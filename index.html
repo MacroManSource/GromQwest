@@ -60,9 +60,16 @@ body{
   position:absolute; inset:0;
   display:none;
   flex-direction:column;
-  padding-top: calc(var(--safe-top) + 14px);
+  padding-top: calc(var(--safe-top) + 40px);
   padding-bottom: calc(var(--safe-bottom));
   overflow:hidden;
+}
+.beta-ribbon{
+  position:absolute; top:0; left:0; right:0; z-index:900;
+  background:linear-gradient(90deg, #2a1206, #1a1006, #2a1206);
+  color:var(--amber); font-family:var(--mono); font-size:9.5px; letter-spacing:.09em;
+  text-align:center; padding: calc(var(--safe-top) + 7px) 8px 6px;
+  border-bottom:1px solid #3a2a10; cursor:pointer; text-transform:uppercase;
 }
 .screen.active{display:flex;}
 .scroll{
@@ -369,10 +376,77 @@ p{line-height:1.55; color:var(--text); margin:0;}
 
 .section-title{font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--text-dim); text-transform:uppercase; margin: 20px 0 10px;}
 .section-title:first-child{margin-top:4px;}
+
+/* ---------- AVATAR ---------- */
+.avatar-picker{text-align:center; margin:4px 0 16px;}
+.avatar-circle{
+  width:84px; height:84px; border-radius:50%; border:1px solid var(--accent-dim); background:var(--panel);
+  display:flex; align-items:center; justify-content:center; margin:0 auto; overflow:hidden; cursor:pointer; position:relative;
+}
+.avatar-circle img{width:100%; height:100%; object-fit:cover;}
+.avatar-circle svg{width:60%; height:60%;}
+.avatar-circle .edit-badge{
+  position:absolute; bottom:0; right:0; width:24px; height:24px; border-radius:50%; background:var(--accent);
+  display:flex; align-items:center; justify-content:center; font-size:12px; color:#04140b; border:2px solid var(--bg);
+}
+.avatar-hint{font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.08em; margin-top:9px;}
+.avatar-sm{width:46px; height:46px; min-width:46px;}
+.avatar-sm .edit-badge{width:16px; height:16px; font-size:9px;}
+
+/* ---------- SERVER SELECT ---------- */
+.server-select-btn{
+  width:100%; text-align:left; background:#070a08; border:1px solid var(--panel-edge); color:var(--text-dim);
+  font-family:var(--mono); font-size:15px; padding:12px 12px; border-radius:2px; cursor:pointer;
+}
+.server-select-btn.chosen{color:var(--accent); border-color:var(--accent-dim);}
+.server-modal{width:100%; max-width:380px; max-height:80vh; display:flex; flex-direction:column;}
+.server-search{
+  width:100%; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--mono); font-size:14px; padding:11px 12px; border-radius:2px; outline:none; margin-bottom:12px;
+}
+.server-search:focus{border-color:var(--accent);}
+.server-grid{
+  display:grid; grid-template-columns:repeat(5, 1fr); gap:7px; overflow-y:auto; padding-right:2px; flex:1;
+}
+.server-cell{
+  font-family:var(--mono); font-size:12px; padding:9px 2px; text-align:center; border:1px solid var(--panel-edge);
+  border-radius:3px; background:var(--panel); color:var(--text-dim); cursor:pointer;
+}
+.server-cell:active{border-color:var(--accent); color:var(--accent);}
+
+/* ---------- PLAYER STRIP (hub) ---------- */
+.player-strip{
+  display:flex; align-items:center; gap:12px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:16px;
+}
+.player-strip .info{flex:1; min-width:0;}
+.player-strip .name-row{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+.player-strip .name-row .nm{font-family:var(--mono); font-size:13px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.player-strip .name-row .lvl{font-family:var(--mono); font-size:11px; color:var(--accent); white-space:nowrap;}
+.xp-track{height:5px; border-radius:2px; background:#101512; border:1px solid var(--panel-edge); overflow:hidden; margin-top:7px;}
+.xp-fill{height:100%; background:linear-gradient(90deg, var(--amber), #ffd67a); transition:width .5s ease;}
+.xp-caption{font-family:var(--mono); font-size:9px; color:var(--text-dim); margin-top:4px;}
+
+/* ---------- LOCKED MODULES (hub) ---------- */
+.locked-module{
+  display:flex; align-items:center; gap:12px; padding:14px 14px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px; cursor:pointer; opacity:.55;
+}
+.locked-module .lm-icon{font-size:18px;}
+.locked-module .lm-body{flex:1;}
+.locked-module .lm-title{font-size:13.5px; color:var(--text);}
+.locked-module .lm-tag{font-family:var(--mono); font-size:9.5px; color:var(--danger); letter-spacing:.1em; margin-top:2px; display:block;}
+
+.lock-big{font-size:46px; filter:grayscale(1); opacity:.75;}
+
+/* ---------- REWARD XP ---------- */
+.reward-xp{margin-top:6px; font-family:var(--mono); font-size:11.5px; color:var(--amber);}
 </style>
 </head>
 <body>
 <div id="app">
+
+  <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">⚠ BETA — ИСКЛЮЧИТЕЛЬНО ДЛЯ ТЕСТИРОВАНИЯ</div>
 
   <!-- BOOT -->
   <div class="screen active" id="screen-boot">
@@ -393,9 +467,15 @@ p{line-height:1.55; color:var(--text); margin:0;}
       <h2 style="font-size:21px; margin-top:8px;">ИДЕНТИФИКАЦИЯ ВЫЖИВШЕГО</h2>
       <p class="dim" style="margin-top:8px; font-size:13px;">Система требует подтверждения личности перед выдачей доступа к архиву.</p>
       <div class="reg-card">
+        <div class="avatar-picker">
+          <div class="avatar-circle" id="reg-avatar-circle" onclick="Avatar.pick()">
+            <div class="edit-badge">+</div>
+          </div>
+          <div class="avatar-hint">НАЖМИ, ЧТОБЫ ЗАГРУЗИТЬ ФОТО</div>
+        </div>
         <div class="field">
           <label>Номер сервера</label>
-          <input type="text" id="reg-server" placeholder="SERVER #___" maxlength="12">
+          <button type="button" class="server-select-btn" id="reg-server-btn" onclick="ServerPicker.open()">ВЫБРАТЬ СЕРВЕР (1–300)</button>
         </div>
         <div class="field">
           <label>Позывной выжившего</label>
@@ -417,7 +497,17 @@ p{line-height:1.55; color:var(--text); margin:0;}
     <div class="scroll">
       <div class="hub-header">
         <div class="eyebrow">LAST ASYLUM DATABASE</div>
-        <h2 style="font-size:20px; margin-top:6px;">КАРТА РАССЛЕДОВАНИЯ</h2>
+        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">КАРТА РАССЛЕДОВАНИЯ</h2>
+
+        <div class="player-strip">
+          <div class="avatar-circle avatar-sm" id="hub-avatar-circle" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
+          <div class="info">
+            <div class="name-row"><span class="nm" id="hub-strip-name">—</span><span class="lvl" id="hub-strip-level">LVL 1</span></div>
+            <div class="xp-track"><div class="xp-fill" id="hub-strip-xpfill" style="width:0%"></div></div>
+            <div class="xp-caption" id="hub-strip-xpcap">0 / 0 XP</div>
+          </div>
+        </div>
+
         <div class="progress-bar-wrap">
           <div class="progress-track"><div class="progress-fill" id="hub-progress-fill" style="width:0%"></div></div>
           <div class="progress-label"><span id="hub-progress-pct">0%</span><span id="hub-progress-txt">0 / 0 РАЗГАДАНО</span></div>
@@ -427,6 +517,45 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <div class="branch-line"></div>
         <div id="branch-list"></div>
       </div>
+
+      <div class="section-title">ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ</div>
+      <div class="locked-module" onclick="Nav.go('rating')">
+        <div class="lm-icon">🏆</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag">🔒 CLASSIFIED</span></div>
+      </div>
+      <div class="locked-module" onclick="Nav.go('chat')">
+        <div class="lm-icon">💬</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag">🔒 CLASSIFIED</span></div>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <!-- RATING (locked) -->
+  <div class="screen" id="screen-rating">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">МИРОВОЙ РЕЙТИНГ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top:70px;">
+      <div class="lock-big">🔒</div>
+      <h3 style="color:var(--danger); margin-top:18px; font-size:16px;">ACCESS DENIED</h3>
+      <p class="dim" style="margin-top:10px; font-size:13px; max-width:280px;">Глобальный рейтинг выживших временно недоступен. Модуль находится в разработке и будет открыт в одном из ближайших обновлений архива.</p>
+    </div>
+  </div>
+
+  <!-- WORLD CHAT (locked) -->
+  <div class="screen" id="screen-chat">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">МИРОВОЙ ЧАТ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top:70px;">
+      <div class="lock-big">🔒</div>
+      <h3 style="color:var(--danger); margin-top:18px; font-size:16px;">ACCESS DENIED</h3>
+      <p class="dim" style="margin-top:10px; font-size:13px; max-width:280px;">Канал связи между выжившими заблокирован администрацией архива. Коммуникация будет восстановлена после дополнительной проверки.</p>
     </div>
   </div>
 
@@ -504,8 +633,12 @@ p{line-height:1.55; color:var(--text); margin:0;}
       <h2 style="font-size:20px; margin-top:6px; margin-bottom:16px;">ПРОФИЛЬ</h2>
 
       <div class="rank-badge">
+        <div class="avatar-circle" id="profile-avatar-circle" style="margin-bottom:12px;" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
         <div class="dim mono" style="font-size:10.5px; letter-spacing:.15em;" id="prof-server-name">SERVER — PLAYER</div>
         <div class="rank-name" id="prof-rank">NOVICE</div>
+        <div class="mono" style="font-size:12px; color:var(--amber); margin-top:8px;" id="prof-level">LVL 1</div>
+        <div class="xp-track" style="max-width:220px; margin:8px auto 0;"><div class="xp-fill" id="prof-xpfill" style="width:0%"></div></div>
+        <div class="xp-caption" id="prof-xpcap" style="text-align:center; margin-top:5px;">0 / 0 XP</div>
       </div>
 
       <div class="stat-grid">
@@ -568,6 +701,18 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <button class="btn ghost" onclick="UI.closeOverlay()">ОТМЕНА</button>
         <button class="btn danger" onclick="Game.resetProgress()">СБРОСИТЬ</button>
       </div>
+    </div>
+  </div>
+
+  <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+
+  <!-- MODAL (server select) -->
+  <div class="overlay" id="overlay-server">
+    <div class="modal server-modal">
+      <h3 style="margin-bottom:12px;">ВЫБОР СЕРВЕРА</h3>
+      <input type="text" class="server-search" id="server-search" placeholder="Поиск по номеру..." inputmode="numeric">
+      <div class="server-grid" id="server-grid"></div>
+      <button class="btn ghost" style="margin-top:14px;" onclick="UI.closeOverlay()">ОТМЕНА</button>
     </div>
   </div>
 
@@ -904,6 +1049,21 @@ const RANKS = [
 ];
 const TOKENS_PER_BRANCH = 6;
 
+/* XP / Level progression */
+const PUZZLE_XP = {1:10, 2:15, 3:20};       // xp per solved puzzle, keyed by branch.order
+const FINAL_XP = {1:30, 2:60, 3:90};        // bonus xp per completed branch final protocol
+const LEVEL_THRESHOLDS = [0,30,70,120,180,250,330,420,520,630,750,880,1020,1170,1330,1500];
+function levelInfo(xp){
+  xp = xp||0;
+  let lvl = 1;
+  for(let i=1;i<LEVEL_THRESHOLDS.length;i++){ if(xp>=LEVEL_THRESHOLDS[i]) lvl = i+1; else break; }
+  const idx = lvl-1;
+  const cur = LEVEL_THRESHOLDS[idx];
+  const next = LEVEL_THRESHOLDS[idx+1]!==undefined ? LEVEL_THRESHOLDS[idx+1] : cur+300;
+  const pct = Math.min(100, Math.max(0, Math.round(((xp-cur)/(next-cur))*100)));
+  return {level:lvl, xp:xp, cur:cur, next:next, pct:pct};
+}
+
 /* ---------------- STATE ---------------- */
 const SAVE_KEY = 'lastAsylum_save_v1';
 let state = null;
@@ -914,9 +1074,9 @@ function defaultState(){
     branches[b.id] = { unlocked: i===0, completed:false, mistakes:0, hintsLeft: TOKENS_PER_BRANCH };
   });
   return {
-    registered:false, server:'', name:'',
+    registered:false, server:'', name:'', avatar:null,
     branches, solvedPuzzles:{}, symbols:[], hintsUsedByPuzzle:{},
-    achievements:{}, totalMistakes:0, totalHintsUsed:0,
+    achievements:{}, totalMistakes:0, totalHintsUsed:0, xp:0,
     startTime:null, soundOn:false, eggClicks:0, eggFound:false
   };
 }
@@ -1031,6 +1191,13 @@ const UI = {
     document.getElementById('hub-progress-pct').textContent = pct+'%';
     document.getElementById('hub-progress-txt').textContent = solved+' / '+TOTAL_PUZZLES+' РАЗГАДАНО';
 
+    const li = levelInfo(state.xp);
+    document.getElementById('hub-strip-name').textContent = (state.name||'SURVIVOR');
+    document.getElementById('hub-strip-level').textContent = 'LVL '+li.level;
+    document.getElementById('hub-strip-xpfill').style.width = li.pct+'%';
+    document.getElementById('hub-strip-xpcap').textContent = (li.xp-li.cur)+' / '+(li.next-li.cur)+' XP';
+    Avatar.renderInto('hub-avatar-circle');
+
     const wrap = document.getElementById('branch-list');
     wrap.innerHTML = '';
     DATA.branches.forEach((b, idx)=>{
@@ -1092,6 +1259,11 @@ const UI = {
   renderProfile(){
     document.getElementById('prof-server-name').textContent = (state.server||'SERVER —')+' / '+(state.name||'—');
     document.getElementById('prof-rank').textContent = currentRank();
+    const li = levelInfo(state.xp);
+    document.getElementById('prof-level').textContent = 'LVL '+li.level;
+    document.getElementById('prof-xpfill').style.width = li.pct+'%';
+    document.getElementById('prof-xpcap').textContent = (li.xp-li.cur)+' / '+(li.next-li.cur)+' XP · ВСЕГО '+li.xp;
+    Avatar.renderInto('profile-avatar-circle');
     document.getElementById('stat-solved').textContent = totalSolvedCount();
     document.getElementById('stat-symbols').textContent = state.symbols.length;
     const branchesDone = DATA.branches.filter(b=>state.branches[b.id].completed).length;
@@ -1118,6 +1290,77 @@ const UI = {
 
 function toRoman(n){ return ['I','II','III','IV','V'][n-1]||n; }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---------------- AVATAR ---------------- */
+const DEFAULT_AVATAR_SVG = `<svg viewBox="0 0 24 24" stroke="#31ff9c" stroke-width="1.5" fill="none"><circle cx="12" cy="12" r="10" opacity=".5"/><path d="M12 4 L17.5 15 L6.5 15 Z"/><circle cx="12" cy="12.5" r="1" fill="#31ff9c"/><rect x="11.3" y="7" width="1.4" height="4" fill="#31ff9c"/></svg>`;
+const Avatar = {
+  pick(){ document.getElementById('avatar-file-input').click(); },
+  onFile(e){
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    if(!f.type.startsWith('image/')){ toast('ВЫБЕРИ ФАЙЛ ИЗОБРАЖЕНИЯ'); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      state.avatar = reader.result;
+      saveState();
+      Avatar.renderAll();
+      toast('АВАТАР ОБНОВЛЁН');
+    };
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  },
+  markup(){
+    return state.avatar ? `<img src="${state.avatar}" alt="avatar">` : DEFAULT_AVATAR_SVG;
+  },
+  renderInto(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    const editBadge = el.querySelector('.edit-badge');
+    el.innerHTML = this.markup() + (editBadge ? editBadge.outerHTML : '');
+  },
+  renderAll(){
+    ['reg-avatar-circle','hub-avatar-circle','profile-avatar-circle'].forEach(id=>{
+      if(document.getElementById(id)) this.renderInto(id);
+    });
+  }
+};
+
+/* ---------------- SERVER PICKER (1-300) ---------------- */
+const ServerPicker = {
+  selected:null,
+  open(){
+    UI.openOverlay('overlay-server');
+    this.renderGrid('');
+    const search = document.getElementById('server-search');
+    search.value = '';
+    search.oninput = ()=> this.renderGrid(search.value.trim());
+    setTimeout(()=>search.focus(), 50);
+  },
+  renderGrid(filter){
+    const grid = document.getElementById('server-grid');
+    grid.innerHTML = '';
+    for(let n=1; n<=300; n++){
+      const s = String(n);
+      if(filter && s.indexOf(filter)===-1) continue;
+      const cell = document.createElement('div');
+      cell.className = 'server-cell';
+      cell.textContent = '#'+n;
+      cell.onclick = ()=> ServerPicker.select(n);
+      grid.appendChild(cell);
+    }
+    if(!grid.children.length){
+      grid.innerHTML = '<div class="dim mono" style="grid-column:1/-1; font-size:12px; text-align:center; padding:14px 0;">НЕТ СОВПАДЕНИЙ</div>';
+    }
+  },
+  select(n){
+    Audio_.tap();
+    this.selected = n;
+    const btn = document.getElementById('reg-server-btn');
+    btn.textContent = 'SERVER #'+n;
+    btn.classList.add('chosen');
+    UI.closeOverlay();
+  }
+};
 
 /* ---------------- QUEST / PUZZLE ENGINE ---------------- */
 const Quest = {
@@ -1239,7 +1482,6 @@ const Quest = {
       Quest.markSolved(p,b);
     } else {
       btns[idx].classList.add('wrong');
-      btns[p.correctIndex].classList.add('correct');
       if(!state.achievements.FALSE_TRAIL){ state.achievements.FALSE_TRAIL = true; saveState(); toast('ДОСТИЖЕНИЕ: ЛОЖНЫЙ СЛЕД'); }
       Quest.markMistake(p,b,'ЭТО ЛОЖНЫЙ СЛЕД. ПОПРОБУЙ ЕЩЁ РАЗ.', true, ()=>{
         btns.forEach(el=>{ el.onclick = ()=> Quest.checkMC(p,b,parseInt(el.dataset.i,10)); el.classList.remove('wrong','correct','selected'); });
@@ -1280,6 +1522,10 @@ const Quest = {
     Audio_.ok();
     state.solvedPuzzles[p.id] = true;
     state.symbols.push({ value:p.reward, branchLabel:b.title.split(' ')[0], puzzleId:p.id, date:new Date().toISOString() });
+    const beforeLvl = levelInfo(state.xp).level;
+    const xpGain = PUZZLE_XP[b.order] || 10;
+    state.xp = (state.xp||0) + xpGain;
+    const afterLvl = levelInfo(state.xp).level;
     if(p.trap && !state.achievements.WRONG_QUESTION){
       state.achievements.WRONG_QUESTION = true; toast('ДОСТИЖЕНИЕ: НЕ ТОТ ВОПРОС');
     }
@@ -1287,8 +1533,9 @@ const Quest = {
       state.achievements.ARCHIVIST = true; toast('ДОСТИЖЕНИЕ: АРХИВАРИУС');
     }
     saveState();
-    showFeedback(true, '✓ VERIFIED\nДАННЫЕ ПОДТВЕРЖДЕНЫ\nПОЛУЧЕН ФРАГМЕНТ', p, true);
+    showFeedback(true, '✓ VERIFIED\nДАННЫЕ ПОДТВЕРЖДЕНЫ\nПОЛУЧЕН ФРАГМЕНТ', p, true, xpGain);
     document.getElementById('puzzle-next-btn').style.display = 'inline-block';
+    if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 600); }
   },
 
   useHint(p,b){
@@ -1352,6 +1599,10 @@ const Quest = {
     if(ok){
       Audio_.unlock();
       state.branches[b.id].completed = true;
+      const beforeLvl = levelInfo(state.xp).level;
+      const xpGain = FINAL_XP[b.order] || 30;
+      state.xp = (state.xp||0) + xpGain;
+      const afterLvl = levelInfo(state.xp).level;
       if(state.branches[b.id].mistakes===0 && !state.achievements.NO_MISTAKES){
         state.achievements.NO_MISTAKES = true; toast('ДОСТИЖЕНИЕ: БЕЗ ОШИБОК');
       }
@@ -1363,11 +1614,13 @@ const Quest = {
       }
       saveState();
       fb.className = 'feedback show ok';
-      fb.innerHTML = 'SEQUENCE VERIFIED\n█████████████ 100%\nARCHIVE DECRYPTED — NEW DATA FOUND';
+      fb.innerHTML = 'SEQUENCE VERIFIED\n█████████████ 100%\nARCHIVE DECRYPTED — NEW DATA FOUND'
+        + `<div class="reward-xp" style="margin-top:8px;">+${xpGain} XP БОНУС ЗА ПРОТОКОЛ</div>`;
+      if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 400); }
       setTimeout(()=>{
         if(nextBranch){ UI.showUnlock('ACCESS GRANTED', 'ВЕТКА '+toRoman(nextBranch.order)+' «'+nextBranch.title+'» РАЗБЛОКИРОВАНА.'); }
         else { UI.showUnlock('РАССЛЕДОВАНИЕ ЗАВЕРШЕНО', 'Все известные ветки архива раскрыты. Дальнейшие данные — CLASSIFIED.'); }
-      }, 500);
+      }, 700);
     } else {
       Audio_.bad(); glitchFlash();
       fb.className = 'feedback show bad';
@@ -1450,11 +1703,15 @@ function updateFinalHintButton(b){
   btn.textContent = 'ПОДСКАЗКА ('+used+'/'+b.finalHints.length+')';
 }
 
-function showFeedback(ok, text, p, withReward){
+function showFeedback(ok, text, p, withReward, xpGain){
   const fb = document.getElementById('puzzle-feedback');
   fb.className = 'feedback show '+(ok?'ok':'bad');
   let html = escapeHtml(text).replace(/\n/g,'<br>');
-  if(withReward){ html += `<div class="reward-chip">${p.reward}</div><div style="margin-top:6px; color:var(--text-dim); font-size:11px;">${escapeHtml(p.lore||'')}</div>`; }
+  if(withReward){
+    html += `<div class="reward-chip">${p.reward}</div>`;
+    if(xpGain){ html += `<div class="reward-xp">+${xpGain} XP</div>`; }
+    html += `<div style="margin-top:6px; color:var(--text-dim); font-size:11px;">${escapeHtml(p.lore||'')}</div>`;
+  }
   fb.innerHTML = html;
 }
 
@@ -1510,13 +1767,16 @@ const Game = {
       saveState();
     };
 
-    document.getElementById('reg-server').addEventListener('input', updateRegPreview);
+    document.getElementById('avatar-file-input').addEventListener('change', Avatar.onFile);
+    Avatar.renderAll();
+
     document.getElementById('reg-name').addEventListener('input', updateRegPreview);
     document.getElementById('reg-submit').onclick = ()=>{
-      const server = document.getElementById('reg-server').value.trim();
+      const server = ServerPicker.selected;
       const name = document.getElementById('reg-name').value.trim();
-      if(!server || !name){ toast('ЗАПОЛНИ ОБА ПОЛЯ'); return; }
-      state.server = server.toUpperCase();
+      if(!server){ toast('ВЫБЕРИ НОМЕР СЕРВЕРА'); return; }
+      if(!name){ toast('ВВЕДИ ПОЗЫВНОЙ'); return; }
+      state.server = 'SERVER #'+server;
       state.name = name;
       state.registered = true;
       state.startTime = state.startTime || Date.now();
@@ -1542,22 +1802,26 @@ const Game = {
     localStorage.removeItem(SAVE_KEY);
     state = defaultState();
     UI.closeOverlay();
-    document.getElementById('reg-server').value='';
+    ServerPicker.selected = null;
+    const srvBtn = document.getElementById('reg-server-btn');
+    srvBtn.textContent = 'ВЫБРАТЬ СЕРВЕР (1–300)';
+    srvBtn.classList.remove('chosen');
     document.getElementById('reg-name').value='';
     document.getElementById('reg-preview').style.display='none';
     document.getElementById('egg-text').classList.remove('show');
+    Avatar.renderAll();
     Nav.go('boot');
     runBoot();
   }
 };
 
 function updateRegPreview(){
-  const server = document.getElementById('reg-server').value.trim();
+  const server = ServerPicker.selected;
   const name = document.getElementById('reg-name').value.trim();
   const pv = document.getElementById('reg-preview');
   if(server || name){
     pv.style.display = 'block';
-    document.getElementById('pv-server').textContent = server ? ('SERVER #'+server.replace(/^#/,'')) : 'SERVER #___';
+    document.getElementById('pv-server').textContent = server ? ('SERVER #'+server) : 'SERVER #___';
     document.getElementById('pv-name').textContent = name || 'SURVIVOR NAME';
   } else {
     pv.style.display = 'none';
