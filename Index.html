@@ -39,7 +39,7 @@ body{
     radial-gradient(ellipse at 50% -10%, rgba(49,255,156,.06), transparent 60%),
     var(--bg);
 }
-#app{position:relative; width:100%; height:100%; overflow:hidden;}
+#app{position:relative; width:100%; height:100%; overflow:hidden; display:flex; flex-direction:column;}
 
 /* noise / scanlines overlay */
 .grain{
@@ -60,15 +60,21 @@ body{
   position:absolute; inset:0;
   display:none;
   flex-direction:column;
-  padding-top: calc(var(--safe-top) + 48px);
-  padding-bottom: calc(var(--safe-bottom));
+  padding-top: 14px;
+  padding-bottom: calc(var(--safe-bottom) + 4px);
+  overflow:hidden;
+}
+#screen-stack{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
   overflow:hidden;
 }
 .beta-ribbon{
-  position:absolute; top:0; left:0; right:0; z-index:900;
+  flex:0 0 auto;
   background:linear-gradient(90deg, #2a1206, #1a1006, #2a1206);
   color:var(--amber); font-family:var(--mono); font-size:8.5px; letter-spacing:.02em;
-  text-align:center; padding: calc(var(--safe-top) + 5px) 8px 5px;
+  text-align:center; padding: calc(var(--safe-top) + 6px) 8px 6px;
   border-bottom:1px solid #3a2a10; cursor:pointer; text-transform:uppercase;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
@@ -338,7 +344,7 @@ p{line-height:1.55; color:var(--text); margin:0;}
 
 /* ---------- BOTTOM NAV ---------- */
 .bottomnav{
-  display:flex; border-top:1px solid var(--panel-edge); background:rgba(10,13,11,.92); backdrop-filter:blur(6px);
+  display:flex; flex:0 0 auto; border-top:1px solid var(--panel-edge); background:rgba(10,13,11,.92); backdrop-filter:blur(6px);
   padding-bottom: var(--safe-bottom);
 }
 .nav-item{
@@ -467,6 +473,53 @@ p{line-height:1.55; color:var(--text); margin:0;}
 .rating-row .rk-server{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
 .rating-row .rk-stats{text-align:right; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
 .rating-row .rk-stats .lvl{color:var(--amber);}
+.rating-row .rk-alliance{font-family:var(--mono); font-size:9.5px; color:var(--amber); margin-top:2px;}
+
+.rating-sort-row{display:flex; gap:8px; margin-top:10px;}
+.rating-select{
+  flex:1; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--mono); font-size:11.5px; padding:10px 8px; border-radius:2px; outline:none;
+}
+
+/* ---------------- FRIENDS ---------------- */
+.friend-row{
+  display:flex; align-items:center; gap:12px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px;
+}
+.friend-row .fr-info{flex:1; min-width:0;}
+.friend-row .fr-name{font-size:13px; color:var(--text); cursor:pointer;}
+.friend-row .fr-server{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+.friend-row .fr-remove{background:none; border:1px solid var(--danger); color:var(--danger); border-radius:3px; padding:7px 10px; font-family:var(--mono); font-size:10.5px; cursor:pointer;}
+
+/* ---------------- CHAT ---------------- */
+.chat-input-row{
+  flex:0 0 auto; display:flex; gap:8px; padding:12px 18px calc(var(--safe-bottom) + 12px);
+  border-top:1px solid var(--panel-edge); background:var(--bg2);
+}
+.chat-input-row input{
+  flex:1; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--sans); font-size:14px; padding:11px 13px; border-radius:20px; outline:none;
+}
+.chat-input-row input:focus{border-color:var(--accent);}
+.chat-bubble{display:flex; gap:10px; margin-bottom:14px; align-items:flex-start;}
+.chat-bubble.me{flex-direction:row-reverse;}
+.chat-bubble .cb-avatar{width:32px; height:32px; min-width:32px; border-radius:50%; overflow:hidden; border:1px solid var(--panel-edge); cursor:pointer;}
+.chat-bubble .cb-avatar img{width:100%; height:100%; object-fit:cover;}
+.chat-bubble .cb-body{max-width:75%;}
+.chat-bubble .cb-name{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-bottom:4px; cursor:pointer;}
+.chat-bubble.me .cb-name{text-align:right;}
+.chat-bubble .cb-text{
+  background:var(--panel); border:1px solid var(--panel-edge); border-radius:12px; padding:10px 13px;
+  font-size:13.5px; line-height:1.5; color:var(--text);
+}
+.chat-bubble.me .cb-text{background:rgba(49,255,156,.08); border-color:var(--accent-dim);}
+.chat-bubble.system .cb-text{border-color:var(--amber); color:var(--amber); font-family:var(--mono); font-size:12px;}
+.chat-bubble .cb-time{font-family:var(--mono); font-size:9px; color:var(--text-dim); margin-top:4px;}
+.chat-bubble.me .cb-time{text-align:right;}
+.chat-share-btn{
+  background:none; border:1px solid var(--accent-dim); color:var(--accent); border-radius:3px;
+  padding:6px 10px; font-family:var(--mono); font-size:10px; cursor:pointer; margin-top:8px;
+}
 
 /* ---------- REWARD XP ---------- */
 .reward-xp{margin-top:6px; font-family:var(--mono); font-size:11.5px; color:var(--amber);}
@@ -476,6 +529,8 @@ p{line-height:1.55; color:var(--text); margin:0;}
 <div id="app">
 
   <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">⚠ BETA · ТЕСТОВАЯ ВЕРСИЯ</div>
+
+  <div id="screen-stack">
 
   <!-- BOOT -->
   <div class="screen active" id="screen-boot">
@@ -510,11 +565,16 @@ p{line-height:1.55; color:var(--text); margin:0;}
           <label>Позывной выжившего</label>
           <input type="text" id="reg-name" placeholder="SURVIVOR NAME" maxlength="18">
         </div>
+        <div class="field">
+          <label>Тег альянса (опционально)</label>
+          <input type="text" id="reg-alliance" placeholder="НАПР. RATS" maxlength="5" style="text-transform:uppercase;">
+        </div>
         <button class="btn solid" id="reg-submit">ПОДТВЕРДИТЬ ЛИЧНОСТЬ</button>
       </div>
       <div class="player-card" id="reg-preview" style="display:none;">
         <div class="row"><span>SERVER</span><span id="pv-server" class="mono accent"></span></div>
         <div class="row"><span>PLAYER</span><span id="pv-name" class="mono accent"></span></div>
+        <div class="row" id="pv-alliance-row" style="display:none;"><span>АЛЬЯНС</span><span id="pv-alliance" class="mono accent"></span></div>
         <div class="row"><span>STATUS</span><span class="mono accent"><span class="status-dot"></span>ACTIVE</span></div>
         <div class="row"><span>CLEARANCE</span><span class="mono">LEVEL 0</span></div>
       </div>
@@ -558,13 +618,21 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <div class="lm-icon">🏆</div>
         <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
       </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('alliance')">
+        <div class="lm-icon">🛡</div>
+        <div class="lm-body"><div class="lm-title">АЛЬЯНСЫ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('friends')">
+        <div class="lm-icon">🧑‍🤝‍🧑</div>
+        <div class="lm-body"><div class="lm-title">ДРУЗЬЯ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('chat')">
+        <div class="lm-icon">💬</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag" style="color:var(--accent);">ТЕСТ ФУНКЦИОНАЛА</span></div>
+      </div>
       <div class="locked-module" onclick="Nav.go('pvp')">
         <div class="lm-icon">⚔</div>
         <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag">🔒 В РАЗРАБОТКЕ</span></div>
-      </div>
-      <div class="locked-module" onclick="Nav.go('chat')">
-        <div class="lm-icon">💬</div>
-        <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag">🔒 CLASSIFIED</span></div>
       </div>
       <div style="height:8px;"></div>
     </div>
@@ -602,7 +670,57 @@ p{line-height:1.55; color:var(--text); margin:0;}
       <h2 style="font-size:19px; margin-top:6px;">МИРОВОЙ РЕЙТИНГ</h2>
       <p class="dim" style="margin-top:8px; font-size:12px;">Рейтинг в раннем тестировании: пока отображаются только данные, зарегистрированные на этом устройстве.</p>
       <input type="text" class="server-search" id="rating-filter" placeholder="Фильтр по номеру сервера..." inputmode="numeric" style="margin-top:14px;">
+      <div class="rating-sort-row">
+        <select class="rating-select" id="rating-sort-field">
+          <option value="xp">ПО ОЧКАМ (XP)</option>
+          <option value="level">ПО УРОВНЮ</option>
+          <option value="solved">ПО ЗАДАНИЯМ</option>
+        </select>
+        <button class="btn ghost" id="rating-sort-dir" style="width:auto; padding:10px 14px;">↓ БОЛЬШЕ→МЕНЬШЕ</button>
+      </div>
       <div id="rating-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ALLIANCES -->
+  <div class="screen" id="screen-alliance">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">АЛЬЯНСЫ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">ALLIANCE REGISTRY · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">АЛЬЯНСЫ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;" id="alliance-status-text">—</p>
+      <div id="alliance-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="screen" id="screen-friends">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">ДРУЗЬЯ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">CONTACT LIST · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">ДРУЗЬЯ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Добавляй других выживших по позывному и номеру сервера. Список хранится локально на этом устройстве.</p>
+      <div class="reg-card" style="margin-top:14px; padding:16px;">
+        <div class="field">
+          <label>Позывной</label>
+          <input type="text" id="friend-add-name" placeholder="SURVIVOR NAME" maxlength="18">
+        </div>
+        <div class="field">
+          <label>Номер сервера</label>
+          <input type="text" id="friend-add-server" placeholder="НАПР. 047" maxlength="4" inputmode="numeric">
+        </div>
+        <button class="btn solid" id="friend-add-btn">ДОБАВИТЬ В ДРУЗЬЯ</button>
+      </div>
+      <div class="section-title">СПИСОК ДРУЗЕЙ</div>
+      <div id="friends-list"></div>
     </div>
   </div>
 
@@ -620,17 +738,20 @@ p{line-height:1.55; color:var(--text); margin:0;}
     </div>
   </div>
 
-  <!-- WORLD CHAT (locked) -->
+  <!-- WORLD CHAT (open, local test only) -->
   <div class="screen" id="screen-chat">
     <div class="topbar">
       <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
       <div class="topbar-title">МИРОВОЙ ЧАТ</div>
       <div style="width:60px;"></div>
     </div>
-    <div class="scroll" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top:70px;">
-      <div class="lock-big">🔒</div>
-      <h3 style="color:var(--danger); margin-top:18px; font-size:16px;">ACCESS DENIED</h3>
-      <p class="dim" style="margin-top:10px; font-size:13px; max-width:280px;">Канал связи между выжившими заблокирован администрацией архива. Коммуникация будет восстановлена после дополнительной проверки.</p>
+    <div class="scroll" id="chat-scroll" style="flex:1;">
+      <p class="dim" style="font-size:11px; text-align:center; margin-bottom:10px;">ТЕСТОВЫЙ РЕЖИМ — сообщения видны только тебе на этом устройстве.</p>
+      <div id="chat-messages"></div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Сообщение..." maxlength="200">
+      <button class="btn solid" id="chat-send-btn" style="width:auto; padding:12px 16px;">➤</button>
     </div>
   </div>
 
@@ -728,6 +849,14 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <div class="stat-box"><div class="v" id="stat-time">0м</div><div class="l">ВРЕМЯ РАССЛЕДОВАНИЯ</div></div>
       </div>
 
+      <div class="section-title">PVP СТАТИСТИКА <span class="dim" style="text-transform:none; letter-spacing:0;">(режим в разработке)</span></div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="v" id="stat-pvp-rating">1000</div><div class="l">РЕЙТИНГ</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-winrate">—</div><div class="l">% ПОБЕД</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-wins">0</div><div class="l">ПОБЕДЫ</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-losses">0</div><div class="l">ПОРАЖЕНИЯ</div></div>
+      </div>
+
       <div class="section-title">ДОСТИЖЕНИЯ</div>
       <div id="ach-list"></div>
 
@@ -740,15 +869,21 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <span class="mono" style="font-size:12.5px;">ПОЗЫВНОЙ</span>
         <span class="mono accent" id="settings-name" style="font-size:12.5px;">—</span>
       </div>
-      <div class="settings-row" style="border-bottom:none;">
+      <div class="settings-row">
         <span class="mono" style="font-size:12.5px;">СЕРВЕР</span>
         <span class="mono accent" id="settings-server" style="font-size:12.5px;">—</span>
+      </div>
+      <div class="settings-row" style="border-bottom:none; gap:10px;">
+        <span class="mono" style="font-size:12.5px; white-space:nowrap;">ТЕГ АЛЬЯНСА</span>
+        <input type="text" id="settings-alliance" maxlength="5" placeholder="—" style="text-transform:uppercase; text-align:right; width:90px; background:none; border:none; border-bottom:1px solid var(--panel-edge); color:var(--accent); font-family:var(--mono); font-size:12.5px; padding:4px 2px; outline:none;">
       </div>
 
       <button class="btn danger" style="margin-top:22px;" id="reset-btn">СБРОСИТЬ ПРОГРЕСС</button>
       <div style="height:20px;"></div>
     </div>
   </div>
+
+  </div><!-- /screen-stack -->
 
   <!-- BOTTOM NAV -->
   <div class="bottomnav" id="bottomnav" style="display:none;">
@@ -1117,12 +1252,20 @@ const DATA = {
     }
   ],
   achievements:[
+    {id:'FIRST_STEPS', title:'ПЕРВЫЕ ШАГИ', desc:'Решить первую загадку архива.'},
     {id:'NO_MISTAKES', title:'БЕЗ ОШИБОК', desc:'Пройти ветку без единой ошибки.'},
     {id:'FALSE_TRAIL', title:'ЛОЖНЫЙ СЛЕД', desc:'Выбрать отвлекающий вариант ответа.'},
     {id:'WRONG_QUESTION', title:'НЕ ТОТ ВОПРОС', desc:'Решить загадку с намеренно вводящей в заблуждение формулировкой.'},
     {id:'ARCHIVIST', title:'АРХИВАРИУС', desc:'Собрать все известные символы архива.'},
     {id:'PARANOID', title:'ПАРАНОИК', desc:'Пройти всё расследование, использовав минимум подсказок.'},
-    {id:'NOT_TRUST_EYES', title:'НЕ ДОВЕРЯЙ ГЛАЗАМ', desc:'Найти скрытую деталь там, где её не искали.'}
+    {id:'NOT_TRUST_EYES', title:'НЕ ДОВЕРЯЙ ГЛАЗАМ', desc:'Найти скрытую деталь там, где её не искали.'},
+    {id:'COMPLETIONIST', title:'РАССЛЕДОВАНИЕ ЗАВЕРШЕНО', desc:'Пройти все известные ветки архива.'},
+    {id:'LEVEL_5', title:'РАСТУЩАЯ УГРОЗА', desc:'Достичь 5 уровня.'},
+    {id:'ALLY', title:'СОЮЗНИК', desc:'Указать тег альянса.'},
+    {id:'SOCIAL', title:'НЕ ОДИН', desc:'Добавить первого друга в список.'},
+    {id:'CHATTY', title:'НА СВЯЗИ', desc:'Отправить первое сообщение в мировом чате.'},
+    {id:'NIGHT_OWL', title:'НОЧНОЙ ДОЗОР', desc:'Решить загадку глубокой ночью (00:00–05:00).'},
+    {id:'BRAGGART', title:'ХВАСТУН', desc:'Поделиться достижением в мировом чате.'}
   ]
 };
 
@@ -1199,6 +1342,11 @@ function levelInfo(xp){
   const pct = Math.min(100, Math.max(0, Math.round(((xp-cur)/(next-cur))*100)));
   return {level:lvl, xp:xp, cur:cur, next:next, pct:pct};
 }
+function checkLevelAchievements(level){
+  if(level>=5 && !state.achievements.LEVEL_5){
+    state.achievements.LEVEL_5 = true; toast('ДОСТИЖЕНИЕ: РАСТУЩАЯ УГРОЗА');
+  }
+}
 
 /* ---------------- STATE ---------------- */
 const SAVE_KEY = 'lastAsylum_save_v1';
@@ -1210,11 +1358,13 @@ function defaultState(){
     branches[b.id] = { unlocked: i===0, completed:false, mistakes:0, hintsLeft: TOKENS_PER_BRANCH, unlockAt:null };
   });
   return {
-    registered:false, server:'', name:'', avatar:null,
+    registered:false, server:'', name:'', avatar:null, allianceTag:'',
     branches, solvedPuzzles:{}, symbols:[], hintsUsedByPuzzle:{},
     achievements:{}, totalMistakes:0, totalHintsUsed:0, xp:0,
     startTime:null, soundOn:false, eggClicks:0, eggFound:false,
-    role:null, roleTasksDone:{}
+    role:null, roleTasksDone:{},
+    pvpStats:{wins:0, losses:0, rating:1000},
+    friends:[], chatMessages:[]
   };
 }
 
@@ -1337,6 +1487,9 @@ const Nav = {
     if(screenId==='profile') UI.renderProfile();
     if(screenId==='role') RoleUI.renderScreen();
     if(screenId==='rating') RatingUI.render();
+    if(screenId==='alliance') AllianceUI.render();
+    if(screenId==='friends') FriendsUI.render();
+    if(screenId==='chat') ChatUI.render();
   },
   tab(id){ this.go(id); }
 };
@@ -1438,7 +1591,7 @@ const UI = {
     }
   },
   renderProfile(){
-    document.getElementById('prof-server-name').textContent = (state.server||'SERVER —')+' / '+(state.name||'—');
+    document.getElementById('prof-server-name').textContent = (state.server||'SERVER —')+' / '+(state.name||'—') + (state.allianceTag ? ' ['+state.allianceTag+']' : '');
     document.getElementById('prof-rank').textContent = currentRank();
     const li = levelInfo(state.xp);
     document.getElementById('prof-level').textContent = 'LVL '+li.level;
@@ -1453,18 +1606,35 @@ const UI = {
     document.getElementById('stat-hints').textContent = state.totalHintsUsed;
     document.getElementById('stat-time').textContent = state.startTime ? fmtTime(Date.now()-state.startTime) : '0м';
 
+    const pvp = state.pvpStats || {wins:0,losses:0,rating:1000};
+    document.getElementById('stat-pvp-rating').textContent = pvp.rating;
+    document.getElementById('stat-pvp-wins').textContent = pvp.wins;
+    document.getElementById('stat-pvp-losses').textContent = pvp.losses;
+    const totalMatches = pvp.wins+pvp.losses;
+    document.getElementById('stat-pvp-winrate').textContent = totalMatches>0 ? Math.round((pvp.wins/totalMatches)*100)+'%' : '—';
+
     const achWrap = document.getElementById('ach-list');
     achWrap.innerHTML = '';
     DATA.achievements.forEach(a=>{
       const unlocked = !!state.achievements[a.id];
       const row = document.createElement('div');
       row.className = 'ach-row'+(unlocked?'':' locked');
-      row.innerHTML = `<div class="ach-icon">${unlocked?'✓':'?'}</div><div><div class="t">${a.title}</div><div class="d">${a.desc}</div></div>`;
+      row.innerHTML = `<div class="ach-icon">${unlocked?'✓':'?'}</div><div style="flex:1;"><div class="t">${a.title}</div><div class="d">${a.desc}</div></div>`;
+      if(unlocked){
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'chat-share-btn';
+        shareBtn.style.marginTop = '0';
+        shareBtn.textContent = 'ПОДЕЛИТЬСЯ';
+        shareBtn.onclick = ()=> ChatUI.shareAchievement(a);
+        row.appendChild(shareBtn);
+      }
       achWrap.appendChild(row);
     });
 
     document.getElementById('settings-name').textContent = state.name||'—';
     document.getElementById('settings-server').textContent = state.server||'—';
+    const allianceInput = document.getElementById('settings-alliance');
+    if(document.activeElement !== allianceInput){ allianceInput.value = state.allianceTag||''; }
     document.getElementById('sound-toggle').classList.toggle('on', state.soundOn);
   }
 };
@@ -1593,24 +1763,93 @@ const RoleUI = {
 
 /* ---------------- RATING UI (self-only, local device) ---------------- */
 const RatingUI = {
+  sortField:'xp',
+  sortDesc:true,
   render(){
     const input = document.getElementById('rating-filter');
+    const fieldSel = document.getElementById('rating-sort-field');
+    const dirBtn = document.getElementById('rating-sort-dir');
+    fieldSel.value = this.sortField;
+    dirBtn.textContent = this.sortDesc ? '↓ БОЛЬШЕ→МЕНЬШЕ' : '↑ МЕНЬШЕ→БОЛЬШЕ';
     input.oninput = ()=> this.renderList(input.value.trim());
+    fieldSel.onchange = ()=>{ this.sortField = fieldSel.value; this.renderList(input.value.trim()); };
+    dirBtn.onclick = ()=>{
+      this.sortDesc = !this.sortDesc;
+      dirBtn.textContent = this.sortDesc ? '↓ БОЛЬШЕ→МЕНЬШЕ' : '↑ МЕНЬШЕ→БОЛЬШЕ';
+      this.renderList(input.value.trim());
+    };
     this.renderList(input.value.trim());
+  },
+  getEntries(){
+    // Local-device beta: only the registered player exists as a real entry.
+    // Sorting/filtering logic is written generically so it keeps working once
+    // a real multi-player backend supplies more rows.
+    if(!state.registered) return [];
+    const li = levelInfo(state.xp);
+    return [{
+      name: state.name, server: state.server, alliance: state.allianceTag,
+      xp: state.xp||0, level: li.level, solved: totalSolvedCount(), isMe:true
+    }];
   },
   renderList(filter){
     const wrap = document.getElementById('rating-list');
     wrap.innerHTML = '';
+    let entries = this.getEntries();
+    const filterNum = (filter||'').replace(/[^0-9]/g,'');
+    if(filterNum){
+      entries = entries.filter(e=> (e.server||'').replace(/[^0-9]/g,'').indexOf(filterNum)!==-1 );
+    }
+    entries.sort((a,b)=>{
+      const va = a[this.sortField]||0, vb = b[this.sortField]||0;
+      return this.sortDesc ? (vb-va) : (va-vb);
+    });
+    if(!entries.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕТ ВЫЖИВШИХ ПО ЭТОМУ ФИЛЬТРУ.</p>';
+      return;
+    }
+    entries.forEach((e, i)=>{
+      const row = document.createElement('div');
+      row.className = 'rating-row';
+      row.innerHTML = `
+        <div class="rk-pos">#${i+1}</div>
+        <div class="avatar-circle avatar-sm" style="cursor:default;">${e.isMe ? Avatar.markup() : DEFAULT_AVATAR_SVG}</div>
+        <div class="rk-info">
+          <div class="rk-name">${escapeHtml(e.name||'—')}</div>
+          <div class="rk-server">${escapeHtml(e.server||'—')}${e.alliance ? ' · ['+escapeHtml(e.alliance)+']' : ''}</div>
+        </div>
+        <div class="rk-stats"><div class="lvl">LVL ${e.level}</div><div>${e.solved} ЗАДАНИЙ</div><div>${e.xp} XP</div></div>`;
+      if(e.isMe){ row.querySelector('.rk-name').onclick = ()=> Nav.go('profile'); row.querySelector('.rk-name').style.cursor='pointer'; }
+      wrap.appendChild(row);
+    });
+    const note = document.createElement('p');
+    note.className = 'dim';
+    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
+    note.textContent = '#'+entries.length+' из '+entries.length+' известных выживших на данный момент.';
+    wrap.appendChild(note);
+  }
+};
+
+/* ---------------- ALLIANCES ---------------- */
+const AllianceUI = {
+  render(){
+    const status = document.getElementById('alliance-status-text');
+    const wrap = document.getElementById('alliance-list');
+    wrap.innerHTML = '';
     if(!state.registered){
-      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕТ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ.</p>';
+      status.textContent = 'Сначала пройди идентификацию выжившего.';
       return;
     }
-    const serverNum = (state.server||'').replace(/[^0-9]/g,'');
-    const matches = !filter || serverNum.indexOf(filter)!==-1;
-    if(!matches){
-      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕТ ВЫЖИВШИХ НА ЭТОМ СЕРВЕРЕ.</p>';
+    if(!state.allianceTag){
+      status.textContent = 'У тебя нет тега альянса. Добавь его в Профиль → Настройки, чтобы найти союзников.';
+      const hint = document.createElement('button');
+      hint.className = 'btn ghost';
+      hint.style.marginTop = '14px';
+      hint.textContent = 'ПЕРЕЙТИ В НАСТРОЙКИ';
+      hint.onclick = ()=> Nav.go('profile');
+      wrap.appendChild(hint);
       return;
     }
+    status.textContent = 'Альянс: ['+state.allianceTag+']. Показаны все известные выжившие с этим тегом на этом устройстве.';
     const li = levelInfo(state.xp);
     const row = document.createElement('div');
     row.className = 'rating-row';
@@ -1618,19 +1857,141 @@ const RatingUI = {
       <div class="rk-pos">#1</div>
       <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
       <div class="rk-info">
-        <div class="rk-name" id="rating-name-link">${escapeHtml(state.name||'—')}</div>
-        <div class="rk-server">${escapeHtml(state.server||'—')}</div>
+        <div class="rk-name" style="cursor:pointer;">${escapeHtml(state.name||'—')}</div>
+        <div class="rk-server">${escapeHtml(state.server||'—')} · [${escapeHtml(state.allianceTag)}]</div>
       </div>
       <div class="rk-stats"><div class="lvl">LVL ${li.level}</div><div>${totalSolvedCount()} ЗАДАНИЙ</div></div>`;
-    row.querySelector('#rating-name-link').onclick = ()=> Nav.go('profile');
+    row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
     wrap.appendChild(row);
-    const note = document.createElement('p');
-    note.className = 'dim';
-    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
-    note.textContent = '#1 из 1 известных выживших на данный момент.';
-    wrap.appendChild(note);
   }
 };
+
+/* ---------------- FRIENDS ---------------- */
+const FriendsUI = {
+  render(){
+    document.getElementById('friend-add-btn').onclick = ()=> this.addFriend();
+    this.renderList();
+  },
+  addFriend(){
+    const nameInput = document.getElementById('friend-add-name');
+    const serverInput = document.getElementById('friend-add-server');
+    const name = nameInput.value.trim();
+    const server = serverInput.value.trim().replace(/[^0-9]/g,'');
+    if(!name){ toast('ВВЕДИ ПОЗЫВНОЙ'); return; }
+    if(!server){ toast('ВВЕДИ НОМЕР СЕРВЕРА'); return; }
+    const exists = state.friends.some(f=>f.name.toLowerCase()===name.toLowerCase() && f.server===server);
+    if(exists){ toast('ЭТОТ ВЫЖИВШИЙ УЖЕ В СПИСКЕ'); return; }
+    state.friends.push({ id:'fr_'+Date.now(), name, server, addedAt:new Date().toISOString() });
+    const isFirstFriend = state.friends.length===1 && !state.achievements.SOCIAL;
+    if(isFirstFriend){ state.achievements.SOCIAL = true; }
+    saveState();
+    Audio_.ok();
+    toast(isFirstFriend ? 'ДОСТИЖЕНИЕ: НЕ ОДИН · ДОБАВЛЕНО В ДРУЗЬЯ' : 'ДОБАВЛЕНО В ДРУЗЬЯ');
+    nameInput.value=''; serverInput.value='';
+    this.renderList();
+  },
+  removeFriend(id){
+    state.friends = state.friends.filter(f=>f.id!==id);
+    saveState();
+    this.renderList();
+  },
+  renderList(){
+    const wrap = document.getElementById('friends-list');
+    wrap.innerHTML = '';
+    if(!state.friends.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:16px 0;">СПИСОК ДРУЗЕЙ ПУСТ.</p>';
+      return;
+    }
+    state.friends.forEach(f=>{
+      const row = document.createElement('div');
+      row.className = 'friend-row';
+      row.innerHTML = `
+        <div class="avatar-circle avatar-sm" style="cursor:default;">${DEFAULT_AVATAR_SVG}</div>
+        <div class="fr-info">
+          <div class="fr-name">${escapeHtml(f.name)}</div>
+          <div class="fr-server">SERVER #${escapeHtml(f.server)}</div>
+        </div>
+        <button class="fr-remove">УДАЛИТЬ</button>`;
+      row.querySelector('.fr-remove').onclick = ()=> FriendsUI.removeFriend(f.id);
+      wrap.appendChild(row);
+    });
+  }
+};
+
+/* ---------------- CHAT (local test only, no networking) ---------------- */
+const ChatUI = {
+  seeded:false,
+  render(){
+    if(!this.seeded && state.chatMessages.length===0){
+      state.chatMessages.push({
+        id:'sys_1', system:true, text:'СОЕДИНЕНИЕ УСТАНОВЛЕНО. ЭТО ТЕСТОВЫЙ РЕЖИМ ЧАТА — СООБЩЕНИЯ НЕ ОТПРАВЛЯЮТСЯ ДРУГИМ ВЫЖИВШИМ.',
+        timestamp: new Date().toISOString()
+      });
+      saveState();
+      this.seeded = true;
+    }
+    document.getElementById('chat-send-btn').onclick = ()=> this.send();
+    const input = document.getElementById('chat-input');
+    input.onkeydown = (e)=>{ if(e.key==='Enter') this.send(); };
+    this.renderMessages();
+  },
+  send(){
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if(!text) return;
+    state.chatMessages.push({
+      id:'msg_'+Date.now(), fromMe:true, text, timestamp:new Date().toISOString()
+    });
+    const sentCount = state.chatMessages.filter(m=>m.fromMe).length;
+    if(sentCount===1 && !state.achievements.CHATTY){
+      state.achievements.CHATTY = true;
+      setTimeout(()=>toast('ДОСТИЖЕНИЕ: НА СВЯЗИ'), 200);
+    }
+    saveState();
+    input.value = '';
+    Audio_.tap();
+    this.renderMessages();
+  },
+  renderMessages(){
+    const wrap = document.getElementById('chat-messages');
+    wrap.innerHTML = '';
+    state.chatMessages.forEach(m=>{
+      const bubble = document.createElement('div');
+      if(m.system){
+        bubble.className = 'chat-bubble system';
+        bubble.innerHTML = `<div class="cb-body" style="max-width:100%;"><div class="cb-text">${escapeHtml(m.text)}</div></div>`;
+      } else {
+        bubble.className = 'chat-bubble me';
+        bubble.innerHTML = `
+          <div class="cb-avatar">${Avatar.markup()}</div>
+          <div class="cb-body">
+            <div class="cb-name">${escapeHtml(state.name||'ТЫ')}</div>
+            <div class="cb-text">${escapeHtml(m.text)}</div>
+            <div class="cb-time">${formatShortTime(m.timestamp)}</div>
+          </div>`;
+        bubble.querySelector('.cb-avatar').onclick = ()=> Nav.go('profile');
+        bubble.querySelector('.cb-name').onclick = ()=> Nav.go('profile');
+      }
+      wrap.appendChild(bubble);
+    });
+    const scroller = document.getElementById('chat-scroll');
+    scroller.scrollTop = scroller.scrollHeight;
+  },
+  shareAchievement(ach){
+    const text = '🏆 ДОСТИЖЕНИЕ РАЗБЛОКИРОВАНО: '+ach.title+' — '+ach.desc;
+    state.chatMessages.push({ id:'msg_'+Date.now(), fromMe:true, text, timestamp:new Date().toISOString() });
+    if(!state.achievements.BRAGGART){ state.achievements.BRAGGART = true; }
+    saveState();
+    toast('ДОСТИЖЕНИЕ ОТПРАВЛЕНО В ЧАТ');
+    Nav.go('chat');
+  }
+};
+function formatShortTime(iso){
+  const d = new Date(iso);
+  const pad = n=>String(n).padStart(2,'0');
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
 
 /* ---------------- QUEST / PUZZLE ENGINE ---------------- */
 const Quest = {
@@ -1802,6 +2163,14 @@ const Quest = {
     if(state.symbols.length >= TOTAL_PUZZLES && !state.achievements.ARCHIVIST){
       state.achievements.ARCHIVIST = true; toast('ДОСТИЖЕНИЕ: АРХИВАРИУС');
     }
+    if(totalSolvedCount()===1 && !state.achievements.FIRST_STEPS){
+      state.achievements.FIRST_STEPS = true; toast('ДОСТИЖЕНИЕ: ПЕРВЫЕ ШАГИ');
+    }
+    const hourNow = new Date().getHours();
+    if(hourNow>=0 && hourNow<5 && !state.achievements.NIGHT_OWL){
+      state.achievements.NIGHT_OWL = true; toast('ДОСТИЖЕНИЕ: НОЧНОЙ ДОЗОР');
+    }
+    checkLevelAchievements(afterLvl);
     saveState();
     showFeedback(true, '✓ VERIFIED\nДАННЫЕ ПОДТВЕРЖДЕНЫ\nПОЛУЧЕН ФРАГМЕНТ', p, true, xpGain);
     Quest.setupNavRow(b);
@@ -1894,6 +2263,10 @@ const Quest = {
       if(allDone && state.totalHintsUsed<=2 && !state.achievements.PARANOID){
         state.achievements.PARANOID = true; toast('ДОСТИЖЕНИЕ: ПАРАНОИК');
       }
+      if(allDone && !state.achievements.COMPLETIONIST){
+        state.achievements.COMPLETIONIST = true; toast('ДОСТИЖЕНИЕ: РАССЛЕДОВАНИЕ ЗАВЕРШЕНО');
+      }
+      checkLevelAchievements(afterLvl);
       saveState();
       fb.className = 'feedback show ok';
       fb.innerHTML = 'SEQUENCE VERIFIED\n█████████████ 100%\nARCHIVE DECRYPTED — NEW DATA FOUND'
@@ -2028,6 +2401,7 @@ function runBoot(){
 const Game = {
   init(){
     loadState();
+    Game.ensureRole();
     runBoot();
 
     document.getElementById('boot-start').onclick = ()=>{
@@ -2053,16 +2427,20 @@ const Game = {
     Avatar.renderAll();
 
     document.getElementById('reg-name').addEventListener('input', updateRegPreview);
+    document.getElementById('reg-alliance').addEventListener('input', updateRegPreview);
     document.getElementById('reg-submit').onclick = ()=>{
       const server = ServerPicker.selected;
       const name = document.getElementById('reg-name').value.trim();
+      const alliance = document.getElementById('reg-alliance').value.trim().toUpperCase();
       if(!server){ toast('ВЫБЕРИ НОМЕР СЕРВЕРА'); return; }
       if(!name){ toast('ВВЕДИ ПОЗЫВНОЙ'); return; }
       state.server = 'SERVER #'+server;
       state.name = name;
+      state.allianceTag = alliance;
       state.registered = true;
       state.startTime = state.startTime || Date.now();
-      if(!state.role){ state.role = pickRole(); }
+      Game.ensureRole();
+      if(alliance && !state.achievements.ALLY){ state.achievements.ALLY = true; }
       saveState();
       Audio_.unlock();
       RoleUI.showReveal();
@@ -2077,12 +2455,30 @@ const Game = {
 
     document.getElementById('reset-btn').onclick = ()=> UI.openOverlay('overlay-confirm');
 
+    document.getElementById('settings-alliance').addEventListener('change', (e)=>{
+      state.allianceTag = e.target.value.trim().toUpperCase().slice(0,5);
+      e.target.value = state.allianceTag;
+      let newAlly = false;
+      if(state.allianceTag && !state.achievements.ALLY){ state.achievements.ALLY = true; newAlly = true; }
+      saveState();
+      if(newAlly){ toast('ДОСТИЖЕНИЕ: СОЮЗНИК · ТЕГ АЛЬЯНСА ОБНОВЛЁН'); }
+      else { toast(state.allianceTag ? 'ТЕГ АЛЬЯНСА ОБНОВЛЁН' : 'ТЕГ АЛЬЯНСА УДАЛЁН'); }
+    });
+
     setInterval(()=>{
       if(Nav.current==='hub'){ UI.renderHub(); }
     }, 30000);
 
     if(state.registered){
       Nav.go('hub');
+    }
+  },
+  ensureRole(){
+    // Role-assignment safety check: if a profile exists but somehow has no role
+    // (e.g. an older save, or an interrupted registration), grant one silently now.
+    if(state.registered && !state.role){
+      state.role = pickRole();
+      saveState();
     }
   },
   resetProgress(){
@@ -2094,8 +2490,10 @@ const Game = {
     srvBtn.textContent = 'ВЫБРАТЬ СЕРВЕР (1–300)';
     srvBtn.classList.remove('chosen');
     document.getElementById('reg-name').value='';
+    document.getElementById('reg-alliance').value='';
     document.getElementById('reg-preview').style.display='none';
     document.getElementById('egg-text').classList.remove('show');
+    ChatUI.seeded = false;
     Avatar.renderAll();
     Nav.go('boot');
     runBoot();
@@ -2105,11 +2503,15 @@ const Game = {
 function updateRegPreview(){
   const server = ServerPicker.selected;
   const name = document.getElementById('reg-name').value.trim();
+  const alliance = document.getElementById('reg-alliance').value.trim();
   const pv = document.getElementById('reg-preview');
   if(server || name){
     pv.style.display = 'block';
     document.getElementById('pv-server').textContent = server ? ('SERVER #'+server) : 'SERVER #___';
     document.getElementById('pv-name').textContent = name || 'SURVIVOR NAME';
+    const allianceRow = document.getElementById('pv-alliance-row');
+    if(alliance){ allianceRow.style.display = 'flex'; document.getElementById('pv-alliance').textContent = '['+alliance.toUpperCase()+']'; }
+    else { allianceRow.style.display = 'none'; }
   } else {
     pv.style.display = 'none';
   }
