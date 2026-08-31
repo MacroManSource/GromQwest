@@ -60,16 +60,17 @@ body{
   position:absolute; inset:0;
   display:none;
   flex-direction:column;
-  padding-top: calc(var(--safe-top) + 40px);
+  padding-top: calc(var(--safe-top) + 48px);
   padding-bottom: calc(var(--safe-bottom));
   overflow:hidden;
 }
 .beta-ribbon{
   position:absolute; top:0; left:0; right:0; z-index:900;
   background:linear-gradient(90deg, #2a1206, #1a1006, #2a1206);
-  color:var(--amber); font-family:var(--mono); font-size:9.5px; letter-spacing:.09em;
-  text-align:center; padding: calc(var(--safe-top) + 7px) 8px 6px;
+  color:var(--amber); font-family:var(--mono); font-size:8.5px; letter-spacing:.02em;
+  text-align:center; padding: calc(var(--safe-top) + 5px) 8px 5px;
   border-bottom:1px solid #3a2a10; cursor:pointer; text-transform:uppercase;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .screen.active{display:flex;}
 .scroll{
@@ -286,6 +287,8 @@ p{line-height:1.55; color:var(--text); margin:0;}
 @keyframes pop{from{transform:scale(.5); opacity:0;}to{transform:scale(1);opacity:1;}}
 
 .hint-bar{display:flex; align-items:center; justify-content:space-between; margin-top:16px; gap:10px;}
+.puzzle-nav-row{display:flex; gap:10px; margin-top:16px;}
+.puzzle-nav-row .btn{margin-top:0;}
 .hint-btn{
   font-family:var(--mono); font-size:11px; color:var(--amber); background:none; border:1px solid #4a3a12;
   padding:9px 12px; border-radius:3px; cursor:pointer; letter-spacing:.08em;
@@ -439,6 +442,32 @@ p{line-height:1.55; color:var(--text); margin:0;}
 
 .lock-big{font-size:46px; filter:grayscale(1); opacity:.75;}
 
+/* ---------------- ROLE TASKS ---------------- */
+.role-task-row{
+  display:flex; align-items:flex-start; gap:11px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:8px; cursor:pointer;
+}
+.role-task-row.done{border-color:var(--accent-dim);}
+.role-task-row .rt-check{
+  width:20px; height:20px; min-width:20px; border-radius:4px; border:1px solid var(--panel-edge);
+  display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent; margin-top:1px;
+}
+.role-task-row.done .rt-check{border-color:var(--accent); color:var(--accent); background:rgba(49,255,156,.1);}
+.role-task-row .rt-text{font-size:13px; line-height:1.5; color:var(--text);}
+.role-task-row.done .rt-text{color:var(--text-dim); text-decoration:line-through;}
+
+/* ---------------- RATING ---------------- */
+.rating-row{
+  display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px;
+}
+.rating-row .rk-pos{font-family:var(--mono); font-size:13px; color:var(--amber); width:26px; text-align:center;}
+.rating-row .rk-info{flex:1; min-width:0;}
+.rating-row .rk-name{font-size:13.5px; color:var(--accent); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+.rating-row .rk-server{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+.rating-row .rk-stats{text-align:right; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+.rating-row .rk-stats .lvl{color:var(--amber);}
+
 /* ---------- REWARD XP ---------- */
 .reward-xp{margin-top:6px; font-family:var(--mono); font-size:11.5px; color:var(--amber);}
 </style>
@@ -446,7 +475,7 @@ p{line-height:1.55; color:var(--text); margin:0;}
 <body>
 <div id="app">
 
-  <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">⚠ BETA — ИСКЛЮЧИТЕЛЬНО ДЛЯ ТЕСТИРОВАНИЯ</div>
+  <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">⚠ BETA · ТЕСТОВАЯ ВЕРСИЯ</div>
 
   <!-- BOOT -->
   <div class="screen active" id="screen-boot">
@@ -518,10 +547,20 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <div id="branch-list"></div>
       </div>
 
+      <div class="section-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <div class="locked-module" id="hub-role-card" style="opacity:1;" onclick="Nav.go('role')">
+        <div class="lm-icon">🎭</div>
+        <div class="lm-body"><div class="lm-title" id="hub-role-title">ТВОЯ РОЛЬ</div><span class="lm-tag" id="hub-role-tag" style="color:var(--accent);">ОТКРЫТЬ ДОСЬЕ</span></div>
+      </div>
+
       <div class="section-title">ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ</div>
-      <div class="locked-module" onclick="Nav.go('rating')">
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('rating')">
         <div class="lm-icon">🏆</div>
-        <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag">🔒 CLASSIFIED</span></div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" onclick="Nav.go('pvp')">
+        <div class="lm-icon">⚔</div>
+        <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag">🔒 В РАЗРАБОТКЕ</span></div>
       </div>
       <div class="locked-module" onclick="Nav.go('chat')">
         <div class="lm-icon">💬</div>
@@ -531,17 +570,53 @@ p{line-height:1.55; color:var(--text); margin:0;}
     </div>
   </div>
 
-  <!-- RATING (locked) -->
+  <!-- SECRET ROLE -->
+  <div class="screen" id="screen-role">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">CLASSIFIED PERSONNEL FILE</div>
+      <h2 id="role-screen-name" style="font-size:22px; margin-top:8px;">—</h2>
+      <p class="dim" style="margin-top:8px; font-size:12.5px;" id="role-screen-tagline">—</p>
+      <div class="doc-panel" style="margin-top:16px;">
+        <div class="q-text" id="role-screen-desc">—</div>
+      </div>
+      <p class="dim" style="margin-top:6px; font-size:11px;">Задания роли пока не влияют на других выживших — это личный протокол для отслеживания твоего стиля игры.</p>
+      <div class="section-title">ЗАДАНИЯ РОЛИ</div>
+      <div id="role-task-list"></div>
+    </div>
+  </div>
+
+  <!-- RATING (open, single-player self view) -->
   <div class="screen" id="screen-rating">
     <div class="topbar">
       <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
       <div class="topbar-title">МИРОВОЙ РЕЙТИНГ</div>
       <div style="width:60px;"></div>
     </div>
+    <div class="scroll">
+      <div class="eyebrow">GLOBAL LEADERBOARD · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">МИРОВОЙ РЕЙТИНГ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Рейтинг в раннем тестировании: пока отображаются только данные, зарегистрированные на этом устройстве.</p>
+      <input type="text" class="server-search" id="rating-filter" placeholder="Фильтр по номеру сервера..." inputmode="numeric" style="margin-top:14px;">
+      <div id="rating-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- PVP (locked) -->
+  <div class="screen" id="screen-pvp">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">PVP АРЕНА</div>
+      <div style="width:60px;"></div>
+    </div>
     <div class="scroll" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top:70px;">
       <div class="lock-big">🔒</div>
       <h3 style="color:var(--danger); margin-top:18px; font-size:16px;">ACCESS DENIED</h3>
-      <p class="dim" style="margin-top:10px; font-size:13px; max-width:280px;">Глобальный рейтинг выживших временно недоступен. Модуль находится в разработке и будет открыт в одном из ближайших обновлений архива.</p>
+      <p class="dim" style="margin-top:10px; font-size:13px; max-width:280px;">Режим прямого противостояния выживших находится в разработке. Следи за обновлениями архива.</p>
     </div>
   </div>
 
@@ -580,9 +655,12 @@ p{line-height:1.55; color:var(--text); margin:0;}
       <div class="file-tag" id="puzzle-file-tag">FILE #000</div>
       <div id="puzzle-body"></div>
       <div class="feedback" id="puzzle-feedback"></div>
+      <div class="puzzle-nav-row" id="puzzle-nav-row" style="display:none;">
+        <button class="btn ghost" id="puzzle-menu-btn" onclick="Quest.goToMenu()">В МЕНЮ</button>
+        <button class="btn solid" id="puzzle-continue-btn" onclick="Quest.goNextPuzzle()">ДАЛЬШЕ →</button>
+      </div>
       <div class="hint-bar">
         <button class="hint-btn" id="puzzle-hint-btn">ПОДСКАЗКА</button>
-        <button class="btn ghost" style="width:auto; padding:9px 16px;" id="puzzle-next-btn" onclick="Quest.goNextFromPuzzle()">ДАЛЕЕ →</button>
       </div>
       <div class="hint-box" id="puzzle-hint-box"></div>
     </div>
@@ -722,6 +800,16 @@ p{line-height:1.55; color:var(--text); margin:0;}
       <h3 id="unlock-title">ACCESS GRANTED</h3>
       <p id="unlock-text">Новая ветка расследования разблокирована.</p>
       <button class="btn solid" onclick="UI.closeOverlay()">ПРОДОЛЖИТЬ</button>
+    </div>
+  </div>
+
+  <!-- MODAL (secret role reveal) -->
+  <div class="overlay" id="overlay-role">
+    <div class="modal">
+      <div class="eyebrow" style="justify-content:center; display:block; text-align:center;">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <h3 id="role-reveal-name" style="margin-top:10px; font-size:19px;">РОЛЬ</h3>
+      <p id="role-reveal-tagline" style="margin-top:10px;">—</p>
+      <button class="btn solid" id="role-reveal-continue">ПРИНЯТЬ РОЛЬ</button>
     </div>
   </div>
 
@@ -1039,6 +1127,54 @@ const DATA = {
 };
 
 const TOTAL_PUZZLES = DATA.branches.reduce((n,b)=>n+b.puzzles.length,0);
+
+/* ---------------- SECRET ROLE SYSTEM (visual only, no player interaction yet) ---------------- */
+const ROLES = {
+  INFECTED: {
+    id:'INFECTED', name:'ЗАРАЖЁННЫЙ', color:'var(--accent)',
+    tagline:'Ты — один из многих. Твоя задача проста: пройти протокол архива и не привлекать лишнего внимания.',
+    desc:'Стандартная роль выжившего. Ты выполняешь обычное расследование — читаешь архив, решаешь загадки, собираешь символы. Ничего необычного. Или почти ничего.',
+    tasks:[
+      {id:'inf_1', text:'Реши любые 3 фрагмента без единой ошибки.'},
+      {id:'inf_2', text:'Собери все символы одной ветки полностью.'},
+      {id:'inf_3', text:'Пройди ветку, использовав не более 1 подсказки.'},
+      {id:'inf_4', text:'Заверши FINAL PROTOCOL любой ветки с первой попытки.'},
+      {id:'inf_5', text:'Открой Архив Символов и изучи все найденные фрагменты.'}
+    ]
+  },
+  INVESTIGATOR: {
+    id:'INVESTIGATOR', name:'СЛЕДОВАТЕЛЬ', color:'#4ac8ff',
+    tagline:'Тебе поручено особое задание: в архиве действует кто-то, кто намеренно портит данные. Найди его следы.',
+    desc:'Ты выявляешь несоответствия, которые не мог оставить обычный заражённый. Твоя работа тише и внимательнее — ты ищешь то, что не должно было существовать в системе.',
+    tasks:[
+      {id:'inv_1', text:'Найди в архиве утверждение, которое выглядит правдой, но является ловушкой.'},
+      {id:'inv_2', text:'Зафиксируй 3 формулировки, намеренно вводящие в заблуждение.'},
+      {id:'inv_3', text:'Пройди ветку, ни разу не выбрав очевидный, но неверный ответ.'},
+      {id:'inv_4', text:'Составь для себя список из 3 подозрительных несостыковок в лором.'},
+      {id:'inv_5', text:'Заверши расследование, не показав признаков паники (0 использованных подсказок в одной ветке).'}
+    ]
+  },
+  SABOTEUR: {
+    id:'SABOTEUR', name:'ВРЕДИТЕЛЬ', color:'var(--danger)',
+    tagline:'Ты не такой, как остальные. Твоя цель — замедлить расследование заражённых, оставаясь незамеченным.',
+    desc:'Формально ты проходишь тот же архив. Но у тебя есть скрытые мотивы — вносить сомнения, тратить чужое время, путать следы. Твои задания не мешают тебе лично закрывать ветки.',
+    tasks:[
+      {id:'sab_1', text:'Хотя бы раз намеренно введи неверный ответ перед тем, как ответить верно.'},
+      {id:'sab_2', text:'Пройди целую ветку, ни разу не воспользовавшись ANALYSIS TOKEN.'},
+      {id:'sab_3', text:'Заверши FINAL PROTOCOL не с первой попытки — сначала собери заведомо неверную последовательность.'},
+      {id:'sab_4', text:'Не открывай Архив Символов, пока не закроешь текущую ветку полностью.'},
+      {id:'sab_5', text:'Заверши ветку так, будто не знал(а) ни одной подсказки заранее.'}
+    ]
+  }
+};
+const ROLE_WEIGHTS = [ ['INFECTED',70], ['INVESTIGATOR',15], ['SABOTEUR',15] ];
+function pickRole(){
+  const total = ROLE_WEIGHTS.reduce((s,r)=>s+r[1],0);
+  let r = Math.random()*total;
+  for(const [id,w] of ROLE_WEIGHTS){ if(r<w) return id; r -= w; }
+  return 'INFECTED';
+}
+
 const RANKS = [
   {min:0, name:'NOVICE'},
   {min:1, name:'SCAVENGER'},
@@ -1071,13 +1207,14 @@ let state = null;
 function defaultState(){
   const branches = {};
   DATA.branches.forEach((b,i)=>{
-    branches[b.id] = { unlocked: i===0, completed:false, mistakes:0, hintsLeft: TOKENS_PER_BRANCH };
+    branches[b.id] = { unlocked: i===0, completed:false, mistakes:0, hintsLeft: TOKENS_PER_BRANCH, unlockAt:null };
   });
   return {
     registered:false, server:'', name:'', avatar:null,
     branches, solvedPuzzles:{}, symbols:[], hintsUsedByPuzzle:{},
     achievements:{}, totalMistakes:0, totalHintsUsed:0, xp:0,
-    startTime:null, soundOn:false, eggClicks:0, eggFound:false
+    startTime:null, soundOn:false, eggClicks:0, eggFound:false,
+    role:null, roleTasksDone:{}
   };
 }
 
@@ -1151,6 +1288,34 @@ function fmtTime(ms){
   return h+'ч '+m+'м';
 }
 
+/* ---------------- MSK SCHEDULED UNLOCK (05:00 MSK next day) ---------------- */
+const MSK_OFFSET_MS = 3*3600*1000; // Moscow is fixed UTC+3, no DST
+function nextUnlockTimestamp(fromMs){
+  const mskShifted = fromMs + MSK_OFFSET_MS;
+  const d = new Date(mskShifted);
+  const y = d.getUTCFullYear(), m = d.getUTCMonth(), day = d.getUTCDate();
+  const targetMskWallMs = Date.UTC(y, m, day+1, 5, 0, 0, 0);
+  return targetMskWallMs - MSK_OFFSET_MS;
+}
+function formatMsk(ts){
+  const d = new Date(ts + MSK_OFFSET_MS);
+  const pad = n => String(n).padStart(2,'0');
+  return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+' MSK';
+}
+function checkUnlocks(){
+  let changed = false;
+  DATA.branches.forEach(b=>{
+    const bs = state.branches[b.id];
+    if(!bs.unlocked && bs.unlockAt && Date.now() >= bs.unlockAt){
+      bs.unlocked = true;
+      bs.unlockAt = null;
+      changed = true;
+    }
+  });
+  if(changed) saveState();
+  return changed;
+}
+
 /* ---------------- NAV ---------------- */
 const Nav = {
   current:'boot',
@@ -1170,6 +1335,8 @@ const Nav = {
     if(screenId==='hub') UI.renderHub();
     if(screenId==='symbols') UI.renderSymbols();
     if(screenId==='profile') UI.renderProfile();
+    if(screenId==='role') RoleUI.renderScreen();
+    if(screenId==='rating') RatingUI.render();
   },
   tab(id){ this.go(id); }
 };
@@ -1185,6 +1352,7 @@ const UI = {
     Audio_.unlock();
   },
   renderHub(){
+    checkUnlocks();
     const solved = totalSolvedCount();
     const pct = Math.round((solved/TOTAL_PUZZLES)*100);
     document.getElementById('hub-progress-fill').style.width = pct+'%';
@@ -1198,27 +1366,40 @@ const UI = {
     document.getElementById('hub-strip-xpcap').textContent = (li.xp-li.cur)+' / '+(li.next-li.cur)+' XP';
     Avatar.renderInto('hub-avatar-circle');
 
+    const role = ROLES[state.role];
+    if(role){
+      document.getElementById('hub-role-title').textContent = role.name;
+      document.getElementById('hub-role-title').style.color = role.color;
+      document.getElementById('hub-role-tag').textContent = 'ОТКРЫТЬ ДОСЬЕ';
+    }
+
     const wrap = document.getElementById('branch-list');
     wrap.innerHTML = '';
     DATA.branches.forEach((b, idx)=>{
       const bs = state.branches[b.id];
       const done = bs.completed;
       const locked = !bs.unlocked;
+      const scheduled = locked && bs.unlockAt && Date.now() < bs.unlockAt;
       const node = document.createElement('div');
       node.className = 'branch-node ' + (done?'done':(locked?'locked':'active'));
       const solvedN = branchSolvedCount(b);
+      let metaRight = locked ? 'ACCESS DENIED' : (solvedN+'/'+b.puzzles.length);
+      let titleText = locked ? 'CLASSIFIED' : b.title;
+      if(scheduled){ metaRight = 'ОТКРЫТИЕ ' + formatMsk(bs.unlockAt); titleText = 'DECRYPTING…'; }
       node.innerHTML = `
         <div class="node-dot">${done?'✓':(locked?'🔒':(idx+1))}</div>
         <div class="branch-card">
           <div class="b-eyebrow">ВЕТКА ${toRoman(idx+1)}</div>
-          <h3>${locked? 'CLASSIFIED' : b.title}</h3>
+          <h3>${titleText}</h3>
           <div class="b-meta">
             <span class="stars">${'★'.repeat(b.stars)}${'☆'.repeat(6-b.stars)}</span>
-            <span>${locked? 'ACCESS DENIED' : (solvedN+'/'+b.puzzles.length)}</span>
+            <span>${metaRight}</span>
           </div>
         </div>`;
       if(!locked){
         node.onclick = ()=>{ Audio_.tap(); Quest.openBranch(b.id); };
+      } else if(scheduled){
+        node.onclick = ()=>{ Audio_.bad(); glitchFlash(); toast('АРХИВ РАСШИФРОВЫВАЕТСЯ. ОТКРЫТИЕ '+formatMsk(bs.unlockAt)); };
       } else {
         node.onclick = ()=>{ Audio_.bad(); glitchFlash(); toast('ACCESS DENIED — ЗАВЕРШИ ПРЕДЫДУЩУЮ ВЕТКУ'); };
       }
@@ -1362,6 +1543,95 @@ const ServerPicker = {
   }
 };
 
+/* ---------------- ROLE UI ---------------- */
+const RoleUI = {
+  showReveal(){
+    const role = ROLES[state.role];
+    if(!role){ Nav.go('hub'); return; }
+    document.getElementById('role-reveal-name').textContent = role.name;
+    document.getElementById('role-reveal-name').style.color = role.color;
+    document.getElementById('role-reveal-tagline').textContent = role.tagline;
+    UI.openOverlay('overlay-role');
+    Audio_.unlock();
+    document.getElementById('role-reveal-continue').onclick = ()=>{
+      UI.closeOverlay();
+      Nav.go('hub');
+    };
+  },
+  renderScreen(){
+    const role = ROLES[state.role];
+    if(!role) return;
+    document.getElementById('role-screen-name').textContent = role.name;
+    document.getElementById('role-screen-name').style.color = role.color;
+    document.getElementById('role-screen-tagline').textContent = role.tagline;
+    document.getElementById('role-screen-desc').textContent = role.desc;
+    const list = document.getElementById('role-task-list');
+    list.innerHTML = '';
+    role.tasks.forEach(t=>{
+      const done = !!state.roleTasksDone[t.id];
+      const row = document.createElement('div');
+      row.className = 'role-task-row'+(done?' done':'');
+      row.innerHTML = `<div class="rt-check">✓</div><div class="rt-text">${escapeHtml(t.text)}</div>`;
+      row.onclick = ()=> RoleUI.toggleTask(t.id);
+      list.appendChild(row);
+    });
+  },
+  toggleTask(taskId){
+    const wasDone = !!state.roleTasksDone[taskId];
+    if(!wasDone){
+      state.roleTasksDone[taskId] = true;
+      state.xp = (state.xp||0) + 5;
+      Audio_.ok();
+      toast('ЗАДАНИЕ РОЛИ ВЫПОЛНЕНО +5 XP');
+    } else {
+      delete state.roleTasksDone[taskId];
+    }
+    saveState();
+    this.renderScreen();
+  }
+};
+
+/* ---------------- RATING UI (self-only, local device) ---------------- */
+const RatingUI = {
+  render(){
+    const input = document.getElementById('rating-filter');
+    input.oninput = ()=> this.renderList(input.value.trim());
+    this.renderList(input.value.trim());
+  },
+  renderList(filter){
+    const wrap = document.getElementById('rating-list');
+    wrap.innerHTML = '';
+    if(!state.registered){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕТ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ.</p>';
+      return;
+    }
+    const serverNum = (state.server||'').replace(/[^0-9]/g,'');
+    const matches = !filter || serverNum.indexOf(filter)!==-1;
+    if(!matches){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕТ ВЫЖИВШИХ НА ЭТОМ СЕРВЕРЕ.</p>';
+      return;
+    }
+    const li = levelInfo(state.xp);
+    const row = document.createElement('div');
+    row.className = 'rating-row';
+    row.innerHTML = `
+      <div class="rk-pos">#1</div>
+      <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
+      <div class="rk-info">
+        <div class="rk-name" id="rating-name-link">${escapeHtml(state.name||'—')}</div>
+        <div class="rk-server">${escapeHtml(state.server||'—')}</div>
+      </div>
+      <div class="rk-stats"><div class="lvl">LVL ${li.level}</div><div>${totalSolvedCount()} ЗАДАНИЙ</div></div>`;
+    row.querySelector('#rating-name-link').onclick = ()=> Nav.go('profile');
+    wrap.appendChild(row);
+    const note = document.createElement('p');
+    note.className = 'dim';
+    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
+    note.textContent = '#1 из 1 известных выживших на данный момент.';
+    wrap.appendChild(note);
+  }
+};
+
 /* ---------------- QUEST / PUZZLE ENGINE ---------------- */
 const Quest = {
   currentBranchId:null,
@@ -1406,7 +1676,7 @@ const Quest = {
     document.getElementById('puzzle-feedback').innerHTML = '';
     document.getElementById('puzzle-hint-box').className = 'hint-box';
     document.getElementById('puzzle-hint-box').innerHTML = '';
-    document.getElementById('puzzle-next-btn').style.display = 'none';
+    document.getElementById('puzzle-nav-row').style.display = 'none';
 
     const body = document.getElementById('puzzle-body');
     const alreadySolved = !!state.solvedPuzzles[p.id];
@@ -1432,7 +1702,7 @@ const Quest = {
 
     if(alreadySolved){
       showFeedback(true, `✓ VERIFIED — ДАННЫЕ УЖЕ ПОДТВЕРЖДЕНЫ РАНЕЕ.\nФРАГМЕНТ: [ ${p.reward} ]`, p);
-      document.getElementById('puzzle-next-btn').style.display = 'inline-block';
+      Quest.setupNavRow(b);
     }
 
     if(p.type==='text' && !alreadySolved){
@@ -1493,10 +1763,10 @@ const Quest = {
     const btns = document.querySelectorAll('#tf-list .doc-stmt');
     btns[idx].classList.add('selected');
     if(idx===p.falseIndex){
-      btns[idx].classList.add('wrong');
+      btns[idx].classList.add('correct');
       Quest.markSolved(p,b);
     } else {
-      btns[idx].classList.add('correct');
+      btns[idx].classList.add('wrong');
       Quest.markMistake(p,b,'ЭТО УТВЕРЖДЕНИЕ ПРАВДИВО. ИЩИ ДРУГОЕ.', true, ()=>{
         btns.forEach(el=>{ el.onclick = ()=> Quest.checkTF(p,b,parseInt(el.dataset.i,10)); el.classList.remove('wrong','correct','selected'); });
       });
@@ -1534,26 +1804,33 @@ const Quest = {
     }
     saveState();
     showFeedback(true, '✓ VERIFIED\nДАННЫЕ ПОДТВЕРЖДЕНЫ\nПОЛУЧЕН ФРАГМЕНТ', p, true, xpGain);
-    document.getElementById('puzzle-next-btn').style.display = 'inline-block';
+    Quest.setupNavRow(b);
     if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 600); }
   },
 
-  useHint(p,b){
-    const used = state.hintsUsedByPuzzle[p.id] || 0;
-    if(used >= p.hints.length){ toast('ПОДСКАЗКИ ПО ЭТОМУ ФРАГМЕНТУ ИСЧЕРПАНЫ'); return; }
-    if(state.branches[b.id].hintsLeft <= 0){ toast('ANALYSIS TOKENS ИСЧЕРПАНЫ ДЛЯ ЭТОЙ ВЕТКИ'); return; }
-    state.hintsUsedByPuzzle[p.id] = used+1;
-    state.branches[b.id].hintsLeft--;
-    state.totalHintsUsed++;
-    saveState();
-    const box = document.getElementById('puzzle-hint-box');
-    box.classList.add('show');
-    box.innerHTML += (box.innerHTML?'<br><br>':'') + 'ПОДСКАЗКА '+(used+1)+': '+escapeHtml(p.hints[used]);
-    document.getElementById('puzzle-tokens').textContent = '💠 '+state.branches[b.id].hintsLeft;
-    updateHintButton(p,b);
+  setupNavRow(b){
+    const row = document.getElementById('puzzle-nav-row');
+    row.style.display = 'flex';
+    const idx = b.puzzles.findIndex(pp=>pp.id===this.currentPuzzleId);
+    const hasNext = idx>=0 && idx < b.puzzles.length-1;
+    const contBtn = document.getElementById('puzzle-continue-btn');
+    if(hasNext){ contBtn.textContent = 'СЛЕДУЮЩИЙ ФРАГМЕНТ →'; }
+    else if(b.puzzles.every(pp=>state.solvedPuzzles[pp.id])){ contBtn.textContent = 'FINAL PROTOCOL →'; }
+    else { contBtn.textContent = 'К СПИСКУ ФРАГМЕНТОВ →'; }
   },
 
-  goNextFromPuzzle(){ Quest.openBranch(this.currentBranchId); },
+  goNextPuzzle(){
+    const b = findBranch(this.currentBranchId);
+    const idx = b.puzzles.findIndex(pp=>pp.id===this.currentPuzzleId);
+    if(idx>=0 && idx < b.puzzles.length-1){
+      Quest.openPuzzle(b.puzzles[idx+1].id);
+    } else if(b.puzzles.every(pp=>state.solvedPuzzles[pp.id])){
+      Quest.openFinal(b.id);
+    } else {
+      Quest.openBranch(b.id);
+    }
+  },
+  goToMenu(){ Quest.openBranch(this.currentBranchId); },
 
   openFinal(branchId){
     const b = findBranch(branchId);
@@ -1607,7 +1884,12 @@ const Quest = {
         state.achievements.NO_MISTAKES = true; toast('ДОСТИЖЕНИЕ: БЕЗ ОШИБОК');
       }
       const nextBranch = DATA.branches.find(x=>x.order===b.order+1);
-      if(nextBranch){ state.branches[nextBranch.id].unlocked = true; }
+      let unlockAt = null;
+      if(nextBranch){
+        unlockAt = nextUnlockTimestamp(Date.now());
+        state.branches[nextBranch.id].unlockAt = unlockAt;
+        state.branches[nextBranch.id].unlocked = false;
+      }
       const allDone = DATA.branches.every(x=>state.branches[x.id].completed);
       if(allDone && state.totalHintsUsed<=2 && !state.achievements.PARANOID){
         state.achievements.PARANOID = true; toast('ДОСТИЖЕНИЕ: ПАРАНОИК');
@@ -1618,7 +1900,7 @@ const Quest = {
         + `<div class="reward-xp" style="margin-top:8px;">+${xpGain} XP БОНУС ЗА ПРОТОКОЛ</div>`;
       if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 400); }
       setTimeout(()=>{
-        if(nextBranch){ UI.showUnlock('ACCESS GRANTED', 'ВЕТКА '+toRoman(nextBranch.order)+' «'+nextBranch.title+'» РАЗБЛОКИРОВАНА.'); }
+        if(nextBranch){ UI.showUnlock('ПРОТОКОЛ ЗАКРЫТ', 'ВЕТКА '+toRoman(nextBranch.order)+' «'+nextBranch.title+'» БУДЕТ ОТКРЫТА '+formatMsk(unlockAt)+'.'); }
         else { UI.showUnlock('РАССЛЕДОВАНИЕ ЗАВЕРШЕНО', 'Все известные ветки архива раскрыты. Дальнейшие данные — CLASSIFIED.'); }
       }, 700);
     } else {
@@ -1780,9 +2062,10 @@ const Game = {
       state.name = name;
       state.registered = true;
       state.startTime = state.startTime || Date.now();
+      if(!state.role){ state.role = pickRole(); }
       saveState();
       Audio_.unlock();
-      Nav.go('hub');
+      RoleUI.showReveal();
     };
 
     document.getElementById('sound-toggle').onclick = ()=>{
@@ -1793,6 +2076,10 @@ const Game = {
     };
 
     document.getElementById('reset-btn').onclick = ()=> UI.openOverlay('overlay-confirm');
+
+    setInterval(()=>{
+      if(Nav.current==='hub'){ UI.renderHub(); }
+    }, 30000);
 
     if(state.registered){
       Nav.go('hub');
