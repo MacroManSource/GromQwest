@@ -222,6 +222,9 @@ p{line-height:1.55; color:var(--text); margin:0;}
   background:var(--panel); border-radius:4px; margin-bottom:9px; cursor:pointer;
 }
 .puzzle-row.solved{border-color:var(--accent-dim);}
+.sidetask-row{border-color:rgba(231,178,58,.35);}
+.sidetask-row .idx{border-color:rgba(231,178,58,.35);}
+.sidetask-row.solved{border-color:var(--accent-dim);}
 .puzzle-row .idx{
   font-family:var(--mono); font-size:11px; color:var(--text-dim); width:26px; min-width:26px;
   height:26px; border:1px solid var(--panel-edge); border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -630,9 +633,9 @@ p{line-height:1.55; color:var(--text); margin:0;}
         <div class="lm-icon">💬</div>
         <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag" style="color:var(--accent);">ТЕСТ ФУНКЦИОНАЛА</span></div>
       </div>
-      <div class="locked-module" onclick="Nav.go('pvp')">
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('pvp')">
         <div class="lm-icon">⚔</div>
-        <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag">🔒 В РАЗРАБОТКЕ</span></div>
+        <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag" style="color:var(--accent);">РЕЙТИНГ ДОСТУПЕН</span></div>
       </div>
       <div style="height:8px;"></div>
     </div>
@@ -724,17 +727,25 @@ p{line-height:1.55; color:var(--text); margin:0;}
     </div>
   </div>
 
-  <!-- PVP (locked) -->
+  <!-- PVP (rating + search shell open, live matches still in development) -->
   <div class="screen" id="screen-pvp">
     <div class="topbar">
       <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
       <div class="topbar-title">PVP АРЕНА</div>
       <div style="width:60px;"></div>
     </div>
-    <div class="scroll" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top:70px;">
-      <div class="lock-big">🔒</div>
-      <h3 style="color:var(--danger); margin-top:18px; font-size:16px;">ACCESS DENIED</h3>
-      <p class="dim" style="margin-top:10px; font-size:13px; max-width:280px;">Режим прямого противостояния выживших находится в разработке. Следи за обновлениями архива.</p>
+    <div class="scroll">
+      <div class="eyebrow">PVP ARENA · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">PVP АРЕНА</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Прямые бои между выжившими всё ещё в разработке. Пока доступны только рейтинг и прототип поиска противника.</p>
+
+      <div class="section-title">РЕЙТИНГ PVP</div>
+      <div id="pvp-rating-list"></div>
+
+      <div class="section-title">ПОИСК ПРОТИВНИКА</div>
+      <p class="dim mono" id="pvp-search-counter" style="font-size:10.5px;">ПОПЫТОК СЕГОДНЯ: 0/5</p>
+      <button class="btn solid" id="pvp-find-btn" style="margin-top:10px;">НАЙТИ ПРОТИВНИКА</button>
+      <div id="pvp-search-results"></div>
     </div>
   </div>
 
@@ -1053,6 +1064,13 @@ const DATA = {
           reward:'Ω',
           lore:"Файл 071: отчёт с пятью утверждениями, одно из которых было изменено намеренно."
         }
+      ],
+      sideTasks:[
+        {
+          id:'b1_t1', afterIndex:2,
+          title:'ЗАДАНИЕ: ПОЛЕВЫЕ РАБОТЫ',
+          description:'Раскопать 3 клумбы в игре Last Asylum: Plague.'
+        }
       ]
     },
     {
@@ -1149,6 +1167,18 @@ const DATA = {
           ],
           reward:'R',
           lore:"Файл 140: обгоревшая страница со списком союзников."
+        }
+      ],
+      sideTasks:[
+        {
+          id:'b2_t1', afterIndex:1,
+          title:'ЗАДАНИЕ: ЗАЧИСТКА',
+          description:'Уничтожить 10 скверн уровня 20–60 в игре Last Asylum: Plague.'
+        },
+        {
+          id:'b2_t2', afterIndex:4,
+          title:'ЗАДАНИЕ: РАЗВЕДКА',
+          description:'Провести разведку 5 раз в игре Last Asylum: Plague.'
         }
       ]
     },
@@ -1247,6 +1277,13 @@ const DATA = {
           ],
           reward:'W',
           lore:"Файл 230: последняя уцелевшая страница ветки."
+        }
+      ],
+      sideTasks:[
+        {
+          id:'b3_t1', afterIndex:3,
+          title:'ЗАДАНИЕ: ЭКСПЕДИЦИЯ',
+          description:'Сходить на раскопки корабля в игре Last Asylum: Plague.'
         }
       ]
     }
@@ -1362,8 +1399,9 @@ function defaultState(){
     branches, solvedPuzzles:{}, symbols:[], hintsUsedByPuzzle:{},
     achievements:{}, totalMistakes:0, totalHintsUsed:0, xp:0,
     startTime:null, soundOn:false, eggClicks:0, eggFound:false,
-    role:null, roleTasksDone:{},
+    role:null, roleTasksDone:{}, sideTasksDone:{},
     pvpStats:{wins:0, losses:0, rating:1000},
+    pvpSearch:{date:null, used:0},
     friends:[], chatMessages:[]
   };
 }
@@ -1411,6 +1449,23 @@ function findPuzzle(id){
   for(const b of DATA.branches){ const p = b.puzzles.find(p=>p.id===id); if(p) return {puzzle:p, branch:b}; }
   return null;
 }
+function findSideTask(id){
+  for(const b of DATA.branches){
+    const t = (b.sideTasks||[]).find(t=>t.id===id);
+    if(t) return {task:t, branch:b};
+  }
+  return null;
+}
+const SIDE_TASK_XP = 15;
+function getBranchSequence(b){
+  // Interleaves main puzzles with in-game screenshot tasks in display/navigation order.
+  const seq = [];
+  b.puzzles.forEach((p, i)=>{
+    seq.push({type:'puzzle', id:p.id});
+    (b.sideTasks||[]).filter(t=>t.afterIndex===i).forEach(t=> seq.push({type:'task', id:t.id}));
+  });
+  return seq;
+}
 function branchPuzzleCount(b){ return b.puzzles.length; }
 function branchSolvedCount(b){ return b.puzzles.filter(p=>state.solvedPuzzles[p.id]).length; }
 function totalSolvedCount(){ return Object.keys(state.solvedPuzzles).length; }
@@ -1452,6 +1507,10 @@ function formatMsk(ts){
   const pad = n => String(n).padStart(2,'0');
   return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+' MSK';
 }
+function mskDateKey(ts){
+  const d = new Date(ts + MSK_OFFSET_MS);
+  return d.getUTCFullYear()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCDate();
+}
 function checkUnlocks(){
   let changed = false;
   DATA.branches.forEach(b=>{
@@ -1490,6 +1549,7 @@ const Nav = {
     if(screenId==='alliance') AllianceUI.render();
     if(screenId==='friends') FriendsUI.render();
     if(screenId==='chat') ChatUI.render();
+    if(screenId==='pvp') PvpUI.render();
   },
   tab(id){ this.go(id); }
 };
@@ -1867,6 +1927,68 @@ const AllianceUI = {
 };
 
 /* ---------------- FRIENDS ---------------- */
+/* ---------------- PVP (rating shell + throttled opponent search, no real matches yet) ---------------- */
+const PvpUI = {
+  render(){
+    this.renderRating();
+    this.renderSearchState();
+    document.getElementById('pvp-find-btn').onclick = ()=> this.findOpponent();
+    document.getElementById('pvp-search-results').innerHTML = '';
+  },
+  renderRating(){
+    const wrap = document.getElementById('pvp-rating-list');
+    wrap.innerHTML = '';
+    if(!state.registered){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:16px 0;">НЕТ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ.</p>';
+      return;
+    }
+    const li = levelInfo(state.xp);
+    const pvp = state.pvpStats || {wins:0, losses:0, rating:1000};
+    const row = document.createElement('div');
+    row.className = 'rating-row';
+    row.innerHTML = `
+      <div class="rk-pos">#1</div>
+      <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
+      <div class="rk-info">
+        <div class="rk-name" style="cursor:pointer;">${escapeHtml(state.name||'—')}</div>
+        <div class="rk-server">${escapeHtml(state.server||'—')}${state.allianceTag ? ' · ['+escapeHtml(state.allianceTag)+']' : ''}</div>
+      </div>
+      <div class="rk-stats"><div class="lvl">LVL ${li.level}</div><div>${pvp.rating} MMR</div></div>`;
+    row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
+    wrap.appendChild(row);
+    const note = document.createElement('p');
+    note.className = 'dim';
+    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
+    note.textContent = '#1 из 1 известных участников PvP-рейтинга на данный момент.';
+    wrap.appendChild(note);
+  },
+  getSearchState(){
+    const today = mskDateKey(Date.now());
+    if(!state.pvpSearch || state.pvpSearch.date !== today){
+      state.pvpSearch = {date:today, used:0};
+      saveState();
+    }
+    return state.pvpSearch;
+  },
+  renderSearchState(){
+    const s = this.getSearchState();
+    document.getElementById('pvp-search-counter').textContent = 'ПОПЫТОК СЕГОДНЯ: '+s.used+'/5';
+    document.getElementById('pvp-find-btn').disabled = s.used>=5;
+    document.getElementById('pvp-find-btn').textContent = s.used>=5 ? 'ЛИМИТ НА СЕГОДНЯ ИСЧЕРПАН' : 'НАЙТИ ПРОТИВНИКА';
+  },
+  findOpponent(){
+    const s = this.getSearchState();
+    if(s.used>=5){ toast('ЛИМИТ ПОИСКА НА СЕГОДНЯ ИСЧЕРПАН. ПОПРОБУЙ ЗАВТРА.'); return; }
+    s.used++;
+    saveState();
+    Audio_.tap();
+    this.renderSearchState();
+    const results = document.getElementById('pvp-search-results');
+    results.innerHTML = `<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 14px; border:1px dashed var(--panel-edge); border-radius:4px; margin-top:14px; line-height:1.6;">🔍 ИГРОКИ НЕ НАЙДЕНЫ.<br>PVP-РЕЖИМ В РАННЕМ ТЕСТИРОВАНИИ — БАЗА ПРОТИВНИКОВ ПОКА ПУСТА.</p>`;
+  }
+};
+
+/* ---------------- FRIENDS ---------------- */
 const FriendsUI = {
   render(){
     document.getElementById('friend-add-btn').onclick = ()=> this.addFriend();
@@ -2004,15 +2126,30 @@ const Quest = {
     document.getElementById('quest-branch-title').textContent = 'ВЕТКА '+toRoman(b.order)+' · '+b.title;
     const wrap = document.getElementById('quest-list-wrap');
     wrap.innerHTML = `<p class="dim" style="font-size:12.5px; margin-bottom:16px;">${b.intro}</p>`;
-    b.puzzles.forEach((p, i)=>{
-      const solved = !!state.solvedPuzzles[p.id];
-      const row = document.createElement('div');
-      row.className = 'puzzle-row'+(solved?' solved':'');
-      row.innerHTML = `<div class="idx">${solved?'✓':(i+1)}</div>
-        <div class="body"><div class="t">${p.title}</div><div class="s">${p.fileTag}</div></div>
-        <div class="chev">›</div>`;
-      row.onclick = ()=>{ Audio_.tap(); Quest.openPuzzle(p.id); };
-      wrap.appendChild(row);
+    const seq = getBranchSequence(b);
+    seq.forEach(item=>{
+      if(item.type==='puzzle'){
+        const p = b.puzzles.find(pp=>pp.id===item.id);
+        const i = b.puzzles.indexOf(p);
+        const solved = !!state.solvedPuzzles[p.id];
+        const row = document.createElement('div');
+        row.className = 'puzzle-row'+(solved?' solved':'');
+        row.innerHTML = `<div class="idx">${solved?'✓':(i+1)}</div>
+          <div class="body"><div class="t">${p.title}</div><div class="s">${p.fileTag}</div></div>
+          <div class="chev">›</div>`;
+        row.onclick = ()=>{ Audio_.tap(); Quest.openPuzzle(p.id); };
+        wrap.appendChild(row);
+      } else {
+        const t = (b.sideTasks||[]).find(tt=>tt.id===item.id);
+        const done = !!state.sideTasksDone[t.id];
+        const row = document.createElement('div');
+        row.className = 'puzzle-row sidetask-row'+(done?' solved':'');
+        row.innerHTML = `<div class="idx">${done?'✓':'📸'}</div>
+          <div class="body"><div class="t">${t.title}</div><div class="s">ЗАДАНИЕ ИЗ ИГРЫ</div></div>
+          <div class="chev">›</div>`;
+        row.onclick = ()=>{ Audio_.tap(); Quest.openSideTask(t.id); };
+        wrap.appendChild(row);
+      }
     });
     const allSolved = b.puzzles.every(p=>state.solvedPuzzles[p.id]);
     const finalBtn = document.createElement('button');
@@ -2038,6 +2175,7 @@ const Quest = {
     document.getElementById('puzzle-hint-box').className = 'hint-box';
     document.getElementById('puzzle-hint-box').innerHTML = '';
     document.getElementById('puzzle-nav-row').style.display = 'none';
+    document.getElementById('puzzle-hint-btn').style.display = '';
 
     const body = document.getElementById('puzzle-body');
     const alreadySolved = !!state.solvedPuzzles[p.id];
@@ -2180,19 +2318,23 @@ const Quest = {
   setupNavRow(b){
     const row = document.getElementById('puzzle-nav-row');
     row.style.display = 'flex';
-    const idx = b.puzzles.findIndex(pp=>pp.id===this.currentPuzzleId);
-    const hasNext = idx>=0 && idx < b.puzzles.length-1;
+    const seq = getBranchSequence(b);
+    const idx = seq.findIndex(it=>it.id===this.currentPuzzleId);
+    const hasNext = idx>=0 && idx < seq.length-1;
     const contBtn = document.getElementById('puzzle-continue-btn');
-    if(hasNext){ contBtn.textContent = 'СЛЕДУЮЩИЙ ФРАГМЕНТ →'; }
+    if(hasNext){ contBtn.textContent = 'ДАЛЬШЕ →'; }
     else if(b.puzzles.every(pp=>state.solvedPuzzles[pp.id])){ contBtn.textContent = 'FINAL PROTOCOL →'; }
     else { contBtn.textContent = 'К СПИСКУ ФРАГМЕНТОВ →'; }
   },
 
   goNextPuzzle(){
     const b = findBranch(this.currentBranchId);
-    const idx = b.puzzles.findIndex(pp=>pp.id===this.currentPuzzleId);
-    if(idx>=0 && idx < b.puzzles.length-1){
-      Quest.openPuzzle(b.puzzles[idx+1].id);
+    const seq = getBranchSequence(b);
+    const idx = seq.findIndex(it=>it.id===this.currentPuzzleId);
+    if(idx>=0 && idx < seq.length-1){
+      const nextItem = seq[idx+1];
+      if(nextItem.type==='puzzle'){ Quest.openPuzzle(nextItem.id); }
+      else { Quest.openSideTask(nextItem.id); }
     } else if(b.puzzles.every(pp=>state.solvedPuzzles[pp.id])){
       Quest.openFinal(b.id);
     } else {
@@ -2200,6 +2342,63 @@ const Quest = {
     }
   },
   goToMenu(){ Quest.openBranch(this.currentBranchId); },
+
+  openSideTask(taskId){
+    const found = findSideTask(taskId);
+    if(!found) return;
+    const {task:t, branch:b} = found;
+    this.currentBranchId = b.id;
+    this.currentPuzzleId = t.id;
+    document.getElementById('puzzle-branch-title').textContent = b.title;
+    document.getElementById('puzzle-file-tag').textContent = 'ЗАДАНИЕ ИЗ ИГРЫ';
+    document.getElementById('puzzle-tokens').textContent = '';
+    document.getElementById('puzzle-feedback').className = 'feedback';
+    document.getElementById('puzzle-feedback').innerHTML = '';
+    document.getElementById('puzzle-hint-box').className = 'hint-box';
+    document.getElementById('puzzle-hint-box').innerHTML = '';
+    document.getElementById('puzzle-nav-row').style.display = 'none';
+    document.getElementById('puzzle-hint-btn').style.display = 'none';
+
+    const done = !!state.sideTasksDone[t.id];
+    const body = document.getElementById('puzzle-body');
+    body.innerHTML = `
+      <h3 style="font-size:15px; color:var(--text-dim); margin-bottom:10px;">${t.title}</h3>
+      <div class="doc-panel"><div class="q-text">Выполни в игре Last Asylum: Plague:<br><br><strong style="color:var(--accent);">${escapeHtml(t.description)}</strong></div></div>
+      <div class="doc-panel" style="border-color:rgba(231,178,58,.4); background:rgba(231,178,58,.05);">
+        <div class="q-text" style="color:var(--amber); font-size:12.5px;">📸 Это задание выполняется в самой игре, а не в архиве. Сделай скриншот подтверждения и загрузи его сюда.<br><br>На время тестирования задание засчитывается автоматически сразу после загрузки скриншота — без ручной проверки модератором.</div>
+      </div>
+      ${done ? '' : '<button class="btn solid" id="task-upload-btn" style="margin-top:14px;">ЗАГРУЗИТЬ СКРИНШОТ</button><input type="file" id="task-file-input" accept="image/*" style="display:none;">'}
+    `;
+
+    if(done){
+      const fb = document.getElementById('puzzle-feedback');
+      fb.className = 'feedback show ok';
+      fb.innerHTML = '✓ ПОДТВЕРЖДЕНО<br>СКРИНШОТ ПРИНЯТ. ЗАДАНИЕ ЗАСЧИТАНО.';
+      Quest.setupNavRow(b);
+    } else {
+      document.getElementById('task-upload-btn').onclick = ()=> document.getElementById('task-file-input').click();
+      document.getElementById('task-file-input').onchange = (e)=> Quest.completeSideTask(t, b, e);
+    }
+    Nav.go('puzzle');
+  },
+
+  completeSideTask(t, b, e){
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    if(!f.type.startsWith('image/')){ toast('ЗАГРУЗИ ФАЙЛ ИЗОБРАЖЕНИЯ (СКРИНШОТ)'); return; }
+    state.sideTasksDone[t.id] = new Date().toISOString();
+    state.xp = (state.xp||0) + SIDE_TASK_XP;
+    saveState();
+    Audio_.ok();
+    const fb = document.getElementById('puzzle-feedback');
+    fb.className = 'feedback show ok';
+    fb.innerHTML = '✓ СКРИНШОТ ЗАГРУЖЕН<br>ЗАДАНИЕ АВТОМАТИЧЕСКИ ЗАСЧИТАНО<br><span style="color:var(--text-dim); font-size:10.5px;">(тестовый режим: ручная проверка модератором пока не требуется)</span>'
+      + `<div class="reward-xp" style="margin-top:8px;">+${SIDE_TASK_XP} XP</div>`;
+    const uploadBtn = document.getElementById('task-upload-btn');
+    if(uploadBtn) uploadBtn.style.display = 'none';
+    Quest.setupNavRow(b);
+  },
+
 
   openFinal(branchId){
     const b = findBranch(branchId);
