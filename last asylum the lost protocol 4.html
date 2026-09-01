@@ -1,0 +1,2722 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LAST ASYLUM: THE LOST PROTOCOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050505;
+  --bg2:#0c0f0d;
+  --panel:#0f1311;
+  --panel-edge:#1c2621;
+  --text:#d7ded8;
+  --text-dim:#7c8983;
+  --accent:#31ff9c;
+  --accent-dim:#12452c;
+  --accent-glow: rgba(49,255,156,.35);
+  --danger:#ff3b3b;
+  --danger-dim:#3a1414;
+  --amber:#e7b23a;
+  --mono: 'Share Tech Mono', 'Courier New', monospace;
+  --sans: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);overflow:hidden;}
+body{
+  font-family: var(--sans);
+  color: var(--text);
+  position:relative;
+  width:100%;
+  height:100%;
+  max-width:480px;
+  margin:0 auto;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(49,255,156,.06), transparent 60%),
+    var(--bg);
+}
+#app{position:relative; width:100%; height:100%; overflow:hidden; display:flex; flex-direction:column;}
+
+/* noise / scanlines overlay */
+.grain{
+  position:absolute; inset:0; pointer-events:none; z-index:500; opacity:.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.scanlines{
+  position:absolute; inset:0; pointer-events:none; z-index:501;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.12) 3px);
+  opacity:.35;
+}
+.vignette{
+  position:absolute; inset:0; pointer-events:none; z-index:499;
+  box-shadow: inset 0 0 120px rgba(0,0,0,.75);
+}
+
+.screen{
+  position:absolute; inset:0;
+  display:none;
+  flex-direction:column;
+  padding-top: 14px;
+  padding-bottom: calc(var(--safe-bottom) + 4px);
+  overflow:hidden;
+}
+#screen-stack{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+}
+.beta-ribbon{
+  flex:0 0 auto;
+  background:linear-gradient(90deg, #2a1206, #1a1006, #2a1206);
+  color:var(--amber); font-family:var(--mono); font-size:8.5px; letter-spacing:.02em;
+  text-align:center; padding: calc(var(--safe-top) + 6px) 8px 6px;
+  border-bottom:1px solid #3a2a10; cursor:pointer; text-transform:uppercase;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.screen.active{display:flex;}
+.scroll{
+  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding: 0 18px 24px;
+}
+.scroll::-webkit-scrollbar{width:3px;}
+.scroll::-webkit-scrollbar-thumb{background:var(--accent-dim);}
+
+h1,h2,h3{margin:0; font-family: var(--mono); letter-spacing:.03em; font-weight:400;}
+.eyebrow{
+  font-family:var(--mono); font-size:11px; letter-spacing:.25em; color:var(--accent);
+  text-transform:uppercase; opacity:.85;
+}
+p{line-height:1.55; color:var(--text); margin:0;}
+.dim{color:var(--text-dim);}
+.mono{font-family:var(--mono);}
+.accent{color:var(--accent);}
+.danger-text{color:var(--danger);}
+
+/* ---------- BOOT ---------- */
+#screen-boot{align-items:center; justify-content:center; text-align:center;}
+.boot-wrap{width:100%; padding:0 32px;}
+.boot-glyph{
+  width:64px; height:64px; margin:0 auto 22px; position:relative;
+}
+.boot-glyph svg{width:100%; height:100%; filter: drop-shadow(0 0 10px var(--accent-glow));}
+#boot-lines{
+  min-height:120px; font-family:var(--mono); font-size:13px; color:var(--accent);
+  text-align:left; line-height:1.9; white-space:pre-wrap;
+}
+#boot-lines .ln{display:block; opacity:0;}
+#boot-lines .ln.show{opacity:1;}
+.cursor-blink{display:inline-block; width:8px; background:var(--accent); animation:blink 1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+.btn{
+  font-family:var(--mono);
+  letter-spacing:.12em;
+  font-size:13px;
+  text-transform:uppercase;
+  background:transparent;
+  border:1px solid var(--accent);
+  color:var(--accent);
+  padding:15px 20px;
+  border-radius:2px;
+  width:100%;
+  cursor:pointer;
+  position:relative;
+  transition:all .15s ease;
+}
+.btn:active{background:var(--accent); color:#04140b;}
+.btn.solid{background:var(--accent); color:#04140b; border-color:var(--accent);}
+.btn.solid:active{opacity:.8;}
+.btn.ghost{border-color:var(--panel-edge); color:var(--text-dim);}
+.btn.danger{border-color:var(--danger); color:var(--danger);}
+.btn.danger:active{background:var(--danger); color:#1a0505;}
+.btn[disabled]{opacity:.35; pointer-events:none;}
+#boot-start{margin-top:34px; opacity:0; transition:opacity .6s ease;}
+#boot-start.show{opacity:1;}
+
+/* ---------- REGISTRATION ---------- */
+.reg-card{
+  border:1px solid var(--panel-edge); background:var(--panel); border-radius:4px; padding:22px 18px; margin-top:18px;
+  position:relative;
+}
+.reg-card::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity:.6;
+}
+.field{margin-bottom:16px;}
+.field label{
+  display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+  color:var(--text-dim); margin-bottom:7px; text-transform:uppercase;
+}
+.field input{
+  width:100%; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--mono); font-size:15px; padding:12px 12px; border-radius:2px; outline:none;
+}
+.field input:focus{border-color:var(--accent);}
+.player-card{
+  border:1px solid var(--accent-dim); background:linear-gradient(160deg, rgba(49,255,156,.06), transparent);
+  border-radius:4px; padding:18px; margin-top:16px;
+}
+.player-card .row{display:flex; justify-content:space-between; margin-bottom:8px; font-family:var(--mono); font-size:12.5px;}
+.player-card .row span:first-child{color:var(--text-dim);}
+.status-dot{display:inline-block; width:6px;height:6px;border-radius:50%; background:var(--accent); margin-right:6px; box-shadow:0 0 6px var(--accent);}
+
+/* ---------- TOP BAR ---------- */
+.topbar{
+  padding:0 18px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.back-btn{
+  font-family:var(--mono); font-size:12px; color:var(--text-dim); background:none; border:none; padding:6px 0;
+  display:flex; align-items:center; gap:6px; cursor:pointer;
+}
+.topbar-title{font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--text-dim); text-transform:uppercase;}
+
+/* ---------- HUB / MAP ---------- */
+.hub-header{padding:4px 18px 14px;}
+.progress-bar-wrap{margin-top:14px;}
+.progress-track{
+  height:8px; border-radius:2px; background:#101512; border:1px solid var(--panel-edge); overflow:hidden; position:relative;
+}
+.progress-fill{
+  height:100%; background:linear-gradient(90deg, var(--accent-dim), var(--accent));
+  box-shadow:0 0 8px var(--accent-glow);
+  transition:width .5s ease;
+}
+.progress-label{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10.5px; color:var(--text-dim); margin-top:6px;}
+
+.branch-map{position:relative; padding: 6px 8px 20px;}
+.branch-line{
+  position:absolute; left:33px; top:36px; bottom:36px; width:2px;
+  background:repeating-linear-gradient(to bottom, var(--panel-edge) 0 6px, transparent 6px 12px);
+  z-index:0;
+}
+.branch-node{
+  position:relative; z-index:1; display:flex; gap:14px; padding:14px 4px; align-items:flex-start; cursor:pointer;
+}
+.node-dot{
+  width:26px; height:26px; min-width:26px; border-radius:50%; border:2px solid var(--accent-dim);
+  display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:12px; color:var(--text-dim);
+  background:var(--bg2);
+}
+.branch-node.done .node-dot{border-color:var(--accent); color:var(--accent); box-shadow:0 0 10px var(--accent-glow);}
+.branch-node.locked .node-dot{border-color:#2a1414; color:var(--danger); opacity:.6;}
+.branch-node.active .node-dot{border-color:var(--accent); color:var(--accent); animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--accent-glow);}50%{box-shadow:0 0 0 6px transparent;}}
+.branch-card{
+  flex:1; border:1px solid var(--panel-edge); background:var(--panel); border-radius:4px; padding:13px 14px;
+}
+.branch-node.locked .branch-card{opacity:.45;}
+.branch-card .b-eyebrow{font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.15em;}
+.branch-card h3{font-size:15.5px; margin-top:3px; color:var(--text);}
+.branch-node.done .branch-card h3{color:var(--accent);}
+.branch-card .b-meta{display:flex; justify-content:space-between; margin-top:8px; font-family:var(--mono); font-size:10.5px; color:var(--text-dim);}
+.stars{color:var(--amber); letter-spacing:1px;}
+
+/* ---------- QUEST LIST ---------- */
+.puzzle-row{
+  display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px; cursor:pointer;
+}
+.puzzle-row.solved{border-color:var(--accent-dim);}
+.sidetask-row{border-color:rgba(231,178,58,.35);}
+.sidetask-row .idx{border-color:rgba(231,178,58,.35);}
+.sidetask-row.solved{border-color:var(--accent-dim);}
+.puzzle-row .idx{
+  font-family:var(--mono); font-size:11px; color:var(--text-dim); width:26px; min-width:26px;
+  height:26px; border:1px solid var(--panel-edge); border-radius:50%; display:flex; align-items:center; justify-content:center;
+}
+.puzzle-row.solved .idx{color:var(--accent); border-color:var(--accent-dim);}
+.puzzle-row .body{flex:1;}
+.puzzle-row .body .t{font-size:13.5px; color:var(--text);}
+.puzzle-row .body .s{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+.puzzle-row .chev{color:var(--text-dim); font-size:16px;}
+
+/* ---------- PUZZLE SCREEN ---------- */
+.file-tag{
+  display:inline-block; font-family:var(--mono); font-size:10px; color:var(--accent);
+  border:1px solid var(--accent-dim); padding:3px 8px; border-radius:2px; margin-bottom:12px; letter-spacing:.1em;
+}
+.doc-panel{
+  border:1px solid var(--panel-edge); background: linear-gradient(180deg, var(--panel), #0a0d0b);
+  border-radius:4px; padding:18px 16px; position:relative; margin-bottom:18px;
+}
+.doc-panel::before{content:''; position:absolute; top:10px; right:12px; width:5px; height:5px; border-radius:50%; background:var(--accent); box-shadow:0 0 6px var(--accent);}
+.doc-panel .q-text{font-size:15.5px; line-height:1.65; color:var(--text); white-space:pre-wrap;}
+.answer-input{
+  width:100%; background:#070a08; border:1px solid var(--panel-edge); color:var(--accent);
+  font-family:var(--mono); font-size:16px; padding:14px; border-radius:2px; outline:none; margin-bottom:12px;
+  letter-spacing:.03em;
+}
+.answer-input:focus{border-color:var(--accent);}
+.mc-opt{
+  display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--panel-edge);
+  color:var(--text); font-size:14px; padding:13px 14px; border-radius:4px; margin-bottom:9px; cursor:pointer;
+  font-family:var(--sans);
+}
+.mc-opt.selected{border-color:var(--accent); background:rgba(49,255,156,.06);}
+.mc-opt.correct{border-color:var(--accent); background:rgba(49,255,156,.12); color:var(--accent);}
+.mc-opt.wrong{border-color:var(--danger); background:rgba(255,59,59,.08); color:var(--danger);}
+
+.order-pool, .order-seq{
+  display:flex; flex-wrap:wrap; gap:8px; min-height:48px; padding:10px; border:1px dashed var(--panel-edge); border-radius:4px; margin-bottom:10px;
+}
+.order-seq{border-style:solid; border-color:var(--accent-dim);}
+.chip{
+  font-family:var(--mono); font-size:12.5px; padding:9px 12px; border:1px solid var(--panel-edge);
+  border-radius:3px; background:var(--panel); cursor:pointer; color:var(--text); user-select:none;
+}
+.chip.symbol{color:var(--accent); border-color:var(--accent-dim); font-size:15px; min-width:38px; text-align:center;}
+.order-hint{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-bottom:6px; letter-spacing:.05em;}
+
+.doc-stmt{
+  display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--panel-edge);
+  color:var(--text); font-size:13.5px; padding:12px 13px; border-radius:4px; margin-bottom:8px; cursor:pointer; line-height:1.5;
+}
+.doc-stmt .num{font-family:var(--mono); color:var(--text-dim); margin-right:8px;}
+.doc-stmt.selected{border-color:var(--amber);}
+.doc-stmt.correct{border-color:var(--accent); color:var(--accent);}
+.doc-stmt.wrong{border-color:var(--danger); color:var(--danger);}
+
+.feedback{
+  margin-top:14px; padding:14px 15px; border-radius:4px; font-family:var(--mono); font-size:12.5px; line-height:1.7;
+  display:none;
+}
+.feedback.show{display:block;}
+.feedback.ok{border:1px solid var(--accent-dim); background:rgba(49,255,156,.06); color:var(--accent);}
+.feedback.bad{border:1px solid var(--danger); background:rgba(255,59,59,.06); color:var(--danger);}
+.reward-chip{
+  display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; margin-top:10px;
+  border:1px solid var(--accent); border-radius:4px; font-family:var(--mono); font-size:20px; color:var(--accent);
+  box-shadow:0 0 12px var(--accent-glow); animation:pop .4s ease;
+}
+@keyframes pop{from{transform:scale(.5); opacity:0;}to{transform:scale(1);opacity:1;}}
+
+.hint-bar{display:flex; align-items:center; justify-content:space-between; margin-top:16px; gap:10px;}
+.puzzle-nav-row{display:flex; gap:10px; margin-top:16px;}
+.puzzle-nav-row .btn{margin-top:0;}
+.hint-btn{
+  font-family:var(--mono); font-size:11px; color:var(--amber); background:none; border:1px solid #4a3a12;
+  padding:9px 12px; border-radius:3px; cursor:pointer; letter-spacing:.08em;
+}
+.hint-btn[disabled]{opacity:.3;}
+.hint-box{
+  margin-top:10px; padding:11px 12px; border-left:2px solid var(--amber); background:rgba(231,178,58,.06);
+  font-size:13px; color:var(--amber); display:none; line-height:1.5;
+}
+.hint-box.show{display:block;}
+.tokens-label{font-family:var(--mono); font-size:10.5px; color:var(--text-dim);}
+
+/* ---------- FINAL PROTOCOL ---------- */
+.final-symbols{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:18px 0;}
+.final-symbols .chip.symbol{font-size:19px; padding:12px 15px;}
+
+/* ---------- SYMBOL ARCHIVE ---------- */
+.sym-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:6px;}
+.sym-cell{
+  aspect-ratio:1; border:1px solid var(--panel-edge); background:var(--panel); border-radius:4px;
+  display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:20px; color:var(--accent);
+  position:relative;
+}
+.sym-cell .src{position:absolute; bottom:4px; font-size:8px; color:var(--text-dim); letter-spacing:.05em;}
+.sym-cell.empty{color:#2a332e; border-style:dashed;}
+
+/* ---------- PROFILE ---------- */
+.rank-badge{
+  text-align:center; padding:22px 10px; border:1px solid var(--panel-edge); border-radius:6px; background:var(--panel); margin-bottom:16px;
+}
+.rank-badge .rank-name{font-family:var(--mono); font-size:20px; color:var(--accent); letter-spacing:.1em; margin-top:6px;}
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+.stat-box{border:1px solid var(--panel-edge); background:var(--panel); border-radius:4px; padding:12px 13px;}
+.stat-box .v{font-family:var(--mono); font-size:20px; color:var(--accent);}
+.stat-box .l{font-family:var(--mono); font-size:9.5px; color:var(--text-dim); letter-spacing:.1em; margin-top:2px;}
+.ach-row{display:flex; gap:12px; align-items:center; padding:11px 12px; border:1px solid var(--panel-edge); border-radius:4px; margin-bottom:8px; background:var(--panel);}
+.ach-row.locked{opacity:.35;}
+.ach-icon{width:30px; height:30px; min-width:30px; border-radius:50%; border:1px solid var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:14px;}
+.ach-row.locked .ach-icon{border-color:var(--panel-edge);}
+.ach-row .t{font-size:12.5px; color:var(--text);}
+.ach-row .d{font-size:10.5px; color:var(--text-dim); margin-top:1px;}
+.settings-row{display:flex; justify-content:space-between; align-items:center; padding:13px 2px; border-bottom:1px solid var(--panel-edge);}
+.toggle{width:42px; height:24px; border-radius:12px; background:#161c19; border:1px solid var(--panel-edge); position:relative; cursor:pointer;}
+.toggle .dot{position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--text-dim); transition:all .2s;}
+.toggle.on{border-color:var(--accent);}
+.toggle.on .dot{left:20px; background:var(--accent);}
+
+/* ---------- BOTTOM NAV ---------- */
+.bottomnav{
+  display:flex; flex:0 0 auto; border-top:1px solid var(--panel-edge); background:rgba(10,13,11,.92); backdrop-filter:blur(6px);
+  padding-bottom: var(--safe-bottom);
+}
+.nav-item{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:11px 4px 9px; cursor:pointer;
+  color:var(--text-dim); font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; border:none; background:none;
+}
+.nav-item svg{width:19px; height:19px; stroke:var(--text-dim); fill:none;}
+.nav-item.active{color:var(--accent);}
+.nav-item.active svg{stroke:var(--accent); filter:drop-shadow(0 0 4px var(--accent-glow));}
+
+/* ---------- MODAL / TOASTS ---------- */
+.overlay{
+  position:absolute; inset:0; background:rgba(2,3,2,.85); z-index:600; display:none; align-items:center; justify-content:center; padding:24px;
+}
+.overlay.show{display:flex;}
+.modal{
+  width:100%; max-width:340px; background:var(--panel); border:1px solid var(--accent-dim); border-radius:6px; padding:22px;
+  text-align:center;
+}
+.modal h3{color:var(--accent); font-size:16px; margin-bottom:10px;}
+.modal p{font-size:13px; color:var(--text-dim); margin-bottom:18px;}
+.modal .row{display:flex; gap:10px;}
+
+.toast{
+  position:absolute; left:16px; right:16px; bottom: calc(78px + var(--safe-bottom)); z-index:700;
+  background:var(--panel); border:1px solid var(--accent); border-radius:4px; padding:12px 14px;
+  font-family:var(--mono); font-size:11.5px; color:var(--accent); transform:translateY(20px); opacity:0;
+  transition:all .3s ease; pointer-events:none;
+}
+.toast.show{transform:translateY(0); opacity:1;}
+
+.egg-text{margin-top:16px; font-family:var(--mono); font-size:11px; color:var(--danger); opacity:0; transition:opacity .5s;}
+.egg-text.show{opacity:.85;}
+
+.glitch-flash{position:absolute; inset:0; background:var(--danger); opacity:0; pointer-events:none; z-index:800;}
+.glitch-flash.play{animation:flash .25s ease;}
+@keyframes flash{0%{opacity:0;}30%{opacity:.25;}100%{opacity:0;}}
+
+.section-title{font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--text-dim); text-transform:uppercase; margin: 20px 0 10px;}
+.section-title:first-child{margin-top:4px;}
+
+/* ---------- AVATAR ---------- */
+.avatar-picker{text-align:center; margin:4px 0 16px;}
+.avatar-circle{
+  width:84px; height:84px; border-radius:50%; border:1px solid var(--accent-dim); background:var(--panel);
+  display:flex; align-items:center; justify-content:center; margin:0 auto; overflow:hidden; cursor:pointer; position:relative;
+}
+.avatar-circle img{width:100%; height:100%; object-fit:cover;}
+.avatar-circle svg{width:60%; height:60%;}
+.avatar-circle .edit-badge{
+  position:absolute; bottom:0; right:0; width:24px; height:24px; border-radius:50%; background:var(--accent);
+  display:flex; align-items:center; justify-content:center; font-size:12px; color:#04140b; border:2px solid var(--bg);
+}
+.avatar-hint{font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.08em; margin-top:9px;}
+.avatar-sm{width:46px; height:46px; min-width:46px;}
+.avatar-sm .edit-badge{width:16px; height:16px; font-size:9px;}
+
+/* ---------- SERVER SELECT ---------- */
+.server-select-btn{
+  width:100%; text-align:left; background:#070a08; border:1px solid var(--panel-edge); color:var(--text-dim);
+  font-family:var(--mono); font-size:15px; padding:12px 12px; border-radius:2px; cursor:pointer;
+}
+.server-select-btn.chosen{color:var(--accent); border-color:var(--accent-dim);}
+.server-modal{width:100%; max-width:380px; max-height:80vh; display:flex; flex-direction:column;}
+.server-search{
+  width:100%; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--mono); font-size:14px; padding:11px 12px; border-radius:2px; outline:none; margin-bottom:12px;
+}
+.server-search:focus{border-color:var(--accent);}
+.server-grid{
+  display:grid; grid-template-columns:repeat(5, 1fr); gap:7px; overflow-y:auto; padding-right:2px; flex:1;
+}
+.server-cell{
+  font-family:var(--mono); font-size:12px; padding:9px 2px; text-align:center; border:1px solid var(--panel-edge);
+  border-radius:3px; background:var(--panel); color:var(--text-dim); cursor:pointer;
+}
+.server-cell:active{border-color:var(--accent); color:var(--accent);}
+
+/* ---------- PLAYER STRIP (hub) ---------- */
+.player-strip{
+  display:flex; align-items:center; gap:12px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:16px;
+}
+.player-strip .info{flex:1; min-width:0;}
+.player-strip .name-row{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+.player-strip .name-row .nm{font-family:var(--mono); font-size:13px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.player-strip .name-row .lvl{font-family:var(--mono); font-size:11px; color:var(--accent); white-space:nowrap;}
+.xp-track{height:5px; border-radius:2px; background:#101512; border:1px solid var(--panel-edge); overflow:hidden; margin-top:7px;}
+.xp-fill{height:100%; background:linear-gradient(90deg, var(--amber), #ffd67a); transition:width .5s ease;}
+.xp-caption{font-family:var(--mono); font-size:9px; color:var(--text-dim); margin-top:4px;}
+
+/* ---------- LOCKED MODULES (hub) ---------- */
+.locked-module{
+  display:flex; align-items:center; gap:12px; padding:14px 14px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px; cursor:pointer; opacity:.55;
+}
+.locked-module .lm-icon{font-size:18px;}
+.locked-module .lm-body{flex:1;}
+.locked-module .lm-title{font-size:13.5px; color:var(--text);}
+.locked-module .lm-tag{font-family:var(--mono); font-size:9.5px; color:var(--danger); letter-spacing:.1em; margin-top:2px; display:block;}
+
+.lock-big{font-size:46px; filter:grayscale(1); opacity:.75;}
+
+/* ---------------- ROLE TASKS ---------------- */
+.role-task-row{
+  display:flex; align-items:flex-start; gap:11px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:8px; cursor:pointer;
+}
+.role-task-row.done{border-color:var(--accent-dim);}
+.role-task-row .rt-check{
+  width:20px; height:20px; min-width:20px; border-radius:4px; border:1px solid var(--panel-edge);
+  display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent; margin-top:1px;
+}
+.role-task-row.done .rt-check{border-color:var(--accent); color:var(--accent); background:rgba(49,255,156,.1);}
+.role-task-row .rt-text{font-size:13px; line-height:1.5; color:var(--text);}
+.role-task-row.done .rt-text{color:var(--text-dim); text-decoration:line-through;}
+
+/* ---------------- RATING ---------------- */
+.rating-row{
+  display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px;
+}
+.rating-row .rk-pos{font-family:var(--mono); font-size:13px; color:var(--amber); width:26px; text-align:center;}
+.rating-row .rk-info{flex:1; min-width:0;}
+.rating-row .rk-name{font-size:13.5px; color:var(--accent); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+.rating-row .rk-server{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+.rating-row .rk-stats{text-align:right; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+.rating-row .rk-stats .lvl{color:var(--amber);}
+.rating-row .rk-alliance{font-family:var(--mono); font-size:9.5px; color:var(--amber); margin-top:2px;}
+
+.rating-sort-row{display:flex; gap:8px; margin-top:10px;}
+.rating-select{
+  flex:1; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--mono); font-size:11.5px; padding:10px 8px; border-radius:2px; outline:none;
+}
+
+/* ---------------- FRIENDS ---------------- */
+.friend-row{
+  display:flex; align-items:center; gap:12px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:4px; margin-bottom:9px;
+}
+.friend-row .fr-info{flex:1; min-width:0;}
+.friend-row .fr-name{font-size:13px; color:var(--text); cursor:pointer;}
+.friend-row .fr-server{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+.friend-row .fr-remove{background:none; border:1px solid var(--danger); color:var(--danger); border-radius:3px; padding:7px 10px; font-family:var(--mono); font-size:10.5px; cursor:pointer;}
+
+/* ---------------- CHAT ---------------- */
+.chat-input-row{
+  flex:0 0 auto; display:flex; gap:8px; padding:12px 18px calc(var(--safe-bottom) + 12px);
+  border-top:1px solid var(--panel-edge); background:var(--bg2);
+}
+.chat-input-row input{
+  flex:1; background:#070a08; border:1px solid var(--panel-edge); color:var(--text);
+  font-family:var(--sans); font-size:14px; padding:11px 13px; border-radius:20px; outline:none;
+}
+.chat-input-row input:focus{border-color:var(--accent);}
+.chat-bubble{display:flex; gap:10px; margin-bottom:14px; align-items:flex-start;}
+.chat-bubble.me{flex-direction:row-reverse;}
+.chat-bubble .cb-avatar{width:32px; height:32px; min-width:32px; border-radius:50%; overflow:hidden; border:1px solid var(--panel-edge); cursor:pointer;}
+.chat-bubble .cb-avatar img{width:100%; height:100%; object-fit:cover;}
+.chat-bubble .cb-body{max-width:75%;}
+.chat-bubble .cb-name{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-bottom:4px; cursor:pointer;}
+.chat-bubble.me .cb-name{text-align:right;}
+.chat-bubble .cb-text{
+  background:var(--panel); border:1px solid var(--panel-edge); border-radius:12px; padding:10px 13px;
+  font-size:13.5px; line-height:1.5; color:var(--text);
+}
+.chat-bubble.me .cb-text{background:rgba(49,255,156,.08); border-color:var(--accent-dim);}
+.chat-bubble.system .cb-text{border-color:var(--amber); color:var(--amber); font-family:var(--mono); font-size:12px;}
+.chat-bubble .cb-time{font-family:var(--mono); font-size:9px; color:var(--text-dim); margin-top:4px;}
+.chat-bubble.me .cb-time{text-align:right;}
+.chat-share-btn{
+  background:none; border:1px solid var(--accent-dim); color:var(--accent); border-radius:3px;
+  padding:6px 10px; font-family:var(--mono); font-size:10px; cursor:pointer; margin-top:8px;
+}
+
+/* ---------- REWARD XP ---------- */
+.reward-xp{margin-top:6px; font-family:var(--mono); font-size:11.5px; color:var(--amber);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">⚠ BETA · ТЕСТОВАЯ ВЕРСИЯ</div>
+
+  <div id="screen-stack">
+
+  <!-- BOOT -->
+  <div class="screen active" id="screen-boot">
+    <div class="boot-wrap">
+      <div class="boot-glyph" id="boot-glyph-click">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="#31ff9c" stroke-width="1.5" fill="none" opacity=".5"/><path d="M32 12 L46 40 L18 40 Z" stroke="#31ff9c" stroke-width="1.6" fill="none"/><circle cx="32" cy="34" r="2.4" fill="#31ff9c"/><rect x="30.6" y="20" width="2.8" height="10" fill="#31ff9c"/></svg>
+      </div>
+      <div id="boot-lines"></div>
+      <button class="btn solid" id="boot-start">НАЧАТЬ РАССЛЕДОВАНИЕ</button>
+      <div class="egg-text" id="egg-text">YOU ARE NOT THE FIRST ONE TO ACCESS THIS ARCHIVE.</div>
+    </div>
+  </div>
+
+  <!-- REGISTRATION -->
+  <div class="screen" id="screen-reg">
+    <div class="scroll">
+      <div class="eyebrow">SURVIVOR PROTOCOL</div>
+      <h2 style="font-size:21px; margin-top:8px;">ИДЕНТИФИКАЦИЯ ВЫЖИВШЕГО</h2>
+      <p class="dim" style="margin-top:8px; font-size:13px;">Система требует подтверждения личности перед выдачей доступа к архиву.</p>
+      <div class="reg-card">
+        <div class="avatar-picker">
+          <div class="avatar-circle" id="reg-avatar-circle" onclick="Avatar.pick()">
+            <div class="edit-badge">+</div>
+          </div>
+          <div class="avatar-hint">НАЖМИ, ЧТОБЫ ЗАГРУЗИТЬ ФОТО</div>
+        </div>
+        <div class="field">
+          <label>Номер сервера</label>
+          <button type="button" class="server-select-btn" id="reg-server-btn" onclick="ServerPicker.open()">ВЫБРАТЬ СЕРВЕР (1–300)</button>
+        </div>
+        <div class="field">
+          <label>Позывной выжившего</label>
+          <input type="text" id="reg-name" placeholder="SURVIVOR NAME" maxlength="18">
+        </div>
+        <div class="field">
+          <label>Тег альянса (опционально)</label>
+          <input type="text" id="reg-alliance" placeholder="НАПР. RATS" maxlength="5" style="text-transform:uppercase;">
+        </div>
+        <button class="btn solid" id="reg-submit">ПОДТВЕРДИТЬ ЛИЧНОСТЬ</button>
+      </div>
+      <div class="player-card" id="reg-preview" style="display:none;">
+        <div class="row"><span>SERVER</span><span id="pv-server" class="mono accent"></span></div>
+        <div class="row"><span>PLAYER</span><span id="pv-name" class="mono accent"></span></div>
+        <div class="row" id="pv-alliance-row" style="display:none;"><span>АЛЬЯНС</span><span id="pv-alliance" class="mono accent"></span></div>
+        <div class="row"><span>STATUS</span><span class="mono accent"><span class="status-dot"></span>ACTIVE</span></div>
+        <div class="row"><span>CLEARANCE</span><span class="mono">LEVEL 0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUB (MAP) -->
+  <div class="screen" id="screen-hub">
+    <div class="scroll">
+      <div class="hub-header">
+        <div class="eyebrow">LAST ASYLUM DATABASE</div>
+        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">КАРТА РАССЛЕДОВАНИЯ</h2>
+
+        <div class="player-strip">
+          <div class="avatar-circle avatar-sm" id="hub-avatar-circle" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
+          <div class="info">
+            <div class="name-row"><span class="nm" id="hub-strip-name">—</span><span class="lvl" id="hub-strip-level">LVL 1</span></div>
+            <div class="xp-track"><div class="xp-fill" id="hub-strip-xpfill" style="width:0%"></div></div>
+            <div class="xp-caption" id="hub-strip-xpcap">0 / 0 XP</div>
+          </div>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-track"><div class="progress-fill" id="hub-progress-fill" style="width:0%"></div></div>
+          <div class="progress-label"><span id="hub-progress-pct">0%</span><span id="hub-progress-txt">0 / 0 РАЗГАДАНО</span></div>
+        </div>
+      </div>
+      <div class="branch-map">
+        <div class="branch-line"></div>
+        <div id="branch-list"></div>
+      </div>
+
+      <div class="section-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <div class="locked-module" id="hub-role-card" style="opacity:1;" onclick="Nav.go('role')">
+        <div class="lm-icon">🎭</div>
+        <div class="lm-body"><div class="lm-title" id="hub-role-title">ТВОЯ РОЛЬ</div><span class="lm-tag" id="hub-role-tag" style="color:var(--accent);">ОТКРЫТЬ ДОСЬЕ</span></div>
+      </div>
+
+      <div class="section-title">ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ</div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('rating')">
+        <div class="lm-icon">🏆</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('alliance')">
+        <div class="lm-icon">🛡</div>
+        <div class="lm-body"><div class="lm-title">АЛЬЯНСЫ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('friends')">
+        <div class="lm-icon">🧑‍🤝‍🧑</div>
+        <div class="lm-body"><div class="lm-title">ДРУЗЬЯ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('chat')">
+        <div class="lm-icon">💬</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag" style="color:var(--accent);">ТЕСТ ФУНКЦИОНАЛА</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('pvp')">
+        <div class="lm-icon">⚔</div>
+        <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag" style="color:var(--accent);">РЕЙТИНГ ДОСТУПЕН</span></div>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <!-- SECRET ROLE -->
+  <div class="screen" id="screen-role">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">CLASSIFIED PERSONNEL FILE</div>
+      <h2 id="role-screen-name" style="font-size:22px; margin-top:8px;">—</h2>
+      <p class="dim" style="margin-top:8px; font-size:12.5px;" id="role-screen-tagline">—</p>
+      <div class="doc-panel" style="margin-top:16px;">
+        <div class="q-text" id="role-screen-desc">—</div>
+      </div>
+      <p class="dim" style="margin-top:6px; font-size:11px;">Задания роли пока не влияют на других выживших — это личный протокол для отслеживания твоего стиля игры.</p>
+      <div class="section-title">ЗАДАНИЯ РОЛИ</div>
+      <div id="role-task-list"></div>
+    </div>
+  </div>
+
+  <!-- RATING (open, single-player self view) -->
+  <div class="screen" id="screen-rating">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">МИРОВОЙ РЕЙТИНГ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">GLOBAL LEADERBOARD · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">МИРОВОЙ РЕЙТИНГ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Рейтинг в раннем тестировании: пока отображаются только данные, зарегистрированные на этом устройстве.</p>
+      <input type="text" class="server-search" id="rating-filter" placeholder="Фильтр по номеру сервера..." inputmode="numeric" style="margin-top:14px;">
+      <div class="rating-sort-row">
+        <select class="rating-select" id="rating-sort-field">
+          <option value="xp">ПО ОЧКАМ (XP)</option>
+          <option value="level">ПО УРОВНЮ</option>
+          <option value="solved">ПО ЗАДАНИЯМ</option>
+        </select>
+        <button class="btn ghost" id="rating-sort-dir" style="width:auto; padding:10px 14px;">↓ БОЛЬШЕ→МЕНЬШЕ</button>
+      </div>
+      <div id="rating-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ALLIANCES -->
+  <div class="screen" id="screen-alliance">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">АЛЬЯНСЫ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">ALLIANCE REGISTRY · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">АЛЬЯНСЫ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;" id="alliance-status-text">—</p>
+      <div id="alliance-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="screen" id="screen-friends">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">ДРУЗЬЯ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">CONTACT LIST · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">ДРУЗЬЯ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Добавляй других выживших по позывному и номеру сервера. Список хранится локально на этом устройстве.</p>
+      <div class="reg-card" style="margin-top:14px; padding:16px;">
+        <div class="field">
+          <label>Позывной</label>
+          <input type="text" id="friend-add-name" placeholder="SURVIVOR NAME" maxlength="18">
+        </div>
+        <div class="field">
+          <label>Номер сервера</label>
+          <input type="text" id="friend-add-server" placeholder="НАПР. 047" maxlength="4" inputmode="numeric">
+        </div>
+        <button class="btn solid" id="friend-add-btn">ДОБАВИТЬ В ДРУЗЬЯ</button>
+      </div>
+      <div class="section-title">СПИСОК ДРУЗЕЙ</div>
+      <div id="friends-list"></div>
+    </div>
+  </div>
+
+  <!-- PVP (rating + search shell open, live matches still in development) -->
+  <div class="screen" id="screen-pvp">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">PVP АРЕНА</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">PVP ARENA · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">PVP АРЕНА</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Прямые бои между выжившими всё ещё в разработке. Пока доступны только рейтинг и прототип поиска противника.</p>
+
+      <div class="section-title">РЕЙТИНГ PVP</div>
+      <div id="pvp-rating-list"></div>
+
+      <div class="section-title">ПОИСК ПРОТИВНИКА</div>
+      <p class="dim mono" id="pvp-search-counter" style="font-size:10.5px;">ПОПЫТОК СЕГОДНЯ: 0/5</p>
+      <button class="btn solid" id="pvp-find-btn" style="margin-top:10px;">НАЙТИ ПРОТИВНИКА</button>
+      <div id="pvp-search-results"></div>
+    </div>
+  </div>
+
+  <!-- WORLD CHAT (open, local test only) -->
+  <div class="screen" id="screen-chat">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">МИРОВОЙ ЧАТ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="chat-scroll" style="flex:1;">
+      <p class="dim" style="font-size:11px; text-align:center; margin-bottom:10px;">ТЕСТОВЫЙ РЕЖИМ — сообщения видны только тебе на этом устройстве.</p>
+      <div id="chat-messages"></div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Сообщение..." maxlength="200">
+      <button class="btn solid" id="chat-send-btn" style="width:auto; padding:12px 16px;">➤</button>
+    </div>
+  </div>
+
+  <!-- QUEST (branch puzzle list) -->
+  <div class="screen" id="screen-quest">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title" id="quest-branch-title">—</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="quest-list-wrap"></div>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="screen" id="screen-puzzle">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('quest')">‹ НАЗАД</button>
+      <div class="topbar-title" id="puzzle-branch-title">—</div>
+      <div class="tokens-label" id="puzzle-tokens">💠 0</div>
+    </div>
+    <div class="scroll">
+      <div class="file-tag" id="puzzle-file-tag">FILE #000</div>
+      <div id="puzzle-body"></div>
+      <div class="feedback" id="puzzle-feedback"></div>
+      <div class="puzzle-nav-row" id="puzzle-nav-row" style="display:none;">
+        <button class="btn ghost" id="puzzle-menu-btn" onclick="Quest.goToMenu()">В МЕНЮ</button>
+        <button class="btn solid" id="puzzle-continue-btn" onclick="Quest.goNextPuzzle()">ДАЛЬШЕ →</button>
+      </div>
+      <div class="hint-bar">
+        <button class="hint-btn" id="puzzle-hint-btn">ПОДСКАЗКА</button>
+      </div>
+      <div class="hint-box" id="puzzle-hint-box"></div>
+    </div>
+  </div>
+
+  <!-- FINAL PROTOCOL -->
+  <div class="screen" id="screen-final">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('quest')">‹ НАЗАД</button>
+      <div class="topbar-title">FINAL PROTOCOL</div>
+      <div class="tokens-label" id="final-tokens">💠 0</div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">СБОРКА ФИНАЛЬНОГО ШИФРА</div>
+      <h2 style="font-size:18px; margin-top:8px;" id="final-branch-title">—</h2>
+      <p class="dim" style="margin-top:10px; font-size:13px;">Ты собрал все фрагменты этой ветки. Они не объясняют сами себя. Найди скрытый принцип и расставь символы в правильном порядке. Нажимай на символы снизу, чтобы добавить их в последовательность сверху.</p>
+
+      <div class="order-hint" style="margin-top:16px;">ТЕКУЩАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ</div>
+      <div class="order-seq" id="final-seq"></div>
+      <div class="order-hint">ДОСТУПНЫЕ СИМВОЛЫ</div>
+      <div class="order-pool" id="final-pool"></div>
+
+      <button class="btn solid" style="margin-top:14px;" id="final-check-btn">ПРОВЕРИТЬ ПРОТОКОЛ</button>
+      <button class="btn ghost" style="margin-top:10px;" id="final-clear-btn">ОЧИСТИТЬ</button>
+
+      <div class="feedback" id="final-feedback"></div>
+      <div class="hint-bar">
+        <button class="hint-btn" id="final-hint-btn">ПОДСКАЗКА</button>
+      </div>
+      <div class="hint-box" id="final-hint-box"></div>
+    </div>
+  </div>
+
+  <!-- SYMBOLS ARCHIVE -->
+  <div class="screen" id="screen-symbols">
+    <div class="scroll">
+      <div class="eyebrow">DATA VAULT</div>
+      <h2 style="font-size:20px; margin-top:6px;">АРХИВ СИМВОЛОВ</h2>
+      <p class="dim" style="margin-top:8px; font-size:13px;">Все фрагменты, найденные в ходе расследования. Порядок ничего не значит сам по себе.</p>
+      <div class="sym-grid" id="sym-grid"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen" id="screen-profile">
+    <div class="scroll">
+      <div class="eyebrow">SURVIVOR FILE</div>
+      <h2 style="font-size:20px; margin-top:6px; margin-bottom:16px;">ПРОФИЛЬ</h2>
+
+      <div class="rank-badge">
+        <div class="avatar-circle" id="profile-avatar-circle" style="margin-bottom:12px;" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
+        <div class="dim mono" style="font-size:10.5px; letter-spacing:.15em;" id="prof-server-name">SERVER — PLAYER</div>
+        <div class="rank-name" id="prof-rank">NOVICE</div>
+        <div class="mono" style="font-size:12px; color:var(--amber); margin-top:8px;" id="prof-level">LVL 1</div>
+        <div class="xp-track" style="max-width:220px; margin:8px auto 0;"><div class="xp-fill" id="prof-xpfill" style="width:0%"></div></div>
+        <div class="xp-caption" id="prof-xpcap" style="text-align:center; margin-top:5px;">0 / 0 XP</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box"><div class="v" id="stat-solved">0</div><div class="l">ЗАГАДОК РЕШЕНО</div></div>
+        <div class="stat-box"><div class="v" id="stat-symbols">0</div><div class="l">СИМВОЛОВ НАЙДЕНО</div></div>
+        <div class="stat-box"><div class="v" id="stat-branches">0/3</div><div class="l">ВЕТОК ОТКРЫТО</div></div>
+        <div class="stat-box"><div class="v" id="stat-mistakes">0</div><div class="l">ОШИБОК</div></div>
+        <div class="stat-box"><div class="v" id="stat-hints">0</div><div class="l">ПОДСКАЗОК ИСПОЛЬЗОВАНО</div></div>
+        <div class="stat-box"><div class="v" id="stat-time">0м</div><div class="l">ВРЕМЯ РАССЛЕДОВАНИЯ</div></div>
+      </div>
+
+      <div class="section-title">PVP СТАТИСТИКА <span class="dim" style="text-transform:none; letter-spacing:0;">(режим в разработке)</span></div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="v" id="stat-pvp-rating">1000</div><div class="l">РЕЙТИНГ</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-winrate">—</div><div class="l">% ПОБЕД</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-wins">0</div><div class="l">ПОБЕДЫ</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-losses">0</div><div class="l">ПОРАЖЕНИЯ</div></div>
+      </div>
+
+      <div class="section-title">ДОСТИЖЕНИЯ</div>
+      <div id="ach-list"></div>
+
+      <div class="section-title">НАСТРОЙКИ</div>
+      <div class="settings-row">
+        <span class="mono" style="font-size:12.5px;">SOUND</span>
+        <div class="toggle" id="sound-toggle"><div class="dot"></div></div>
+      </div>
+      <div class="settings-row">
+        <span class="mono" style="font-size:12.5px;">ПОЗЫВНОЙ</span>
+        <span class="mono accent" id="settings-name" style="font-size:12.5px;">—</span>
+      </div>
+      <div class="settings-row">
+        <span class="mono" style="font-size:12.5px;">СЕРВЕР</span>
+        <span class="mono accent" id="settings-server" style="font-size:12.5px;">—</span>
+      </div>
+      <div class="settings-row" style="border-bottom:none; gap:10px;">
+        <span class="mono" style="font-size:12.5px; white-space:nowrap;">ТЕГ АЛЬЯНСА</span>
+        <input type="text" id="settings-alliance" maxlength="5" placeholder="—" style="text-transform:uppercase; text-align:right; width:90px; background:none; border:none; border-bottom:1px solid var(--panel-edge); color:var(--accent); font-family:var(--mono); font-size:12.5px; padding:4px 2px; outline:none;">
+      </div>
+
+      <button class="btn danger" style="margin-top:22px;" id="reset-btn">СБРОСИТЬ ПРОГРЕСС</button>
+      <div style="height:20px;"></div>
+    </div>
+  </div>
+
+  </div><!-- /screen-stack -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav" id="bottomnav" style="display:none;">
+    <button class="nav-item" data-tab="hub" onclick="Nav.tab('hub')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg>
+      АРХИВ
+    </button>
+    <button class="nav-item" data-tab="quest" onclick="Nav.tab('quest')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+      КВЕСТ
+    </button>
+    <button class="nav-item" data-tab="symbols" onclick="Nav.tab('symbols')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>
+      СИМВОЛЫ
+    </button>
+    <button class="nav-item" data-tab="profile" onclick="Nav.tab('profile')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5S18 16 19.5 20"/></svg>
+      ПРОФИЛЬ
+    </button>
+  </div>
+
+  <!-- MODAL (confirm reset) -->
+  <div class="overlay" id="overlay-confirm">
+    <div class="modal">
+      <h3>СБРОСИТЬ ПРОГРЕСС?</h3>
+      <p>Все загадки, символы и достижения будут удалены безвозвратно. Отменить это действие нельзя.</p>
+      <div class="row">
+        <button class="btn ghost" onclick="UI.closeOverlay()">ОТМЕНА</button>
+        <button class="btn danger" onclick="Game.resetProgress()">СБРОСИТЬ</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+
+  <!-- MODAL (server select) -->
+  <div class="overlay" id="overlay-server">
+    <div class="modal server-modal">
+      <h3 style="margin-bottom:12px;">ВЫБОР СЕРВЕРА</h3>
+      <input type="text" class="server-search" id="server-search" placeholder="Поиск по номеру..." inputmode="numeric">
+      <div class="server-grid" id="server-grid"></div>
+      <button class="btn ghost" style="margin-top:14px;" onclick="UI.closeOverlay()">ОТМЕНА</button>
+    </div>
+  </div>
+
+  <!-- MODAL (branch unlock) -->
+  <div class="overlay" id="overlay-unlock">
+    <div class="modal">
+      <h3 id="unlock-title">ACCESS GRANTED</h3>
+      <p id="unlock-text">Новая ветка расследования разблокирована.</p>
+      <button class="btn solid" onclick="UI.closeOverlay()">ПРОДОЛЖИТЬ</button>
+    </div>
+  </div>
+
+  <!-- MODAL (secret role reveal) -->
+  <div class="overlay" id="overlay-role">
+    <div class="modal">
+      <div class="eyebrow" style="justify-content:center; display:block; text-align:center;">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <h3 id="role-reveal-name" style="margin-top:10px; font-size:19px;">РОЛЬ</h3>
+      <p id="role-reveal-tagline" style="margin-top:10px;">—</p>
+      <button class="btn solid" id="role-reveal-continue">ПРИНЯТЬ РОЛЬ</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="glitch-flash" id="glitch-flash"></div>
+  <div class="grain"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+</div>
+
+<script>
+/* =========================================================
+   LAST ASYLUM: THE LOST PROTOCOL — frontend prototype
+   Pure vanilla JS, no backend, state persisted to localStorage.
+========================================================= */
+
+/* ---------------- GAME DATA ---------------- */
+const DATA = {
+  branches: [
+    {
+      id:'b1', order:1, title:'АРХИВ ВЫЖИВШИХ', stars:2,
+      intro:'Первый повреждённый файл архива. Базовые механики убежища и героев — но записи уже подделаны местами.',
+      finalCodeOrder:['4','7','R','Δ','Ω'],
+      finalHints:[
+        'Не все символы равны — раздели их на группы: числа, латинские буквы, греческие буквы.',
+        'Внутри группы чисел выстрой их по возрастанию.',
+        'Порядок групп: сначала числа (по возрастанию), затем латиница, затем греческий алфавит.'
+      ],
+      puzzles:[
+        {
+          id:'b1_p1', type:'text', trap:true,
+          title:'ФРАГМЕНТ 01 — РОЛЬ БЕЗ ИМЕНИ',
+          fileTag:'FILE #041',
+          question:'В отчёте уцелевшего сказано: этот боец стоит в последнем ряду построения, ни разу не получил урон первым и не нанёс ни одного удара за весь бой. Однако именно благодаря ему отряд выжил.\n\nНазови не его класс, а роль, которую он выполняет для остальных.',
+          accepted:['поддержка','support','саппорт'],
+          hints:[
+            'Речь не о том, кто лечит, а о том, кто помогает другим действовать лучше.',
+            'Это слово в играх часто пишут английской калькой из четырёх букв — support.',
+            "Ответ — общее название роли: 'поддержка'."
+          ],
+          reward:'Δ',
+          lore:"Файл 041: 'Личность не установлена. Отмечен как SUPPORT-CLASS в трёх независимых отчётах.'"
+        },
+        {
+          id:'b1_p2', type:'mc',
+          title:'ФРАГМЕНТ 02 — НЕ ЕГО ФУНКЦИЯ',
+          fileTag:'FILE #052',
+          question:'Убежище (Sanctuary) — центр операций выжившего. В повреждённой записи перечислены его функции, но одна строка была подделана.\n\nКакая из функций НЕ относится к прямым задачам убежища?',
+          options:['Хранение и обработка ресурсов','Прокачка героев и построек','Прямое участие в PvP-сражении','Проведение исследований (Research)'],
+          correctIndex:2,
+          hints:[
+            'Три варианта описывают то, что происходит ВНУТРИ базы. Один — снаружи.',
+            'Сам бой в PvP не отображается на экране убежища.',
+            "Ответ — 'Прямое участие в PvP-сражении'."
+          ],
+          reward:'7',
+          lore:"Файл 052: журнал операций Sanctuary за неделю заражения."
+        },
+        {
+          id:'b1_p3', type:'order',
+          title:'ФРАГМЕНТ 03 — ПОРЯДОК РОСТА',
+          fileTag:'FILE #058',
+          question:'Расставь стадии развития героя в правильном порядке, начиная с самой ранней.',
+          items:['Пробуждение (Awakening)','Открытие героя','Повышение звёзд (Rarity Up)','Повышение уровня'],
+          correctOrder:['Открытие героя','Повышение уровня','Повышение звёзд (Rarity Up)','Пробуждение (Awakening)'],
+          hints:[
+            'Сначала героя нужно получить, а уже потом развивать.',
+            'Уровень — самый частый и ранний способ роста силы, задолго до пробуждения.',
+            'Порядок: Открытие → Уровень → Звёзды → Пробуждение.'
+          ],
+          reward:'R',
+          lore:"Файл 058: диаграмма прогрессии героя, обнаруженная в закладках исследователя."
+        },
+        {
+          id:'b1_p4', type:'text',
+          title:'ФРАГМЕНТ 04 — СМЕЩЕНИЕ',
+          fileTag:'FILE #063',
+          question:'Зашифрованное сообщение: XJHWJY\n\nКлюч сдвига уже назван в самом начале расследования — таков был уровень допуска: RESTRICTED, а у него ровно 5 положений смещения.\n\nСдвинь каждую букву шифра на 5 позиций НАЗАД по алфавиту и введи результат.',
+          accepted:['secret','секрет'],
+          hints:[
+            'Ключ шифра уже написан в задании — это число 5.',
+            'Сдвигай каждую букву на 5 позиций назад, не вперёд.',
+            'Результат — английское слово SECRET.'
+          ],
+          reward:'4',
+          lore:"Файл 063: обрывок переписки, зашифрованной простым смещением."
+        },
+        {
+          id:'b1_p5', type:'truefalse',
+          title:'ФРАГМЕНТ 05 — ПОВРЕЖДЁННЫЙ ОТЧЁТ',
+          fileTag:'FILE #071',
+          question:'Ниже — пять утверждений из архивного отчёта. Ровно одно из них ложно. Найди его.',
+          statements:[
+            'ATK повышает физический урон героя.',
+            'CMD — это количество солдат в отряде героя напрямую.',
+            'DEF снижает получаемый физический урон.',
+            'Редкость снаряжения повышает шанс получить бонусный набор характеристик, но не гарантирует урон выше, чем у более прокачанного предмета низкой редкости.',
+            'Sanctuary хранит ресурсы и позволяет проводить исследования.'
+          ],
+          falseIndex:1,
+          hints:[
+            'Утверждение №4 выглядит подозрительно сложным и похожим на ложь — но это правда, это и есть ловушка.',
+            'Ищи утверждение, которое приравнивает параметр к простому числу солдат.',
+            'Ложно утверждение №2: CMD — не есть количество солдат напрямую.'
+          ],
+          reward:'Ω',
+          lore:"Файл 071: отчёт с пятью утверждениями, одно из которых было изменено намеренно."
+        }
+      ],
+      sideTasks:[
+        {
+          id:'b1_t1', afterIndex:2,
+          title:'ЗАДАНИЕ: ПОЛЕВЫЕ РАБОТЫ',
+          description:'Раскопать 3 клумбы в игре Last Asylum: Plague.'
+        }
+      ]
+    },
+    {
+      id:'b2', order:2, title:'ПРОТОКОЛ ГЕРОЕВ', stars:3,
+      intro:'Углублённые записи о характеристиках, классах и снаряжении. Здесь формулировки становятся откровенно двуличными.',
+      finalCodeOrder:['C','M','D','2','T','R'],
+      finalHints:[
+        'Три из шести символов — это буквы. Собери их в осмысленное игровое сокращение.',
+        "Сокращение — 'CMD'. Поставь эти буквы первыми, именно в этом порядке.",
+        'После CMD добавь оставшиеся три символа в порядке их получения: 2, T, R.'
+      ],
+      puzzles:[
+        {
+          id:'b2_p1', type:'text', trap:true,
+          title:'ФРАГМЕНТ 06 — ПАРАМЕТР БЕЗ ЛИЦА',
+          fileTag:'FILE #104',
+          question:'Какой параметр героя увеличивает размер армии выжившего, но сам никогда не равен числу солдат в этой армии?',
+          accepted:['cmd','командование','command'],
+          hints:[
+            'Это трёхбуквенное сокращение, часто встречающееся рядом с ATK, HP и DEF.',
+            'Оно определяет ЁМКОСТЬ армии, а не её текущий состав.',
+            'Ответ: CMD.'
+          ],
+          reward:'C',
+          lore:"Файл 104: спецификация параметров боевой единицы."
+        },
+        {
+          id:'b2_p2', type:'text',
+          title:'ФРАГМЕНТ 07 — ЛИШНИЙ ФАКТ',
+          fileTag:'FILE #111',
+          question:'1) Герой A превосходит героя B по эффективности в PvE.\n2) Герой B расположен выше героя C в списке избранных на экране героев.\n3) Герой C использует энергетический тип урона, а не физический.\n\nОдно из этих утверждений не описывает боевую характеристику, а лишь то, как расположены иконки в интерфейсе. Введи номер этого факта.',
+          accepted:['2','два','второй'],
+          hints:[
+            'Ищи факт, который говорит не о силе героя в бою, а о том, как ты сам разместил его на экране.',
+            "Список 'избранное' пользователь настраивает вручную — это не боевая механика.",
+            'Лишний факт — номер 2.'
+          ],
+          reward:'2',
+          lore:"Файл 111: три разрозненных наблюдения из полевого журнала."
+        },
+        {
+          id:'b2_p3', type:'mc',
+          title:'ФРАГМЕНТ 08 — НЕ ОТ РЕДКОСТИ',
+          fileTag:'FILE #119',
+          question:'Редкость экипировки задаёт стартовые характеристики предмета.\n\nЧто из перечисленного растёт НЕ за счёт редкости, а за счёт отдельного улучшения, доступного на предмете любой редкости?',
+          options:['Базовый ATK предмета при получении','Уровень зачарования / улучшения (Enhancement Level)','Набор бонусов, присвоенный при создании предмета','Слот, в который экипируется предмет'],
+          correctIndex:1,
+          hints:[
+            'Ищи вариант, который можно поднимать многократно уже ПОСЛЕ получения предмета.',
+            "Первый вариант звучит логично из-за слова 'ATK', но слово 'базовый' означает, что оно фиксировано редкостью.",
+            'Ответ: Уровень зачарования / улучшения (Enhancement Level).'
+          ],
+          reward:'M',
+          lore:"Файл 119: сравнительная таблица снаряжения по редкости."
+        },
+        {
+          id:'b2_p4', type:'text',
+          title:'ФРАГМЕНТ 09 — СМЕЩЕНИЕ НА ДВА',
+          fileTag:'FILE #124',
+          question:'Шифр: CTVJWT\n\nКлюч сдвига — это символ, полученный в Фрагменте 07 (интерфейсный факт): цифра 2.\n\nСдвинь каждую букву шифра на 2 позиции НАЗАД по алфавиту и введи результат — это имя героя.',
+          accepted:['arthur','артур'],
+          hints:[
+            'Ключ уже у тебя в архиве символов — это цифра 2.',
+            'Сдвигай назад, а не вперёд — иначе получится бессмыслица.',
+            'Результат — имя героя ARTHUR.'
+          ],
+          reward:'D',
+          lore:"Файл 124: досье героя, частично зашифровано смещением."
+        },
+        {
+          id:'b2_p5', type:'text',
+          title:'ФРАГМЕНТ 10 — ДВОИЧНЫЙ СЛЕД',
+          fileTag:'FILE #131',
+          question:'Индикаторы заражения показывают последовательность:\n\n■ □ □ ■ ■\n\nПрочти её как двоичное число слева направо (■=1, □=0) и переведи в десятичное. Затем найди букву под этим номером в русском алфавите (а=1, б=2, …) и введи её.',
+          accepted:['т','t'],
+          hints:[
+            '■ □ □ ■ ■ слева направо — это 1 0 0 1 1.',
+            'В десятичной системе это число 19.',
+            "19-я буква русского алфавита — 'Т'."
+          ],
+          reward:'T',
+          lore:"Файл 131: скан индикаторной панели терминала заражения."
+        },
+        {
+          id:'b2_p6', type:'text',
+          title:'ФРАГМЕНТ 11 — СОЮЗНИК НА БУКВУ R',
+          fileTag:'FILE #140',
+          question:"В обгоревших страницах архива раз за разом всплывает пятибуквенное имя союзника, приближённого к Sanctuary, начинающееся на 'R' и часто соседствующее со словом 'Honor Hall'.\n\nВведи только первую букву этого имени.",
+          accepted:['r','р'],
+          hints:[
+            "Это имя часто соседствует со словом 'Honor Hall'.",
+            'Имя состоит из пяти букв и начинается на R.',
+            "Первая буква — 'R' (от имени Raven)."
+          ],
+          reward:'R',
+          lore:"Файл 140: обгоревшая страница со списком союзников."
+        }
+      ],
+      sideTasks:[
+        {
+          id:'b2_t1', afterIndex:1,
+          title:'ЗАДАНИЕ: ЗАЧИСТКА',
+          description:'Уничтожить 10 скверн уровня 20–60 в игре Last Asylum: Plague.'
+        },
+        {
+          id:'b2_t2', afterIndex:4,
+          title:'ЗАДАНИЕ: РАЗВЕДКА',
+          description:'Провести разведку 5 раз в игре Last Asylum: Plague.'
+        }
+      ]
+    },
+    {
+      id:'b3', order:3, title:'ТЕНЬ В ЛАБОРАТОРИИ', stars:4,
+      intro:'Ветка, целиком посвящённая герою Shadow. Формулировки здесь построены на двойных отрицаниях — читай внимательно каждое слово.',
+      finalCodeOrder:['S','H','A','D','O','W'],
+      finalHints:[
+        'Не ищи сложную математику — прочти полученные символы просто в порядке их получения.',
+        'Они складываются в слово.',
+        'Это слово ты видел с самого начала этой ветки — имя героя.'
+      ],
+      puzzles:[
+        {
+          id:'b3_p1', type:'text', trap:true,
+          title:'ФРАГМЕНТ 12 — НЕ ТАНК, НО ЖИВОЙ',
+          fileTag:'FILE #201',
+          question:'Шедоу не является героем поддержки и не бьёт одну цель в первую очередь. Он не классический танк, но выживает дольше многих танков в затяжном бою.\n\nЗа счёт какого типа урона по нескольким целям сразу он ослабляет весь строй противника одновременно?',
+          accepted:['aoe','урон по площади','площадной урон'],
+          hints:[
+            'Ищи не причину выживания, а способ атаки.',
+            "Это английское сокращение из трёх букв, означающее 'урон по области'.",
+            'Ответ: AoE.'
+          ],
+          reward:'S',
+          lore:"Файл 201: боевой отчёт с описанием манеры боя Шедоу."
+        },
+        {
+          id:'b3_p2', type:'mc',
+          title:'ФРАГМЕНТ 13 — СВЯЗКА С АРТУРОМ',
+          fileTag:'FILE #207',
+          question:'Шедоу и Артур часто ставятся в один отряд. Что именно делает эту связку опасной для противника — не «они сильные герои вместе», а конкретный игровой эффект?',
+          options:['Оба героя занимают позицию в первой линии','Снижение DEF противника от Шедоу усиливает урон, который наносит Артур','У обоих героев одинаковый тип урона','Оба героя имеют одинаковую редкость'],
+          correctIndex:1,
+          hints:[
+            'Ищи эффект, который влияет на числа урона другого героя, а не на построение отряда.',
+            'Шедоу умеет снижать защиту противника своим навыком.',
+            'Ответ: снижение DEF от Шедоу усиливает урон Артура.'
+          ],
+          reward:'H',
+          lore:"Файл 207: тактическая карта совместных построений."
+        },
+        {
+          id:'b3_p3', type:'order',
+          title:'ФРАГМЕНТ 14 — ПРИОРИТЕТ ПРОКАЧКИ',
+          fileTag:'FILE #212',
+          question:'Опытные командиры прокачивают Шедоу в особом порядке, отличном от обычного героя. Расставь шаги в порядке приоритета для героя с AoE и снижением DEF.',
+          items:['Повышение звёзд (Rarity Up)','Открыть ключевой навык снижения DEF','Пробуждение (Awakening)','Повышение уровня героя'],
+          correctOrder:['Открыть ключевой навык снижения DEF','Повышение уровня героя','Повышение звёзд (Rarity Up)','Пробуждение (Awakening)'],
+          hints:[
+            'Начни с того, что усиливает всю команду, а не только самого Шедоу.',
+            'Навык снижения DEF ценнее общего роста уровня в самом начале.',
+            'Порядок: навык DEF → уровень → звёзды → пробуждение.'
+          ],
+          reward:'A',
+          lore:"Файл 212: рекомендации ветерана-командира."
+        },
+        {
+          id:'b3_p4', type:'text',
+          title:'ФРАГМЕНТ 15 — ОДИН ЛИШНИЙ ФАКТ',
+          fileTag:'FILE #218',
+          question:'1) Шедоу снижает DEF противника при попадании AoE-навыком.\n2) Марлена лечит союзника с наименьшим % HP.\n3) Значок Шедоу на экране команды подсвечивается золотой рамкой, если он выбран лидером отряда.\n\nОдин факт не относится к боевому взаимодействию Шедоу и Марлены. Введи его номер.',
+          accepted:['3','три','третий'],
+          hints:[
+            'Ищи факт про интерфейс, а не про механику боя.',
+            'Золотая рамка лидера — это визуальный индикатор, а не боевой эффект.',
+            'Лишний факт — номер 3.'
+          ],
+          reward:'D',
+          lore:"Файл 218: наблюдения за синергией отряда."
+        },
+        {
+          id:'b3_p5', type:'text',
+          title:'ФРАГМЕНТ 16 — СТАРЫЙ КЛЮЧ',
+          fileTag:'FILE #225',
+          question:'Шифр: CDKOP\n\nКлюч сдвига — число, которое ты получил ещё в Ветке I как один из первых фрагментов архива (символ «4»).\n\nНа этот раз сдвинь буквы шифра ВПЕРЁД на это число позиций и введи результат.',
+          accepted:['ghost','призрак'],
+          hints:[
+            'Вспомни архив символов Ветки I — там есть цифра 4.',
+            'На этот раз сдвигай буквы вперёд, а не назад — направление сменилось.',
+            'Результат — английское слово GHOST.'
+          ],
+          reward:'O',
+          lore:"Файл 225: старый шифр, использующий ключ из прошлой ветки."
+        },
+        {
+          id:'b3_p6', type:'text',
+          title:'ФРАГМЕНТ 17 — ИМЯ, КОТОРОЕ НЕ ПРОИЗНОСЯТ',
+          fileTag:'FILE #230',
+          question:'В самом повреждённом файле архива есть только одно целое слово, повторённое семь раз без объяснения. Это имя героя, которому посвящена вся эта ветка.\n\nНазови его.',
+          accepted:['shadow','шедоу','тень'],
+          hints:[
+            'Не усложняй — ответ уже есть в заголовке этой ветки.',
+            'Это имя героя, а не название механики.',
+            'Ответ: SHADOW.'
+          ],
+          reward:'W',
+          lore:"Файл 230: последняя уцелевшая страница ветки."
+        }
+      ],
+      sideTasks:[
+        {
+          id:'b3_t1', afterIndex:3,
+          title:'ЗАДАНИЕ: ЭКСПЕДИЦИЯ',
+          description:'Сходить на раскопки корабля в игре Last Asylum: Plague.'
+        }
+      ]
+    }
+  ],
+  achievements:[
+    {id:'FIRST_STEPS', title:'ПЕРВЫЕ ШАГИ', desc:'Решить первую загадку архива.'},
+    {id:'NO_MISTAKES', title:'БЕЗ ОШИБОК', desc:'Пройти ветку без единой ошибки.'},
+    {id:'FALSE_TRAIL', title:'ЛОЖНЫЙ СЛЕД', desc:'Выбрать отвлекающий вариант ответа.'},
+    {id:'WRONG_QUESTION', title:'НЕ ТОТ ВОПРОС', desc:'Решить загадку с намеренно вводящей в заблуждение формулировкой.'},
+    {id:'ARCHIVIST', title:'АРХИВАРИУС', desc:'Собрать все известные символы архива.'},
+    {id:'PARANOID', title:'ПАРАНОИК', desc:'Пройти всё расследование, использовав минимум подсказок.'},
+    {id:'NOT_TRUST_EYES', title:'НЕ ДОВЕРЯЙ ГЛАЗАМ', desc:'Найти скрытую деталь там, где её не искали.'},
+    {id:'COMPLETIONIST', title:'РАССЛЕДОВАНИЕ ЗАВЕРШЕНО', desc:'Пройти все известные ветки архива.'},
+    {id:'LEVEL_5', title:'РАСТУЩАЯ УГРОЗА', desc:'Достичь 5 уровня.'},
+    {id:'ALLY', title:'СОЮЗНИК', desc:'Указать тег альянса.'},
+    {id:'SOCIAL', title:'НЕ ОДИН', desc:'Добавить первого друга в список.'},
+    {id:'CHATTY', title:'НА СВЯЗИ', desc:'Отправить первое сообщение в мировом чате.'},
+    {id:'NIGHT_OWL', title:'НОЧНОЙ ДОЗОР', desc:'Решить загадку глубокой ночью (00:00–05:00).'},
+    {id:'BRAGGART', title:'ХВАСТУН', desc:'Поделиться достижением в мировом чате.'}
+  ]
+};
+
+const TOTAL_PUZZLES = DATA.branches.reduce((n,b)=>n+b.puzzles.length,0);
+
+/* ---------------- SECRET ROLE SYSTEM (visual only, no player interaction yet) ---------------- */
+const ROLES = {
+  INFECTED: {
+    id:'INFECTED', name:'ЗАРАЖЁННЫЙ', color:'var(--accent)',
+    tagline:'Ты — один из многих. Твоя задача проста: пройти протокол архива и не привлекать лишнего внимания.',
+    desc:'Стандартная роль выжившего. Ты выполняешь обычное расследование — читаешь архив, решаешь загадки, собираешь символы. Ничего необычного. Или почти ничего.',
+    tasks:[
+      {id:'inf_1', text:'Реши любые 3 фрагмента без единой ошибки.'},
+      {id:'inf_2', text:'Собери все символы одной ветки полностью.'},
+      {id:'inf_3', text:'Пройди ветку, использовав не более 1 подсказки.'},
+      {id:'inf_4', text:'Заверши FINAL PROTOCOL любой ветки с первой попытки.'},
+      {id:'inf_5', text:'Открой Архив Символов и изучи все найденные фрагменты.'}
+    ]
+  },
+  INVESTIGATOR: {
+    id:'INVESTIGATOR', name:'СЛЕДОВАТЕЛЬ', color:'#4ac8ff',
+    tagline:'Тебе поручено особое задание: в архиве действует кто-то, кто намеренно портит данные. Найди его следы.',
+    desc:'Ты выявляешь несоответствия, которые не мог оставить обычный заражённый. Твоя работа тише и внимательнее — ты ищешь то, что не должно было существовать в системе.',
+    tasks:[
+      {id:'inv_1', text:'Найди в архиве утверждение, которое выглядит правдой, но является ловушкой.'},
+      {id:'inv_2', text:'Зафиксируй 3 формулировки, намеренно вводящие в заблуждение.'},
+      {id:'inv_3', text:'Пройди ветку, ни разу не выбрав очевидный, но неверный ответ.'},
+      {id:'inv_4', text:'Составь для себя список из 3 подозрительных несостыковок в лором.'},
+      {id:'inv_5', text:'Заверши расследование, не показав признаков паники (0 использованных подсказок в одной ветке).'}
+    ]
+  },
+  SABOTEUR: {
+    id:'SABOTEUR', name:'ВРЕДИТЕЛЬ', color:'var(--danger)',
+    tagline:'Ты не такой, как остальные. Твоя цель — замедлить расследование заражённых, оставаясь незамеченным.',
+    desc:'Формально ты проходишь тот же архив. Но у тебя есть скрытые мотивы — вносить сомнения, тратить чужое время, путать следы. Твои задания не мешают тебе лично закрывать ветки.',
+    tasks:[
+      {id:'sab_1', text:'Хотя бы раз намеренно введи неверный ответ перед тем, как ответить верно.'},
+      {id:'sab_2', text:'Пройди целую ветку, ни разу не воспользовавшись ANALYSIS TOKEN.'},
+      {id:'sab_3', text:'Заверши FINAL PROTOCOL не с первой попытки — сначала собери заведомо неверную последовательность.'},
+      {id:'sab_4', text:'Не открывай Архив Символов, пока не закроешь текущую ветку полностью.'},
+      {id:'sab_5', text:'Заверши ветку так, будто не знал(а) ни одной подсказки заранее.'}
+    ]
+  }
+};
+const ROLE_WEIGHTS = [ ['INFECTED',70], ['INVESTIGATOR',15], ['SABOTEUR',15] ];
+function pickRole(){
+  const total = ROLE_WEIGHTS.reduce((s,r)=>s+r[1],0);
+  let r = Math.random()*total;
+  for(const [id,w] of ROLE_WEIGHTS){ if(r<w) return id; r -= w; }
+  return 'INFECTED';
+}
+
+const RANKS = [
+  {min:0, name:'NOVICE'},
+  {min:1, name:'SCAVENGER'},
+  {min:5, name:'ANALYST'},
+  {min:9, name:'ARCHIVIST'},
+  {min:13, name:'PLAGUE HUNTER'},
+  {min:TOTAL_PUZZLES, name:'BLACK PROTOCOL'}
+];
+const TOKENS_PER_BRANCH = 6;
+
+/* XP / Level progression */
+const PUZZLE_XP = {1:10, 2:15, 3:20};       // xp per solved puzzle, keyed by branch.order
+const FINAL_XP = {1:30, 2:60, 3:90};        // bonus xp per completed branch final protocol
+const LEVEL_THRESHOLDS = [0,30,70,120,180,250,330,420,520,630,750,880,1020,1170,1330,1500];
+function levelInfo(xp){
+  xp = xp||0;
+  let lvl = 1;
+  for(let i=1;i<LEVEL_THRESHOLDS.length;i++){ if(xp>=LEVEL_THRESHOLDS[i]) lvl = i+1; else break; }
+  const idx = lvl-1;
+  const cur = LEVEL_THRESHOLDS[idx];
+  const next = LEVEL_THRESHOLDS[idx+1]!==undefined ? LEVEL_THRESHOLDS[idx+1] : cur+300;
+  const pct = Math.min(100, Math.max(0, Math.round(((xp-cur)/(next-cur))*100)));
+  return {level:lvl, xp:xp, cur:cur, next:next, pct:pct};
+}
+function checkLevelAchievements(level){
+  if(level>=5 && !state.achievements.LEVEL_5){
+    state.achievements.LEVEL_5 = true; toast('ДОСТИЖЕНИЕ: РАСТУЩАЯ УГРОЗА');
+  }
+}
+
+/* ---------------- STATE ---------------- */
+const SAVE_KEY = 'lastAsylum_save_v1';
+let state = null;
+
+function defaultState(){
+  const branches = {};
+  DATA.branches.forEach((b,i)=>{
+    branches[b.id] = { unlocked: i===0, completed:false, mistakes:0, hintsLeft: TOKENS_PER_BRANCH, unlockAt:null };
+  });
+  return {
+    registered:false, server:'', name:'', avatar:null, allianceTag:'',
+    branches, solvedPuzzles:{}, symbols:[], hintsUsedByPuzzle:{},
+    achievements:{}, totalMistakes:0, totalHintsUsed:0, xp:0,
+    startTime:null, soundOn:false, eggClicks:0, eggFound:false,
+    role:null, roleTasksDone:{}, sideTasksDone:{},
+    pvpStats:{wins:0, losses:0, rating:1000},
+    pvpSearch:{date:null, used:0},
+    friends:[], chatMessages:[]
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){ state = Object.assign(defaultState(), JSON.parse(raw)); }
+    else{ state = defaultState(); }
+  }catch(e){ state = defaultState(); }
+}
+function saveState(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ---------------- AUDIO (tiny synth beeps, no assets) ---------------- */
+const Audio_ = {
+  ctx:null,
+  ensure(){ if(!this.ctx){ try{ this.ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } },
+  beep(freq, dur, type){
+    if(!state.soundOn) return;
+    this.ensure();
+    if(!this.ctx) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type||'sine'; o.frequency.value = freq;
+    g.gain.value = 0.05;
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + dur);
+    o.stop(this.ctx.currentTime + dur);
+  },
+  ok(){ this.beep(660,.12,'sine'); setTimeout(()=>this.beep(880,.15,'sine'),90); },
+  bad(){ this.beep(140,.25,'sawtooth'); },
+  tap(){ this.beep(340,.04,'square'); },
+  unlock(){ this.beep(220,.1); setTimeout(()=>this.beep(440,.1),100); setTimeout(()=>this.beep(880,.2),200); }
+};
+
+/* ---------------- HELPERS ---------------- */
+function normalize(s){
+  return (s||'').toString().toLowerCase().trim().replace(/ё/g,'е').replace(/\s+/g,' ').replace(/[.,!?;:]/g,'');
+}
+function findBranch(id){ return DATA.branches.find(b=>b.id===id); }
+function findPuzzle(id){
+  for(const b of DATA.branches){ const p = b.puzzles.find(p=>p.id===id); if(p) return {puzzle:p, branch:b}; }
+  return null;
+}
+function findSideTask(id){
+  for(const b of DATA.branches){
+    const t = (b.sideTasks||[]).find(t=>t.id===id);
+    if(t) return {task:t, branch:b};
+  }
+  return null;
+}
+const SIDE_TASK_XP = 15;
+function getBranchSequence(b){
+  // Interleaves main puzzles with in-game screenshot tasks in display/navigation order.
+  const seq = [];
+  b.puzzles.forEach((p, i)=>{
+    seq.push({type:'puzzle', id:p.id});
+    (b.sideTasks||[]).filter(t=>t.afterIndex===i).forEach(t=> seq.push({type:'task', id:t.id}));
+  });
+  return seq;
+}
+function branchPuzzleCount(b){ return b.puzzles.length; }
+function branchSolvedCount(b){ return b.puzzles.filter(p=>state.solvedPuzzles[p.id]).length; }
+function totalSolvedCount(){ return Object.keys(state.solvedPuzzles).length; }
+function currentRank(){
+  const n = totalSolvedCount();
+  let r = RANKS[0];
+  for(const rk of RANKS){ if(n>=rk.min) r = rk; }
+  return r.name;
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function glitchFlash(){
+  const g = document.getElementById('glitch-flash');
+  g.classList.remove('play'); void g.offsetWidth; g.classList.add('play');
+}
+function fmtTime(ms){
+  const mins = Math.floor(ms/60000);
+  if(mins<60) return mins+'м';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h+'ч '+m+'м';
+}
+
+/* ---------------- MSK SCHEDULED UNLOCK (05:00 MSK next day) ---------------- */
+const MSK_OFFSET_MS = 3*3600*1000; // Moscow is fixed UTC+3, no DST
+function nextUnlockTimestamp(fromMs){
+  const mskShifted = fromMs + MSK_OFFSET_MS;
+  const d = new Date(mskShifted);
+  const y = d.getUTCFullYear(), m = d.getUTCMonth(), day = d.getUTCDate();
+  const targetMskWallMs = Date.UTC(y, m, day+1, 5, 0, 0, 0);
+  return targetMskWallMs - MSK_OFFSET_MS;
+}
+function formatMsk(ts){
+  const d = new Date(ts + MSK_OFFSET_MS);
+  const pad = n => String(n).padStart(2,'0');
+  return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+' MSK';
+}
+function mskDateKey(ts){
+  const d = new Date(ts + MSK_OFFSET_MS);
+  return d.getUTCFullYear()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCDate();
+}
+function checkUnlocks(){
+  let changed = false;
+  DATA.branches.forEach(b=>{
+    const bs = state.branches[b.id];
+    if(!bs.unlocked && bs.unlockAt && Date.now() >= bs.unlockAt){
+      bs.unlocked = true;
+      bs.unlockAt = null;
+      changed = true;
+    }
+  });
+  if(changed) saveState();
+  return changed;
+}
+
+/* ---------------- NAV ---------------- */
+const Nav = {
+  current:'boot',
+  history:[],
+  go(screenId, opts){
+    opts = opts||{};
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-'+screenId).classList.add('active');
+    this.current = screenId;
+    const nav = document.getElementById('bottomnav');
+    const tabScreens = ['hub','quest','symbols','profile'];
+    nav.style.display = (state.registered && tabScreens.includes(screenId)) ? 'flex' : 'none';
+    document.querySelectorAll('.nav-item').forEach(el=>{
+      el.classList.toggle('active', el.dataset.tab===screenId);
+    });
+    window.scrollTo(0,0);
+    if(screenId==='hub') UI.renderHub();
+    if(screenId==='symbols') UI.renderSymbols();
+    if(screenId==='profile') UI.renderProfile();
+    if(screenId==='role') RoleUI.renderScreen();
+    if(screenId==='rating') RatingUI.render();
+    if(screenId==='alliance') AllianceUI.render();
+    if(screenId==='friends') FriendsUI.render();
+    if(screenId==='chat') ChatUI.render();
+    if(screenId==='pvp') PvpUI.render();
+  },
+  tab(id){ this.go(id); }
+};
+
+/* ---------------- UI (overlays, general renders) ---------------- */
+const UI = {
+  openOverlay(id){ document.getElementById(id).classList.add('show'); },
+  closeOverlay(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); },
+  showUnlock(title, text){
+    document.getElementById('unlock-title').textContent = title;
+    document.getElementById('unlock-text').textContent = text;
+    this.openOverlay('overlay-unlock');
+    Audio_.unlock();
+  },
+  renderHub(){
+    checkUnlocks();
+    const solved = totalSolvedCount();
+    const pct = Math.round((solved/TOTAL_PUZZLES)*100);
+    document.getElementById('hub-progress-fill').style.width = pct+'%';
+    document.getElementById('hub-progress-pct').textContent = pct+'%';
+    document.getElementById('hub-progress-txt').textContent = solved+' / '+TOTAL_PUZZLES+' РАЗГАДАНО';
+
+    const li = levelInfo(state.xp);
+    document.getElementById('hub-strip-name').textContent = (state.name||'SURVIVOR');
+    document.getElementById('hub-strip-level').textContent = 'LVL '+li.level;
+    document.getElementById('hub-strip-xpfill').style.width = li.pct+'%';
+    document.getElementById('hub-strip-xpcap').textContent = (li.xp-li.cur)+' / '+(li.next-li.cur)+' XP';
+    Avatar.renderInto('hub-avatar-circle');
+
+    const role = ROLES[state.role];
+    if(role){
+      document.getElementById('hub-role-title').textContent = role.name;
+      document.getElementById('hub-role-title').style.color = role.color;
+      document.getElementById('hub-role-tag').textContent = 'ОТКРЫТЬ ДОСЬЕ';
+    }
+
+    const wrap = document.getElementById('branch-list');
+    wrap.innerHTML = '';
+    DATA.branches.forEach((b, idx)=>{
+      const bs = state.branches[b.id];
+      const done = bs.completed;
+      const locked = !bs.unlocked;
+      const scheduled = locked && bs.unlockAt && Date.now() < bs.unlockAt;
+      const node = document.createElement('div');
+      node.className = 'branch-node ' + (done?'done':(locked?'locked':'active'));
+      const solvedN = branchSolvedCount(b);
+      let metaRight = locked ? 'ACCESS DENIED' : (solvedN+'/'+b.puzzles.length);
+      let titleText = locked ? 'CLASSIFIED' : b.title;
+      if(scheduled){ metaRight = 'ОТКРЫТИЕ ' + formatMsk(bs.unlockAt); titleText = 'DECRYPTING…'; }
+      node.innerHTML = `
+        <div class="node-dot">${done?'✓':(locked?'🔒':(idx+1))}</div>
+        <div class="branch-card">
+          <div class="b-eyebrow">ВЕТКА ${toRoman(idx+1)}</div>
+          <h3>${titleText}</h3>
+          <div class="b-meta">
+            <span class="stars">${'★'.repeat(b.stars)}${'☆'.repeat(6-b.stars)}</span>
+            <span>${metaRight}</span>
+          </div>
+        </div>`;
+      if(!locked){
+        node.onclick = ()=>{ Audio_.tap(); Quest.openBranch(b.id); };
+      } else if(scheduled){
+        node.onclick = ()=>{ Audio_.bad(); glitchFlash(); toast('АРХИВ РАСШИФРОВЫВАЕТСЯ. ОТКРЫТИЕ '+formatMsk(bs.unlockAt)); };
+      } else {
+        node.onclick = ()=>{ Audio_.bad(); glitchFlash(); toast('ACCESS DENIED — ЗАВЕРШИ ПРЕДЫДУЩУЮ ВЕТКУ'); };
+      }
+      wrap.appendChild(node);
+    });
+    // locked future branches (IV, V) always classified, not built
+    ['ЭРА ВОЗРОЖДЕНИЯ','ЧЁРНЫЙ ПРОТОКОЛ'].forEach((name, i)=>{
+      const node = document.createElement('div');
+      node.className = 'branch-node locked';
+      node.innerHTML = `
+        <div class="node-dot">🔒</div>
+        <div class="branch-card">
+          <div class="b-eyebrow">ВЕТКА ${toRoman(4+i)}</div>
+          <h3>CLASSIFIED</h3>
+          <div class="b-meta"><span class="stars">${'★'.repeat(5+i)}${'☆'.repeat(1-i)}</span><span>ACCESS DENIED</span></div>
+        </div>`;
+      node.onclick = ()=>{ Audio_.bad(); glitchFlash(); toast('ACCESS DENIED — ДАННЫЕ ЗАСЕКРЕЧЕНЫ'); };
+      wrap.appendChild(node);
+    });
+  },
+  renderSymbols(){
+    const grid = document.getElementById('sym-grid');
+    grid.innerHTML = '';
+    const cells = 20;
+    for(let i=0;i<cells;i++){
+      const sym = state.symbols[i];
+      const cell = document.createElement('div');
+      if(sym){
+        cell.className = 'sym-cell';
+        cell.innerHTML = `${escapeHtml(sym.value)}<span class="src">${escapeHtml(sym.branchLabel)}</span>`;
+      } else {
+        cell.className = 'sym-cell empty';
+        cell.textContent = '·';
+      }
+      grid.appendChild(cell);
+    }
+  },
+  renderProfile(){
+    document.getElementById('prof-server-name').textContent = (state.server||'SERVER —')+' / '+(state.name||'—') + (state.allianceTag ? ' ['+state.allianceTag+']' : '');
+    document.getElementById('prof-rank').textContent = currentRank();
+    const li = levelInfo(state.xp);
+    document.getElementById('prof-level').textContent = 'LVL '+li.level;
+    document.getElementById('prof-xpfill').style.width = li.pct+'%';
+    document.getElementById('prof-xpcap').textContent = (li.xp-li.cur)+' / '+(li.next-li.cur)+' XP · ВСЕГО '+li.xp;
+    Avatar.renderInto('profile-avatar-circle');
+    document.getElementById('stat-solved').textContent = totalSolvedCount();
+    document.getElementById('stat-symbols').textContent = state.symbols.length;
+    const branchesDone = DATA.branches.filter(b=>state.branches[b.id].completed).length;
+    document.getElementById('stat-branches').textContent = branchesDone+'/'+DATA.branches.length;
+    document.getElementById('stat-mistakes').textContent = state.totalMistakes;
+    document.getElementById('stat-hints').textContent = state.totalHintsUsed;
+    document.getElementById('stat-time').textContent = state.startTime ? fmtTime(Date.now()-state.startTime) : '0м';
+
+    const pvp = state.pvpStats || {wins:0,losses:0,rating:1000};
+    document.getElementById('stat-pvp-rating').textContent = pvp.rating;
+    document.getElementById('stat-pvp-wins').textContent = pvp.wins;
+    document.getElementById('stat-pvp-losses').textContent = pvp.losses;
+    const totalMatches = pvp.wins+pvp.losses;
+    document.getElementById('stat-pvp-winrate').textContent = totalMatches>0 ? Math.round((pvp.wins/totalMatches)*100)+'%' : '—';
+
+    const achWrap = document.getElementById('ach-list');
+    achWrap.innerHTML = '';
+    DATA.achievements.forEach(a=>{
+      const unlocked = !!state.achievements[a.id];
+      const row = document.createElement('div');
+      row.className = 'ach-row'+(unlocked?'':' locked');
+      row.innerHTML = `<div class="ach-icon">${unlocked?'✓':'?'}</div><div style="flex:1;"><div class="t">${a.title}</div><div class="d">${a.desc}</div></div>`;
+      if(unlocked){
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'chat-share-btn';
+        shareBtn.style.marginTop = '0';
+        shareBtn.textContent = 'ПОДЕЛИТЬСЯ';
+        shareBtn.onclick = ()=> ChatUI.shareAchievement(a);
+        row.appendChild(shareBtn);
+      }
+      achWrap.appendChild(row);
+    });
+
+    document.getElementById('settings-name').textContent = state.name||'—';
+    document.getElementById('settings-server').textContent = state.server||'—';
+    const allianceInput = document.getElementById('settings-alliance');
+    if(document.activeElement !== allianceInput){ allianceInput.value = state.allianceTag||''; }
+    document.getElementById('sound-toggle').classList.toggle('on', state.soundOn);
+  }
+};
+
+function toRoman(n){ return ['I','II','III','IV','V'][n-1]||n; }
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---------------- AVATAR ---------------- */
+const DEFAULT_AVATAR_SVG = `<svg viewBox="0 0 24 24" stroke="#31ff9c" stroke-width="1.5" fill="none"><circle cx="12" cy="12" r="10" opacity=".5"/><path d="M12 4 L17.5 15 L6.5 15 Z"/><circle cx="12" cy="12.5" r="1" fill="#31ff9c"/><rect x="11.3" y="7" width="1.4" height="4" fill="#31ff9c"/></svg>`;
+const Avatar = {
+  pick(){ document.getElementById('avatar-file-input').click(); },
+  onFile(e){
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    if(!f.type.startsWith('image/')){ toast('ВЫБЕРИ ФАЙЛ ИЗОБРАЖЕНИЯ'); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      state.avatar = reader.result;
+      saveState();
+      Avatar.renderAll();
+      toast('АВАТАР ОБНОВЛЁН');
+    };
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  },
+  markup(){
+    return state.avatar ? `<img src="${state.avatar}" alt="avatar">` : DEFAULT_AVATAR_SVG;
+  },
+  renderInto(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    const editBadge = el.querySelector('.edit-badge');
+    el.innerHTML = this.markup() + (editBadge ? editBadge.outerHTML : '');
+  },
+  renderAll(){
+    ['reg-avatar-circle','hub-avatar-circle','profile-avatar-circle'].forEach(id=>{
+      if(document.getElementById(id)) this.renderInto(id);
+    });
+  }
+};
+
+/* ---------------- SERVER PICKER (1-300) ---------------- */
+const ServerPicker = {
+  selected:null,
+  open(){
+    UI.openOverlay('overlay-server');
+    this.renderGrid('');
+    const search = document.getElementById('server-search');
+    search.value = '';
+    search.oninput = ()=> this.renderGrid(search.value.trim());
+    setTimeout(()=>search.focus(), 50);
+  },
+  renderGrid(filter){
+    const grid = document.getElementById('server-grid');
+    grid.innerHTML = '';
+    for(let n=1; n<=300; n++){
+      const s = String(n);
+      if(filter && s.indexOf(filter)===-1) continue;
+      const cell = document.createElement('div');
+      cell.className = 'server-cell';
+      cell.textContent = '#'+n;
+      cell.onclick = ()=> ServerPicker.select(n);
+      grid.appendChild(cell);
+    }
+    if(!grid.children.length){
+      grid.innerHTML = '<div class="dim mono" style="grid-column:1/-1; font-size:12px; text-align:center; padding:14px 0;">НЕТ СОВПАДЕНИЙ</div>';
+    }
+  },
+  select(n){
+    Audio_.tap();
+    this.selected = n;
+    const btn = document.getElementById('reg-server-btn');
+    btn.textContent = 'SERVER #'+n;
+    btn.classList.add('chosen');
+    UI.closeOverlay();
+  }
+};
+
+/* ---------------- ROLE UI ---------------- */
+const RoleUI = {
+  showReveal(){
+    const role = ROLES[state.role];
+    if(!role){ Nav.go('hub'); return; }
+    document.getElementById('role-reveal-name').textContent = role.name;
+    document.getElementById('role-reveal-name').style.color = role.color;
+    document.getElementById('role-reveal-tagline').textContent = role.tagline;
+    UI.openOverlay('overlay-role');
+    Audio_.unlock();
+    document.getElementById('role-reveal-continue').onclick = ()=>{
+      UI.closeOverlay();
+      Nav.go('hub');
+    };
+  },
+  renderScreen(){
+    const role = ROLES[state.role];
+    if(!role) return;
+    document.getElementById('role-screen-name').textContent = role.name;
+    document.getElementById('role-screen-name').style.color = role.color;
+    document.getElementById('role-screen-tagline').textContent = role.tagline;
+    document.getElementById('role-screen-desc').textContent = role.desc;
+    const list = document.getElementById('role-task-list');
+    list.innerHTML = '';
+    role.tasks.forEach(t=>{
+      const done = !!state.roleTasksDone[t.id];
+      const row = document.createElement('div');
+      row.className = 'role-task-row'+(done?' done':'');
+      row.innerHTML = `<div class="rt-check">✓</div><div class="rt-text">${escapeHtml(t.text)}</div>`;
+      row.onclick = ()=> RoleUI.toggleTask(t.id);
+      list.appendChild(row);
+    });
+  },
+  toggleTask(taskId){
+    const wasDone = !!state.roleTasksDone[taskId];
+    if(!wasDone){
+      state.roleTasksDone[taskId] = true;
+      state.xp = (state.xp||0) + 5;
+      Audio_.ok();
+      toast('ЗАДАНИЕ РОЛИ ВЫПОЛНЕНО +5 XP');
+    } else {
+      delete state.roleTasksDone[taskId];
+    }
+    saveState();
+    this.renderScreen();
+  }
+};
+
+/* ---------------- RATING UI (self-only, local device) ---------------- */
+const RatingUI = {
+  sortField:'xp',
+  sortDesc:true,
+  render(){
+    const input = document.getElementById('rating-filter');
+    const fieldSel = document.getElementById('rating-sort-field');
+    const dirBtn = document.getElementById('rating-sort-dir');
+    fieldSel.value = this.sortField;
+    dirBtn.textContent = this.sortDesc ? '↓ БОЛЬШЕ→МЕНЬШЕ' : '↑ МЕНЬШЕ→БОЛЬШЕ';
+    input.oninput = ()=> this.renderList(input.value.trim());
+    fieldSel.onchange = ()=>{ this.sortField = fieldSel.value; this.renderList(input.value.trim()); };
+    dirBtn.onclick = ()=>{
+      this.sortDesc = !this.sortDesc;
+      dirBtn.textContent = this.sortDesc ? '↓ БОЛЬШЕ→МЕНЬШЕ' : '↑ МЕНЬШЕ→БОЛЬШЕ';
+      this.renderList(input.value.trim());
+    };
+    this.renderList(input.value.trim());
+  },
+  getEntries(){
+    // Local-device beta: only the registered player exists as a real entry.
+    // Sorting/filtering logic is written generically so it keeps working once
+    // a real multi-player backend supplies more rows.
+    if(!state.registered) return [];
+    const li = levelInfo(state.xp);
+    return [{
+      name: state.name, server: state.server, alliance: state.allianceTag,
+      xp: state.xp||0, level: li.level, solved: totalSolvedCount(), isMe:true
+    }];
+  },
+  renderList(filter){
+    const wrap = document.getElementById('rating-list');
+    wrap.innerHTML = '';
+    let entries = this.getEntries();
+    const filterNum = (filter||'').replace(/[^0-9]/g,'');
+    if(filterNum){
+      entries = entries.filter(e=> (e.server||'').replace(/[^0-9]/g,'').indexOf(filterNum)!==-1 );
+    }
+    entries.sort((a,b)=>{
+      const va = a[this.sortField]||0, vb = b[this.sortField]||0;
+      return this.sortDesc ? (vb-va) : (va-vb);
+    });
+    if(!entries.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕТ ВЫЖИВШИХ ПО ЭТОМУ ФИЛЬТРУ.</p>';
+      return;
+    }
+    entries.forEach((e, i)=>{
+      const row = document.createElement('div');
+      row.className = 'rating-row';
+      row.innerHTML = `
+        <div class="rk-pos">#${i+1}</div>
+        <div class="avatar-circle avatar-sm" style="cursor:default;">${e.isMe ? Avatar.markup() : DEFAULT_AVATAR_SVG}</div>
+        <div class="rk-info">
+          <div class="rk-name">${escapeHtml(e.name||'—')}</div>
+          <div class="rk-server">${escapeHtml(e.server||'—')}${e.alliance ? ' · ['+escapeHtml(e.alliance)+']' : ''}</div>
+        </div>
+        <div class="rk-stats"><div class="lvl">LVL ${e.level}</div><div>${e.solved} ЗАДАНИЙ</div><div>${e.xp} XP</div></div>`;
+      if(e.isMe){ row.querySelector('.rk-name').onclick = ()=> Nav.go('profile'); row.querySelector('.rk-name').style.cursor='pointer'; }
+      wrap.appendChild(row);
+    });
+    const note = document.createElement('p');
+    note.className = 'dim';
+    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
+    note.textContent = '#'+entries.length+' из '+entries.length+' известных выживших на данный момент.';
+    wrap.appendChild(note);
+  }
+};
+
+/* ---------------- ALLIANCES ---------------- */
+const AllianceUI = {
+  render(){
+    const status = document.getElementById('alliance-status-text');
+    const wrap = document.getElementById('alliance-list');
+    wrap.innerHTML = '';
+    if(!state.registered){
+      status.textContent = 'Сначала пройди идентификацию выжившего.';
+      return;
+    }
+    if(!state.allianceTag){
+      status.textContent = 'У тебя нет тега альянса. Добавь его в Профиль → Настройки, чтобы найти союзников.';
+      const hint = document.createElement('button');
+      hint.className = 'btn ghost';
+      hint.style.marginTop = '14px';
+      hint.textContent = 'ПЕРЕЙТИ В НАСТРОЙКИ';
+      hint.onclick = ()=> Nav.go('profile');
+      wrap.appendChild(hint);
+      return;
+    }
+    status.textContent = 'Альянс: ['+state.allianceTag+']. Показаны все известные выжившие с этим тегом на этом устройстве.';
+    const li = levelInfo(state.xp);
+    const row = document.createElement('div');
+    row.className = 'rating-row';
+    row.innerHTML = `
+      <div class="rk-pos">#1</div>
+      <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
+      <div class="rk-info">
+        <div class="rk-name" style="cursor:pointer;">${escapeHtml(state.name||'—')}</div>
+        <div class="rk-server">${escapeHtml(state.server||'—')} · [${escapeHtml(state.allianceTag)}]</div>
+      </div>
+      <div class="rk-stats"><div class="lvl">LVL ${li.level}</div><div>${totalSolvedCount()} ЗАДАНИЙ</div></div>`;
+    row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
+    wrap.appendChild(row);
+  }
+};
+
+/* ---------------- FRIENDS ---------------- */
+/* ---------------- PVP (rating shell + throttled opponent search, no real matches yet) ---------------- */
+const PvpUI = {
+  render(){
+    this.renderRating();
+    this.renderSearchState();
+    document.getElementById('pvp-find-btn').onclick = ()=> this.findOpponent();
+    document.getElementById('pvp-search-results').innerHTML = '';
+  },
+  renderRating(){
+    const wrap = document.getElementById('pvp-rating-list');
+    wrap.innerHTML = '';
+    if(!state.registered){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:16px 0;">НЕТ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ.</p>';
+      return;
+    }
+    const li = levelInfo(state.xp);
+    const pvp = state.pvpStats || {wins:0, losses:0, rating:1000};
+    const row = document.createElement('div');
+    row.className = 'rating-row';
+    row.innerHTML = `
+      <div class="rk-pos">#1</div>
+      <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
+      <div class="rk-info">
+        <div class="rk-name" style="cursor:pointer;">${escapeHtml(state.name||'—')}</div>
+        <div class="rk-server">${escapeHtml(state.server||'—')}${state.allianceTag ? ' · ['+escapeHtml(state.allianceTag)+']' : ''}</div>
+      </div>
+      <div class="rk-stats"><div class="lvl">LVL ${li.level}</div><div>${pvp.rating} MMR</div></div>`;
+    row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
+    wrap.appendChild(row);
+    const note = document.createElement('p');
+    note.className = 'dim';
+    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
+    note.textContent = '#1 из 1 известных участников PvP-рейтинга на данный момент.';
+    wrap.appendChild(note);
+  },
+  getSearchState(){
+    const today = mskDateKey(Date.now());
+    if(!state.pvpSearch || state.pvpSearch.date !== today){
+      state.pvpSearch = {date:today, used:0};
+      saveState();
+    }
+    return state.pvpSearch;
+  },
+  renderSearchState(){
+    const s = this.getSearchState();
+    document.getElementById('pvp-search-counter').textContent = 'ПОПЫТОК СЕГОДНЯ: '+s.used+'/5';
+    document.getElementById('pvp-find-btn').disabled = s.used>=5;
+    document.getElementById('pvp-find-btn').textContent = s.used>=5 ? 'ЛИМИТ НА СЕГОДНЯ ИСЧЕРПАН' : 'НАЙТИ ПРОТИВНИКА';
+  },
+  findOpponent(){
+    const s = this.getSearchState();
+    if(s.used>=5){ toast('ЛИМИТ ПОИСКА НА СЕГОДНЯ ИСЧЕРПАН. ПОПРОБУЙ ЗАВТРА.'); return; }
+    s.used++;
+    saveState();
+    Audio_.tap();
+    this.renderSearchState();
+    const results = document.getElementById('pvp-search-results');
+    results.innerHTML = `<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 14px; border:1px dashed var(--panel-edge); border-radius:4px; margin-top:14px; line-height:1.6;">🔍 ИГРОКИ НЕ НАЙДЕНЫ.<br>PVP-РЕЖИМ В РАННЕМ ТЕСТИРОВАНИИ — БАЗА ПРОТИВНИКОВ ПОКА ПУСТА.</p>`;
+  }
+};
+
+/* ---------------- FRIENDS ---------------- */
+const FriendsUI = {
+  render(){
+    document.getElementById('friend-add-btn').onclick = ()=> this.addFriend();
+    this.renderList();
+  },
+  addFriend(){
+    const nameInput = document.getElementById('friend-add-name');
+    const serverInput = document.getElementById('friend-add-server');
+    const name = nameInput.value.trim();
+    const server = serverInput.value.trim().replace(/[^0-9]/g,'');
+    if(!name){ toast('ВВЕДИ ПОЗЫВНОЙ'); return; }
+    if(!server){ toast('ВВЕДИ НОМЕР СЕРВЕРА'); return; }
+    const exists = state.friends.some(f=>f.name.toLowerCase()===name.toLowerCase() && f.server===server);
+    if(exists){ toast('ЭТОТ ВЫЖИВШИЙ УЖЕ В СПИСКЕ'); return; }
+    state.friends.push({ id:'fr_'+Date.now(), name, server, addedAt:new Date().toISOString() });
+    const isFirstFriend = state.friends.length===1 && !state.achievements.SOCIAL;
+    if(isFirstFriend){ state.achievements.SOCIAL = true; }
+    saveState();
+    Audio_.ok();
+    toast(isFirstFriend ? 'ДОСТИЖЕНИЕ: НЕ ОДИН · ДОБАВЛЕНО В ДРУЗЬЯ' : 'ДОБАВЛЕНО В ДРУЗЬЯ');
+    nameInput.value=''; serverInput.value='';
+    this.renderList();
+  },
+  removeFriend(id){
+    state.friends = state.friends.filter(f=>f.id!==id);
+    saveState();
+    this.renderList();
+  },
+  renderList(){
+    const wrap = document.getElementById('friends-list');
+    wrap.innerHTML = '';
+    if(!state.friends.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:16px 0;">СПИСОК ДРУЗЕЙ ПУСТ.</p>';
+      return;
+    }
+    state.friends.forEach(f=>{
+      const row = document.createElement('div');
+      row.className = 'friend-row';
+      row.innerHTML = `
+        <div class="avatar-circle avatar-sm" style="cursor:default;">${DEFAULT_AVATAR_SVG}</div>
+        <div class="fr-info">
+          <div class="fr-name">${escapeHtml(f.name)}</div>
+          <div class="fr-server">SERVER #${escapeHtml(f.server)}</div>
+        </div>
+        <button class="fr-remove">УДАЛИТЬ</button>`;
+      row.querySelector('.fr-remove').onclick = ()=> FriendsUI.removeFriend(f.id);
+      wrap.appendChild(row);
+    });
+  }
+};
+
+/* ---------------- CHAT (local test only, no networking) ---------------- */
+const ChatUI = {
+  seeded:false,
+  render(){
+    if(!this.seeded && state.chatMessages.length===0){
+      state.chatMessages.push({
+        id:'sys_1', system:true, text:'СОЕДИНЕНИЕ УСТАНОВЛЕНО. ЭТО ТЕСТОВЫЙ РЕЖИМ ЧАТА — СООБЩЕНИЯ НЕ ОТПРАВЛЯЮТСЯ ДРУГИМ ВЫЖИВШИМ.',
+        timestamp: new Date().toISOString()
+      });
+      saveState();
+      this.seeded = true;
+    }
+    document.getElementById('chat-send-btn').onclick = ()=> this.send();
+    const input = document.getElementById('chat-input');
+    input.onkeydown = (e)=>{ if(e.key==='Enter') this.send(); };
+    this.renderMessages();
+  },
+  send(){
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if(!text) return;
+    state.chatMessages.push({
+      id:'msg_'+Date.now(), fromMe:true, text, timestamp:new Date().toISOString()
+    });
+    const sentCount = state.chatMessages.filter(m=>m.fromMe).length;
+    if(sentCount===1 && !state.achievements.CHATTY){
+      state.achievements.CHATTY = true;
+      setTimeout(()=>toast('ДОСТИЖЕНИЕ: НА СВЯЗИ'), 200);
+    }
+    saveState();
+    input.value = '';
+    Audio_.tap();
+    this.renderMessages();
+  },
+  renderMessages(){
+    const wrap = document.getElementById('chat-messages');
+    wrap.innerHTML = '';
+    state.chatMessages.forEach(m=>{
+      const bubble = document.createElement('div');
+      if(m.system){
+        bubble.className = 'chat-bubble system';
+        bubble.innerHTML = `<div class="cb-body" style="max-width:100%;"><div class="cb-text">${escapeHtml(m.text)}</div></div>`;
+      } else {
+        bubble.className = 'chat-bubble me';
+        bubble.innerHTML = `
+          <div class="cb-avatar">${Avatar.markup()}</div>
+          <div class="cb-body">
+            <div class="cb-name">${escapeHtml(state.name||'ТЫ')}</div>
+            <div class="cb-text">${escapeHtml(m.text)}</div>
+            <div class="cb-time">${formatShortTime(m.timestamp)}</div>
+          </div>`;
+        bubble.querySelector('.cb-avatar').onclick = ()=> Nav.go('profile');
+        bubble.querySelector('.cb-name').onclick = ()=> Nav.go('profile');
+      }
+      wrap.appendChild(bubble);
+    });
+    const scroller = document.getElementById('chat-scroll');
+    scroller.scrollTop = scroller.scrollHeight;
+  },
+  shareAchievement(ach){
+    const text = '🏆 ДОСТИЖЕНИЕ РАЗБЛОКИРОВАНО: '+ach.title+' — '+ach.desc;
+    state.chatMessages.push({ id:'msg_'+Date.now(), fromMe:true, text, timestamp:new Date().toISOString() });
+    if(!state.achievements.BRAGGART){ state.achievements.BRAGGART = true; }
+    saveState();
+    toast('ДОСТИЖЕНИЕ ОТПРАВЛЕНО В ЧАТ');
+    Nav.go('chat');
+  }
+};
+function formatShortTime(iso){
+  const d = new Date(iso);
+  const pad = n=>String(n).padStart(2,'0');
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+
+/* ---------------- QUEST / PUZZLE ENGINE ---------------- */
+const Quest = {
+  currentBranchId:null,
+  currentPuzzleId:null,
+
+  openBranch(branchId){
+    this.currentBranchId = branchId;
+    const b = findBranch(branchId);
+    document.getElementById('quest-branch-title').textContent = 'ВЕТКА '+toRoman(b.order)+' · '+b.title;
+    const wrap = document.getElementById('quest-list-wrap');
+    wrap.innerHTML = `<p class="dim" style="font-size:12.5px; margin-bottom:16px;">${b.intro}</p>`;
+    const seq = getBranchSequence(b);
+    seq.forEach(item=>{
+      if(item.type==='puzzle'){
+        const p = b.puzzles.find(pp=>pp.id===item.id);
+        const i = b.puzzles.indexOf(p);
+        const solved = !!state.solvedPuzzles[p.id];
+        const row = document.createElement('div');
+        row.className = 'puzzle-row'+(solved?' solved':'');
+        row.innerHTML = `<div class="idx">${solved?'✓':(i+1)}</div>
+          <div class="body"><div class="t">${p.title}</div><div class="s">${p.fileTag}</div></div>
+          <div class="chev">›</div>`;
+        row.onclick = ()=>{ Audio_.tap(); Quest.openPuzzle(p.id); };
+        wrap.appendChild(row);
+      } else {
+        const t = (b.sideTasks||[]).find(tt=>tt.id===item.id);
+        const done = !!state.sideTasksDone[t.id];
+        const row = document.createElement('div');
+        row.className = 'puzzle-row sidetask-row'+(done?' solved':'');
+        row.innerHTML = `<div class="idx">${done?'✓':'📸'}</div>
+          <div class="body"><div class="t">${t.title}</div><div class="s">ЗАДАНИЕ ИЗ ИГРЫ</div></div>
+          <div class="chev">›</div>`;
+        row.onclick = ()=>{ Audio_.tap(); Quest.openSideTask(t.id); };
+        wrap.appendChild(row);
+      }
+    });
+    const allSolved = b.puzzles.every(p=>state.solvedPuzzles[p.id]);
+    const finalBtn = document.createElement('button');
+    finalBtn.className = 'btn solid';
+    finalBtn.style.marginTop = '18px';
+    finalBtn.textContent = state.branches[b.id].completed ? 'ПРОТОКОЛ ЗАВЕРШЁН ✓' : 'FINAL PROTOCOL';
+    if(!allSolved){ finalBtn.disabled = true; finalBtn.textContent = 'FINAL PROTOCOL (СОБЕРИ ВСЕ ФРАГМЕНТЫ)'; }
+    finalBtn.onclick = ()=> Quest.openFinal(b.id);
+    wrap.appendChild(finalBtn);
+    Nav.go('quest');
+  },
+
+  openPuzzle(puzzleId){
+    const found = findPuzzle(puzzleId);
+    if(!found) return;
+    const {puzzle:p, branch:b} = found;
+    this.currentPuzzleId = puzzleId;
+    document.getElementById('puzzle-branch-title').textContent = b.title;
+    document.getElementById('puzzle-file-tag').textContent = p.fileTag;
+    document.getElementById('puzzle-tokens').textContent = '💠 '+state.branches[b.id].hintsLeft;
+    document.getElementById('puzzle-feedback').className = 'feedback';
+    document.getElementById('puzzle-feedback').innerHTML = '';
+    document.getElementById('puzzle-hint-box').className = 'hint-box';
+    document.getElementById('puzzle-hint-box').innerHTML = '';
+    document.getElementById('puzzle-nav-row').style.display = 'none';
+    document.getElementById('puzzle-hint-btn').style.display = '';
+
+    const body = document.getElementById('puzzle-body');
+    const alreadySolved = !!state.solvedPuzzles[p.id];
+    let inner = `<h3 style="font-size:15px; color:var(--text-dim); margin-bottom:10px;">${p.title}</h3>
+      <div class="doc-panel"><div class="q-text">${escapeHtml(p.question)}</div></div>`;
+
+    if(p.type==='text'){
+      inner += `<input type="text" class="answer-input" id="ans-input" placeholder="ВВЕДИ ОТВЕТ" autocomplete="off" autocapitalize="off" ${alreadySolved?'disabled':''}>
+        <button class="btn solid" id="ans-submit" ${alreadySolved?'disabled':''}>ПРОВЕРИТЬ</button>`;
+    } else if(p.type==='mc'){
+      inner += `<div id="mc-opts">` + p.options.map((o,i)=>`<button class="mc-opt" data-i="${i}">${escapeHtml(o)}</button>`).join('') + `</div>`;
+    } else if(p.type==='order'){
+      inner += `<div class="order-hint">ПОСЛЕДОВАТЕЛЬНОСТЬ (нажимай, чтобы добавить)</div>
+        <div class="order-seq" id="order-seq"></div>
+        <div class="order-hint">ЭЛЕМЕНТЫ</div>
+        <div class="order-pool" id="order-pool"></div>
+        <button class="btn solid" id="order-submit" style="margin-top:10px;">ПРОВЕРИТЬ</button>
+        <button class="btn ghost" id="order-clear" style="margin-top:8px;">ОЧИСТИТЬ</button>`;
+    } else if(p.type==='truefalse'){
+      inner += `<div id="tf-list">` + p.statements.map((s,i)=>`<button class="doc-stmt" data-i="${i}"><span class="num">${i+1}.</span>${escapeHtml(s)}</button>`).join('') + `</div>`;
+    }
+    body.innerHTML = inner;
+
+    if(alreadySolved){
+      showFeedback(true, `✓ VERIFIED — ДАННЫЕ УЖЕ ПОДТВЕРЖДЕНЫ РАНЕЕ.\nФРАГМЕНТ: [ ${p.reward} ]`, p);
+      Quest.setupNavRow(b);
+    }
+
+    if(p.type==='text' && !alreadySolved){
+      const input = document.getElementById('ans-input');
+      const submit = document.getElementById('ans-submit');
+      const doCheck = ()=>Quest.checkText(p,b,input.value);
+      submit.onclick = doCheck;
+      input.onkeydown = (e)=>{ if(e.key==='Enter') doCheck(); };
+    }
+    if(p.type==='mc' && !alreadySolved){
+      document.querySelectorAll('#mc-opts .mc-opt').forEach(btn=>{
+        btn.onclick = ()=> Quest.checkMC(p,b,parseInt(btn.dataset.i,10));
+      });
+    }
+    if(p.type==='order' && !alreadySolved){
+      this._orderPool = p.items.slice();
+      this._orderSeq = [];
+      renderOrderUI();
+      document.getElementById('order-submit').onclick = ()=> Quest.checkOrder(p,b);
+      document.getElementById('order-clear').onclick = ()=>{ this._orderPool = p.items.slice(); this._orderSeq=[]; renderOrderUI(); };
+    }
+    if(p.type==='truefalse' && !alreadySolved){
+      document.querySelectorAll('#tf-list .doc-stmt').forEach(btn=>{
+        btn.onclick = ()=> Quest.checkTF(p,b,parseInt(btn.dataset.i,10));
+      });
+    }
+
+    const hintBtn = document.getElementById('puzzle-hint-btn');
+    hintBtn.onclick = ()=> Quest.useHint(p,b);
+    updateHintButton(p,b);
+
+    Nav.go('puzzle');
+  },
+
+  checkText(p,b,val){
+    const norm = normalize(val);
+    const ok = p.accepted.some(a=>normalize(a)===norm);
+    if(ok){ Quest.markSolved(p,b); }
+    else { Quest.markMistake(p,b, 'ARCHIVE REJECTS THIS ANSWER.'); }
+  },
+  checkMC(p,b,idx){
+    document.querySelectorAll('#mc-opts .mc-opt').forEach(el=>el.onclick=null);
+    const btns = document.querySelectorAll('#mc-opts .mc-opt');
+    btns[idx].classList.add('selected');
+    if(idx===p.correctIndex){
+      btns[idx].classList.add('correct');
+      Quest.markSolved(p,b);
+    } else {
+      btns[idx].classList.add('wrong');
+      if(!state.achievements.FALSE_TRAIL){ state.achievements.FALSE_TRAIL = true; saveState(); toast('ДОСТИЖЕНИЕ: ЛОЖНЫЙ СЛЕД'); }
+      Quest.markMistake(p,b,'ЭТО ЛОЖНЫЙ СЛЕД. ПОПРОБУЙ ЕЩЁ РАЗ.', true, ()=>{
+        btns.forEach(el=>{ el.onclick = ()=> Quest.checkMC(p,b,parseInt(el.dataset.i,10)); el.classList.remove('wrong','correct','selected'); });
+      });
+    }
+  },
+  checkTF(p,b,idx){
+    document.querySelectorAll('#tf-list .doc-stmt').forEach(el=>el.onclick=null);
+    const btns = document.querySelectorAll('#tf-list .doc-stmt');
+    btns[idx].classList.add('selected');
+    if(idx===p.falseIndex){
+      btns[idx].classList.add('correct');
+      Quest.markSolved(p,b);
+    } else {
+      btns[idx].classList.add('wrong');
+      Quest.markMistake(p,b,'ЭТО УТВЕРЖДЕНИЕ ПРАВДИВО. ИЩИ ДРУГОЕ.', true, ()=>{
+        btns.forEach(el=>{ el.onclick = ()=> Quest.checkTF(p,b,parseInt(el.dataset.i,10)); el.classList.remove('wrong','correct','selected'); });
+      });
+    }
+  },
+  checkOrder(p,b){
+    const seq = this._orderSeq;
+    if(seq.length !== p.correctOrder.length){ toast('РАССТАВЬ ВСЕ ЭЛЕМЕНТЫ'); return; }
+    const ok = seq.every((v,i)=>v===p.correctOrder[i]);
+    if(ok){ Quest.markSolved(p,b); }
+    else { Quest.markMistake(p,b,'ПОРЯДОК НЕВЕРЕН. ПЕРЕСМОТРИ ЛОГИКУ.'); }
+  },
+
+  markMistake(p,b, msg, keepInteractive, restoreFn){
+    state.totalMistakes++; state.branches[b.id].mistakes++;
+    saveState();
+    Audio_.bad(); glitchFlash();
+    showFeedback(false, '✕ ACCESS DENIED\n'+msg, p);
+    if(restoreFn){ setTimeout(restoreFn, 1100); }
+  },
+
+  markSolved(p,b){
+    Audio_.ok();
+    state.solvedPuzzles[p.id] = true;
+    state.symbols.push({ value:p.reward, branchLabel:b.title.split(' ')[0], puzzleId:p.id, date:new Date().toISOString() });
+    const beforeLvl = levelInfo(state.xp).level;
+    const xpGain = PUZZLE_XP[b.order] || 10;
+    state.xp = (state.xp||0) + xpGain;
+    const afterLvl = levelInfo(state.xp).level;
+    if(p.trap && !state.achievements.WRONG_QUESTION){
+      state.achievements.WRONG_QUESTION = true; toast('ДОСТИЖЕНИЕ: НЕ ТОТ ВОПРОС');
+    }
+    if(state.symbols.length >= TOTAL_PUZZLES && !state.achievements.ARCHIVIST){
+      state.achievements.ARCHIVIST = true; toast('ДОСТИЖЕНИЕ: АРХИВАРИУС');
+    }
+    if(totalSolvedCount()===1 && !state.achievements.FIRST_STEPS){
+      state.achievements.FIRST_STEPS = true; toast('ДОСТИЖЕНИЕ: ПЕРВЫЕ ШАГИ');
+    }
+    const hourNow = new Date().getHours();
+    if(hourNow>=0 && hourNow<5 && !state.achievements.NIGHT_OWL){
+      state.achievements.NIGHT_OWL = true; toast('ДОСТИЖЕНИЕ: НОЧНОЙ ДОЗОР');
+    }
+    checkLevelAchievements(afterLvl);
+    saveState();
+    showFeedback(true, '✓ VERIFIED\nДАННЫЕ ПОДТВЕРЖДЕНЫ\nПОЛУЧЕН ФРАГМЕНТ', p, true, xpGain);
+    Quest.setupNavRow(b);
+    if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 600); }
+  },
+
+  setupNavRow(b){
+    const row = document.getElementById('puzzle-nav-row');
+    row.style.display = 'flex';
+    const seq = getBranchSequence(b);
+    const idx = seq.findIndex(it=>it.id===this.currentPuzzleId);
+    const hasNext = idx>=0 && idx < seq.length-1;
+    const contBtn = document.getElementById('puzzle-continue-btn');
+    if(hasNext){ contBtn.textContent = 'ДАЛЬШЕ →'; }
+    else if(b.puzzles.every(pp=>state.solvedPuzzles[pp.id])){ contBtn.textContent = 'FINAL PROTOCOL →'; }
+    else { contBtn.textContent = 'К СПИСКУ ФРАГМЕНТОВ →'; }
+  },
+
+  goNextPuzzle(){
+    const b = findBranch(this.currentBranchId);
+    const seq = getBranchSequence(b);
+    const idx = seq.findIndex(it=>it.id===this.currentPuzzleId);
+    if(idx>=0 && idx < seq.length-1){
+      const nextItem = seq[idx+1];
+      if(nextItem.type==='puzzle'){ Quest.openPuzzle(nextItem.id); }
+      else { Quest.openSideTask(nextItem.id); }
+    } else if(b.puzzles.every(pp=>state.solvedPuzzles[pp.id])){
+      Quest.openFinal(b.id);
+    } else {
+      Quest.openBranch(b.id);
+    }
+  },
+  goToMenu(){ Quest.openBranch(this.currentBranchId); },
+
+  openSideTask(taskId){
+    const found = findSideTask(taskId);
+    if(!found) return;
+    const {task:t, branch:b} = found;
+    this.currentBranchId = b.id;
+    this.currentPuzzleId = t.id;
+    document.getElementById('puzzle-branch-title').textContent = b.title;
+    document.getElementById('puzzle-file-tag').textContent = 'ЗАДАНИЕ ИЗ ИГРЫ';
+    document.getElementById('puzzle-tokens').textContent = '';
+    document.getElementById('puzzle-feedback').className = 'feedback';
+    document.getElementById('puzzle-feedback').innerHTML = '';
+    document.getElementById('puzzle-hint-box').className = 'hint-box';
+    document.getElementById('puzzle-hint-box').innerHTML = '';
+    document.getElementById('puzzle-nav-row').style.display = 'none';
+    document.getElementById('puzzle-hint-btn').style.display = 'none';
+
+    const done = !!state.sideTasksDone[t.id];
+    const body = document.getElementById('puzzle-body');
+    body.innerHTML = `
+      <h3 style="font-size:15px; color:var(--text-dim); margin-bottom:10px;">${t.title}</h3>
+      <div class="doc-panel"><div class="q-text">Выполни в игре Last Asylum: Plague:<br><br><strong style="color:var(--accent);">${escapeHtml(t.description)}</strong></div></div>
+      <div class="doc-panel" style="border-color:rgba(231,178,58,.4); background:rgba(231,178,58,.05);">
+        <div class="q-text" style="color:var(--amber); font-size:12.5px;">📸 Это задание выполняется в самой игре, а не в архиве. Сделай скриншот подтверждения и загрузи его сюда.<br><br>На время тестирования задание засчитывается автоматически сразу после загрузки скриншота — без ручной проверки модератором.</div>
+      </div>
+      ${done ? '' : '<button class="btn solid" id="task-upload-btn" style="margin-top:14px;">ЗАГРУЗИТЬ СКРИНШОТ</button><input type="file" id="task-file-input" accept="image/*" style="display:none;">'}
+    `;
+
+    if(done){
+      const fb = document.getElementById('puzzle-feedback');
+      fb.className = 'feedback show ok';
+      fb.innerHTML = '✓ ПОДТВЕРЖДЕНО<br>СКРИНШОТ ПРИНЯТ. ЗАДАНИЕ ЗАСЧИТАНО.';
+      Quest.setupNavRow(b);
+    } else {
+      document.getElementById('task-upload-btn').onclick = ()=> document.getElementById('task-file-input').click();
+      document.getElementById('task-file-input').onchange = (e)=> Quest.completeSideTask(t, b, e);
+    }
+    Nav.go('puzzle');
+  },
+
+  completeSideTask(t, b, e){
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    if(!f.type.startsWith('image/')){ toast('ЗАГРУЗИ ФАЙЛ ИЗОБРАЖЕНИЯ (СКРИНШОТ)'); return; }
+    state.sideTasksDone[t.id] = new Date().toISOString();
+    state.xp = (state.xp||0) + SIDE_TASK_XP;
+    saveState();
+    Audio_.ok();
+    const fb = document.getElementById('puzzle-feedback');
+    fb.className = 'feedback show ok';
+    fb.innerHTML = '✓ СКРИНШОТ ЗАГРУЖЕН<br>ЗАДАНИЕ АВТОМАТИЧЕСКИ ЗАСЧИТАНО<br><span style="color:var(--text-dim); font-size:10.5px;">(тестовый режим: ручная проверка модератором пока не требуется)</span>'
+      + `<div class="reward-xp" style="margin-top:8px;">+${SIDE_TASK_XP} XP</div>`;
+    const uploadBtn = document.getElementById('task-upload-btn');
+    if(uploadBtn) uploadBtn.style.display = 'none';
+    Quest.setupNavRow(b);
+  },
+
+
+  openFinal(branchId){
+    const b = findBranch(branchId);
+    document.getElementById('final-branch-title').textContent = 'ВЕТКА '+toRoman(b.order)+' · '+b.title;
+    document.getElementById('final-tokens').textContent = '💠 '+state.branches[b.id].hintsLeft;
+    document.getElementById('final-feedback').className = 'feedback';
+    document.getElementById('final-feedback').innerHTML = '';
+    document.getElementById('final-hint-box').className = 'hint-box';
+    document.getElementById('final-hint-box').innerHTML = '';
+    this._finalBranch = b;
+    this._finalPool = b.puzzles.map(p=>p.reward);
+    this._finalSeq = [];
+    renderFinalUI();
+    document.getElementById('final-check-btn').onclick = ()=> Quest.checkFinal(b);
+    document.getElementById('final-clear-btn').onclick = ()=>{ this._finalPool = b.puzzles.map(p=>p.reward); this._finalSeq=[]; renderFinalUI(); };
+    document.getElementById('final-hint-btn').onclick = ()=> Quest.useFinalHint(b);
+    this._finalHintIndex = state['finalHint_'+b.id] || 0;
+    updateFinalHintButton(b);
+    Nav.go('final');
+  },
+
+  useFinalHint(b){
+    const key = 'finalHint_'+b.id;
+    const used = state[key] || 0;
+    if(used >= b.finalHints.length){ toast('ПОДСКАЗКИ ИСЧЕРПАНЫ'); return; }
+    if(state.branches[b.id].hintsLeft <= 0){ toast('ANALYSIS TOKENS ИСЧЕРПАНЫ'); return; }
+    state[key] = used+1;
+    state.branches[b.id].hintsLeft--;
+    state.totalHintsUsed++;
+    saveState();
+    const box = document.getElementById('final-hint-box');
+    box.classList.add('show');
+    box.innerHTML += (box.innerHTML?'<br><br>':'') + 'ПОДСКАЗКА '+(used+1)+': '+escapeHtml(b.finalHints[used]);
+    document.getElementById('final-tokens').textContent = '💠 '+state.branches[b.id].hintsLeft;
+    updateFinalHintButton(b);
+  },
+
+  checkFinal(b){
+    const seq = this._finalSeq;
+    if(seq.length !== b.finalCodeOrder.length){ toast('ИСПОЛЬЗУЙ ВСЕ СИМВОЛЫ'); return; }
+    const ok = seq.every((v,i)=>v===b.finalCodeOrder[i]);
+    const fb = document.getElementById('final-feedback');
+    if(ok){
+      Audio_.unlock();
+      state.branches[b.id].completed = true;
+      const beforeLvl = levelInfo(state.xp).level;
+      const xpGain = FINAL_XP[b.order] || 30;
+      state.xp = (state.xp||0) + xpGain;
+      const afterLvl = levelInfo(state.xp).level;
+      if(state.branches[b.id].mistakes===0 && !state.achievements.NO_MISTAKES){
+        state.achievements.NO_MISTAKES = true; toast('ДОСТИЖЕНИЕ: БЕЗ ОШИБОК');
+      }
+      const nextBranch = DATA.branches.find(x=>x.order===b.order+1);
+      let unlockAt = null;
+      if(nextBranch){
+        unlockAt = nextUnlockTimestamp(Date.now());
+        state.branches[nextBranch.id].unlockAt = unlockAt;
+        state.branches[nextBranch.id].unlocked = false;
+      }
+      const allDone = DATA.branches.every(x=>state.branches[x.id].completed);
+      if(allDone && state.totalHintsUsed<=2 && !state.achievements.PARANOID){
+        state.achievements.PARANOID = true; toast('ДОСТИЖЕНИЕ: ПАРАНОИК');
+      }
+      if(allDone && !state.achievements.COMPLETIONIST){
+        state.achievements.COMPLETIONIST = true; toast('ДОСТИЖЕНИЕ: РАССЛЕДОВАНИЕ ЗАВЕРШЕНО');
+      }
+      checkLevelAchievements(afterLvl);
+      saveState();
+      fb.className = 'feedback show ok';
+      fb.innerHTML = 'SEQUENCE VERIFIED\n█████████████ 100%\nARCHIVE DECRYPTED — NEW DATA FOUND'
+        + `<div class="reward-xp" style="margin-top:8px;">+${xpGain} XP БОНУС ЗА ПРОТОКОЛ</div>`;
+      if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 400); }
+      setTimeout(()=>{
+        if(nextBranch){ UI.showUnlock('ПРОТОКОЛ ЗАКРЫТ', 'ВЕТКА '+toRoman(nextBranch.order)+' «'+nextBranch.title+'» БУДЕТ ОТКРЫТА '+formatMsk(unlockAt)+'.'); }
+        else { UI.showUnlock('РАССЛЕДОВАНИЕ ЗАВЕРШЕНО', 'Все известные ветки архива раскрыты. Дальнейшие данные — CLASSIFIED.'); }
+      }, 700);
+    } else {
+      Audio_.bad(); glitchFlash();
+      fb.className = 'feedback show bad';
+      fb.innerHTML = 'ACCESS DENIED\nTHE ARCHIVE REJECTS THIS SEQUENCE.\nВЫ СОБРАЛИ СИМВОЛЫ. НО НЕ ПОНЯЛИ ИХ.';
+    }
+  }
+};
+
+function renderOrderUI(){
+  const pool = document.getElementById('order-pool');
+  const seq = document.getElementById('order-seq');
+  pool.innerHTML = ''; seq.innerHTML = '';
+  Quest._orderPool.forEach((item, i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = item;
+    chip.onclick = ()=>{
+      Audio_.tap();
+      Quest._orderSeq.push(item);
+      Quest._orderPool.splice(i,1);
+      renderOrderUI();
+    };
+    pool.appendChild(chip);
+  });
+  Quest._orderSeq.forEach((item, i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = (i+1)+'. '+item;
+    chip.onclick = ()=>{
+      Audio_.tap();
+      Quest._orderPool.push(item);
+      Quest._orderSeq.splice(i,1);
+      renderOrderUI();
+    };
+    seq.appendChild(chip);
+  });
+}
+
+function renderFinalUI(){
+  const pool = document.getElementById('final-pool');
+  const seq = document.getElementById('final-seq');
+  pool.innerHTML = ''; seq.innerHTML = '';
+  Quest._finalPool.forEach((val, i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip symbol';
+    chip.textContent = val;
+    chip.onclick = ()=>{
+      Audio_.tap();
+      Quest._finalSeq.push(val);
+      Quest._finalPool.splice(i,1);
+      renderFinalUI();
+    };
+    pool.appendChild(chip);
+  });
+  Quest._finalSeq.forEach((val, i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip symbol';
+    chip.textContent = val;
+    chip.onclick = ()=>{
+      Audio_.tap();
+      Quest._finalPool.push(val);
+      Quest._finalSeq.splice(i,1);
+      renderFinalUI();
+    };
+    seq.appendChild(chip);
+  });
+}
+
+function updateHintButton(p,b){
+  const used = state.hintsUsedByPuzzle[p.id] || 0;
+  const btn = document.getElementById('puzzle-hint-btn');
+  const solved = !!state.solvedPuzzles[p.id];
+  btn.disabled = solved || used>=p.hints.length || state.branches[b.id].hintsLeft<=0;
+  btn.textContent = 'ПОДСКАЗКА ('+used+'/'+p.hints.length+')';
+}
+function updateFinalHintButton(b){
+  const used = state['finalHint_'+b.id] || 0;
+  const btn = document.getElementById('final-hint-btn');
+  btn.disabled = used>=b.finalHints.length || state.branches[b.id].hintsLeft<=0;
+  btn.textContent = 'ПОДСКАЗКА ('+used+'/'+b.finalHints.length+')';
+}
+
+function showFeedback(ok, text, p, withReward, xpGain){
+  const fb = document.getElementById('puzzle-feedback');
+  fb.className = 'feedback show '+(ok?'ok':'bad');
+  let html = escapeHtml(text).replace(/\n/g,'<br>');
+  if(withReward){
+    html += `<div class="reward-chip">${p.reward}</div>`;
+    if(xpGain){ html += `<div class="reward-xp">+${xpGain} XP</div>`; }
+    html += `<div style="margin-top:6px; color:var(--text-dim); font-size:11px;">${escapeHtml(p.lore||'')}</div>`;
+  }
+  fb.innerHTML = html;
+}
+
+/* ---------------- BOOT SEQUENCE ---------------- */
+const BOOT_LINES = [
+  'CONNECTION ESTABLISHED...',
+  'UNKNOWN ARCHIVE DETECTED.',
+  'LAST ASYLUM DATABASE.',
+  'ACCESS LEVEL: RESTRICTED.'
+];
+function runBoot(){
+  const el = document.getElementById('boot-lines');
+  el.innerHTML = '';
+  let i = 0;
+  function next(){
+    if(i>=BOOT_LINES.length){
+      document.getElementById('boot-start').classList.add('show');
+      return;
+    }
+    const line = document.createElement('span');
+    line.className = 'ln';
+    line.innerHTML = BOOT_LINES[i] + '<span class="cursor-blink">&nbsp;</span>';
+    el.appendChild(line);
+    requestAnimationFrame(()=> line.classList.add('show'));
+    i++;
+    setTimeout(next, 650);
+  }
+  setTimeout(next, 400);
+}
+
+/* ---------------- GAME BOOTSTRAP ---------------- */
+const Game = {
+  init(){
+    loadState();
+    Game.ensureRole();
+    runBoot();
+
+    document.getElementById('boot-start').onclick = ()=>{
+      Audio_.tap();
+      if(state.registered){ Nav.go('hub'); }
+      else { Nav.go('reg'); }
+    };
+
+    // easter egg: tap boot glyph 5 times
+    let eggEl = document.getElementById('boot-glyph-click');
+    eggEl.onclick = ()=>{
+      state.eggClicks++;
+      if(state.eggClicks>=5 && !state.eggFound){
+        state.eggFound = true;
+        if(!state.achievements.NOT_TRUST_EYES){ state.achievements.NOT_TRUST_EYES = true; }
+        document.getElementById('egg-text').classList.add('show');
+        Audio_.unlock();
+      }
+      saveState();
+    };
+
+    document.getElementById('avatar-file-input').addEventListener('change', Avatar.onFile);
+    Avatar.renderAll();
+
+    document.getElementById('reg-name').addEventListener('input', updateRegPreview);
+    document.getElementById('reg-alliance').addEventListener('input', updateRegPreview);
+    document.getElementById('reg-submit').onclick = ()=>{
+      const server = ServerPicker.selected;
+      const name = document.getElementById('reg-name').value.trim();
+      const alliance = document.getElementById('reg-alliance').value.trim().toUpperCase();
+      if(!server){ toast('ВЫБЕРИ НОМЕР СЕРВЕРА'); return; }
+      if(!name){ toast('ВВЕДИ ПОЗЫВНОЙ'); return; }
+      state.server = 'SERVER #'+server;
+      state.name = name;
+      state.allianceTag = alliance;
+      state.registered = true;
+      state.startTime = state.startTime || Date.now();
+      Game.ensureRole();
+      if(alliance && !state.achievements.ALLY){ state.achievements.ALLY = true; }
+      saveState();
+      Audio_.unlock();
+      RoleUI.showReveal();
+    };
+
+    document.getElementById('sound-toggle').onclick = ()=>{
+      state.soundOn = !state.soundOn;
+      saveState();
+      document.getElementById('sound-toggle').classList.toggle('on', state.soundOn);
+      if(state.soundOn){ Audio_.ok(); }
+    };
+
+    document.getElementById('reset-btn').onclick = ()=> UI.openOverlay('overlay-confirm');
+
+    document.getElementById('settings-alliance').addEventListener('change', (e)=>{
+      state.allianceTag = e.target.value.trim().toUpperCase().slice(0,5);
+      e.target.value = state.allianceTag;
+      let newAlly = false;
+      if(state.allianceTag && !state.achievements.ALLY){ state.achievements.ALLY = true; newAlly = true; }
+      saveState();
+      if(newAlly){ toast('ДОСТИЖЕНИЕ: СОЮЗНИК · ТЕГ АЛЬЯНСА ОБНОВЛЁН'); }
+      else { toast(state.allianceTag ? 'ТЕГ АЛЬЯНСА ОБНОВЛЁН' : 'ТЕГ АЛЬЯНСА УДАЛЁН'); }
+    });
+
+    setInterval(()=>{
+      if(Nav.current==='hub'){ UI.renderHub(); }
+    }, 30000);
+
+    if(state.registered){
+      Nav.go('hub');
+    }
+  },
+  ensureRole(){
+    // Role-assignment safety check: if a profile exists but somehow has no role
+    // (e.g. an older save, or an interrupted registration), grant one silently now.
+    if(state.registered && !state.role){
+      state.role = pickRole();
+      saveState();
+    }
+  },
+  resetProgress(){
+    localStorage.removeItem(SAVE_KEY);
+    state = defaultState();
+    UI.closeOverlay();
+    ServerPicker.selected = null;
+    const srvBtn = document.getElementById('reg-server-btn');
+    srvBtn.textContent = 'ВЫБРАТЬ СЕРВЕР (1–300)';
+    srvBtn.classList.remove('chosen');
+    document.getElementById('reg-name').value='';
+    document.getElementById('reg-alliance').value='';
+    document.getElementById('reg-preview').style.display='none';
+    document.getElementById('egg-text').classList.remove('show');
+    ChatUI.seeded = false;
+    Avatar.renderAll();
+    Nav.go('boot');
+    runBoot();
+  }
+};
+
+function updateRegPreview(){
+  const server = ServerPicker.selected;
+  const name = document.getElementById('reg-name').value.trim();
+  const alliance = document.getElementById('reg-alliance').value.trim();
+  const pv = document.getElementById('reg-preview');
+  if(server || name){
+    pv.style.display = 'block';
+    document.getElementById('pv-server').textContent = server ? ('SERVER #'+server) : 'SERVER #___';
+    document.getElementById('pv-name').textContent = name || 'SURVIVOR NAME';
+    const allianceRow = document.getElementById('pv-alliance-row');
+    if(alliance){ allianceRow.style.display = 'flex'; document.getElementById('pv-alliance').textContent = '['+alliance.toUpperCase()+']'; }
+    else { allianceRow.style.display = 'none'; }
+  } else {
+    pv.style.display = 'none';
+  }
+}
+
+Game.init();
+</script>
+</body>
+</html>
