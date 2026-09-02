@@ -351,10 +351,10 @@ p{line-height:1.55; color:var(--text); margin:0;}
   padding-bottom: var(--safe-bottom);
 }
 .nav-item{
-  flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:11px 4px 9px; cursor:pointer;
-  color:var(--text-dim); font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; border:none; background:none;
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 2px 8px; cursor:pointer;
+  color:var(--text-dim); font-family:var(--mono); font-size:8.5px; letter-spacing:.03em; border:none; background:none;
 }
-.nav-item svg{width:19px; height:19px; stroke:var(--text-dim); fill:none;}
+.nav-item svg{width:18px; height:18px; stroke:var(--text-dim); fill:none;}
 .nav-item.active{color:var(--accent);}
 .nav-item.active svg{stroke:var(--accent); filter:drop-shadow(0 0 4px var(--accent-glow));}
 
@@ -526,6 +526,123 @@ p{line-height:1.55; color:var(--text); margin:0;}
 
 /* ---------- REWARD XP ---------- */
 .reward-xp{margin-top:6px; font-family:var(--mono); font-size:11.5px; color:var(--amber);}
+
+/* ================= HEROES ================= */
+.hero-card{
+  display:flex; gap:13px; align-items:center; padding:14px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:6px; margin-bottom:10px; cursor:pointer; position:relative;
+}
+.hero-card.locked{opacity:.55;}
+.hero-portrait{
+  width:56px; height:56px; min-width:56px; border-radius:8px; background:linear-gradient(160deg, var(--accent-dim), #0a0d0b);
+  border:1px solid var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--accent);
+}
+.hero-card.locked .hero-portrait{background:#12140f; border-color:var(--panel-edge); color:var(--text-dim); filter:grayscale(1);}
+.hero-card .hc-body{flex:1; min-width:0;}
+.hero-card .hc-name{font-family:var(--mono); font-size:14px; color:var(--text);}
+.hero-card .hc-role{font-size:10.5px; color:var(--text-dim); margin-top:1px;}
+.hero-card .hc-stars{color:var(--amber); font-size:11px; margin-top:3px; letter-spacing:1px;}
+.hero-card .hc-power{text-align:right; font-family:var(--mono);}
+.hero-card .hc-power .val{font-size:16px; color:var(--accent);}
+.hero-card .hc-power .lbl{font-size:8.5px; color:var(--text-dim); letter-spacing:.1em;}
+.hero-card .hc-lock-tag{font-family:var(--mono); font-size:10px; color:var(--danger); text-align:right;}
+
+.hero-hero-header{text-align:center; padding:18px 0 8px;}
+.hero-hero-portrait{
+  width:96px; height:96px; margin:0 auto 12px; border-radius:14px; background:linear-gradient(160deg, var(--accent-dim), #0a0d0b);
+  border:1px solid var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:42px; color:var(--accent);
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.hero-power-big{font-family:var(--mono); font-size:28px; color:var(--accent); margin-top:6px;}
+.hero-power-lbl{font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.15em;}
+
+.stat-line{display:flex; justify-content:space-between; align-items:center; padding:9px 2px; border-bottom:1px solid var(--panel-edge);}
+.stat-line:last-child{border-bottom:none;}
+.stat-line .sl-label{font-size:12.5px; color:var(--text-dim); display:flex; align-items:center; gap:8px;}
+.stat-line .sl-value{font-family:var(--mono); font-size:13px; color:var(--text);}
+.stat-line .sl-delta{color:var(--accent); font-size:10.5px; margin-left:6px;}
+
+.gear-slot{
+  display:flex; align-items:center; gap:12px; padding:12px 13px; border:1px solid var(--panel-edge);
+  background:var(--panel); border-radius:5px; margin-bottom:9px;
+}
+.gear-icon{width:38px; height:38px; min-width:38px; border-radius:6px; background:#12140f; border:1px solid var(--panel-edge); display:flex; align-items:center; justify-content:center; font-size:17px;}
+.gear-slot .gs-body{flex:1;}
+.gear-slot .gs-name{font-size:12.5px; color:var(--text);}
+.gear-slot .gs-level{font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+.gear-slot .gs-btn{
+  font-family:var(--mono); font-size:10px; padding:8px 10px; border-radius:3px; border:1px solid var(--accent-dim);
+  color:var(--accent); background:none; cursor:pointer; white-space:nowrap;
+}
+.gear-slot .gs-btn[disabled]{opacity:.35; border-color:var(--panel-edge); color:var(--text-dim);}
+
+.upgrade-panel{border:1px solid var(--panel-edge); background:var(--panel); border-radius:6px; padding:16px; margin-top:12px;}
+.upgrade-panel .up-title{font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:.1em; margin-bottom:10px;}
+.upgrade-cost-row{display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:12px; margin-bottom:12px;}
+.upgrade-cost-row .cost-ok{color:var(--accent);}
+.upgrade-cost-row .cost-bad{color:var(--danger);}
+
+.warehouse-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.wh-box{border:1px solid var(--panel-edge); background:var(--panel); border-radius:6px; padding:14px;}
+.wh-box .wh-icon{font-size:20px;}
+.wh-box .wh-val{font-family:var(--mono); font-size:19px; color:var(--accent); margin-top:6px;}
+.wh-box .wh-lbl{font-family:var(--mono); font-size:9.5px; color:var(--text-dim); letter-spacing:.08em; margin-top:2px;}
+.wh-hero-row{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border:1px solid var(--panel-edge); background:var(--panel); border-radius:5px; margin-bottom:8px;}
+.wh-hero-row .whr-name{font-size:12.5px; color:var(--text);}
+.wh-hero-row .whr-vals{font-family:var(--mono); font-size:11px; color:var(--text-dim); text-align:right;}
+
+/* ---------- PVP BATTLE ---------- */
+.vs-panel{display:flex; align-items:center; gap:10px; margin:14px 0;}
+.vs-side{flex:1; text-align:center; border:1px solid var(--panel-edge); background:var(--panel); border-radius:6px; padding:14px 8px;}
+.vs-side.enemy{border-color:rgba(255,59,59,.35);}
+.vs-side .vs-portrait{width:56px; height:56px; margin:0 auto 8px; border-radius:8px; background:linear-gradient(160deg, var(--accent-dim), #0a0d0b); border:1px solid var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--accent);}
+.vs-side.enemy .vs-portrait{background:linear-gradient(160deg, rgba(255,59,59,.25), #0a0d0b); border-color:rgba(255,59,59,.4); color:var(--danger);}
+.vs-side .vs-name{font-family:var(--mono); font-size:12.5px; color:var(--text);}
+.vs-side .vs-bot-tag{font-family:var(--mono); font-size:9px; color:var(--danger); letter-spacing:.1em;}
+.vs-side .vs-power{font-family:var(--mono); font-size:16px; color:var(--accent); margin-top:6px;}
+.vs-mid{font-family:var(--mono); font-size:13px; color:var(--text-dim);}
+
+.hp-bar-wrap{margin-bottom:14px;}
+.hp-bar-head{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; margin-bottom:5px;}
+.hp-bar-head .hp-name{color:var(--text);}
+.hp-bar-head .hp-nums{color:var(--text-dim);}
+.hp-track{height:12px; border-radius:3px; background:#101512; border:1px solid var(--panel-edge); overflow:hidden;}
+.hp-fill{height:100%; background:linear-gradient(90deg, #1f7a3d, var(--accent)); transition:width .35s ease;}
+.hp-fill.enemy{background:linear-gradient(90deg, #7a1f1f, var(--danger));}
+.hp-fill.low{background:linear-gradient(90deg, #7a3d1f, var(--amber));}
+.ult-track{height:6px; border-radius:2px; background:#101512; border:1px solid var(--panel-edge); overflow:hidden; margin-top:6px;}
+.ult-fill{height:100%; background:linear-gradient(90deg, #4a3a12, var(--amber)); transition:width .35s ease;}
+.battle-effects{display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;}
+.effect-tag{font-family:var(--mono); font-size:9px; padding:3px 7px; border-radius:3px; border:1px solid var(--panel-edge); color:var(--text-dim);}
+.effect-tag.shield{color:var(--accent); border-color:var(--accent-dim);}
+.effect-tag.buff{color:var(--amber); border-color:rgba(231,178,58,.4);}
+
+.battle-log{
+  height:120px; overflow-y:auto; border:1px solid var(--panel-edge); background:#070a08; border-radius:5px;
+  padding:10px 12px; font-family:var(--mono); font-size:11px; color:var(--text-dim); line-height:1.6; margin:12px 0;
+}
+.battle-log .lg-me{color:var(--accent);}
+.battle-log .lg-enemy{color:var(--danger);}
+.battle-log .lg-crit{color:var(--amber);}
+
+.battle-actions{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px;}
+.battle-action-btn{
+  font-family:var(--mono); font-size:11.5px; padding:14px 8px; border-radius:5px; border:1px solid var(--panel-edge);
+  background:var(--panel); color:var(--text); cursor:pointer; text-align:center; letter-spacing:.03em;
+}
+.battle-action-btn .bab-sub{display:block; font-size:9px; color:var(--text-dim); margin-top:3px;}
+.battle-action-btn.ult{border-color:var(--amber); color:var(--amber);}
+.battle-action-btn.ult.ready{background:rgba(231,178,58,.1); box-shadow:0 0 10px rgba(231,178,58,.25);}
+.battle-action-btn[disabled]{opacity:.3; pointer-events:none;}
+
+.battle-result-panel{text-align:center; padding:20px 10px;}
+.battle-result-panel .br-title{font-family:var(--mono); font-size:24px; letter-spacing:.1em;}
+.battle-result-panel .br-title.win{color:var(--accent);}
+.battle-result-panel .br-title.lose{color:var(--danger);}
+.br-stats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:16px 0; text-align:left;}
+.br-stats .brs-box{border:1px solid var(--panel-edge); background:var(--panel); border-radius:5px; padding:10px 12px;}
+.br-stats .brs-box .v{font-family:var(--mono); font-size:15px; color:var(--text);}
+.br-stats .brs-box .l{font-family:var(--mono); font-size:8.5px; color:var(--text-dim); letter-spacing:.08em; margin-top:2px;}
 </style>
 </head>
 <body>
@@ -635,7 +752,11 @@ p{line-height:1.55; color:var(--text); margin:0;}
       </div>
       <div class="locked-module" style="opacity:1;" onclick="Nav.go('pvp')">
         <div class="lm-icon">⚔</div>
-        <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag" style="color:var(--accent);">РЕЙТИНГ ДОСТУПЕН</span></div>
+        <div class="lm-body"><div class="lm-title">PVP АРЕНА</div><span class="lm-tag" style="color:var(--accent);">БОИ С БОТАМИ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('warehouse')">
+        <div class="lm-icon">📦</div>
+        <div class="lm-body"><div class="lm-title">СКЛАД</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
       </div>
       <div style="height:8px;"></div>
     </div>
@@ -737,7 +858,10 @@ p{line-height:1.55; color:var(--text); margin:0;}
     <div class="scroll">
       <div class="eyebrow">PVP ARENA · BETA</div>
       <h2 style="font-size:19px; margin-top:6px;">PVP АРЕНА</h2>
-      <p class="dim" style="margin-top:8px; font-size:12px;">Прямые бои между выжившими всё ещё в разработке. Пока доступны только рейтинг и прототип поиска противника.</p>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Локальный тестовый режим: бои проходят против ботов, подстроенных под силу твоего героя. Поиск реальных игроков появится позже.</p>
+
+      <div class="section-title">МОЙ БОЕВОЙ ГЕРОЙ</div>
+      <div id="pvp-my-hero"></div>
 
       <div class="section-title">РЕЙТИНГ PVP</div>
       <div id="pvp-rating-list"></div>
@@ -746,6 +870,74 @@ p{line-height:1.55; color:var(--text); margin:0;}
       <p class="dim mono" id="pvp-search-counter" style="font-size:10.5px;">ПОПЫТОК СЕГОДНЯ: 0/5</p>
       <button class="btn solid" id="pvp-find-btn" style="margin-top:10px;">НАЙТИ ПРОТИВНИКА</button>
       <div id="pvp-search-results"></div>
+    </div>
+  </div>
+
+  <!-- PVP COMPARE (pre-battle) -->
+  <div class="screen" id="screen-pvpcompare">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('pvp')">‹ PVP</button>
+      <div class="topbar-title">СРАВНЕНИЕ ПЕРЕД БОЕМ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="vs-panel" id="pvpcompare-panel"></div>
+      <div class="section-title">ХАРАКТЕРИСТИКИ</div>
+      <div id="pvpcompare-stats"></div>
+      <button class="btn solid" id="pvpcompare-fight-btn" style="margin-top:16px;">В БОЙ</button>
+    </div>
+  </div>
+
+  <!-- PVP BATTLE -->
+  <div class="screen" id="screen-battle">
+    <div class="topbar">
+      <div class="topbar-title" id="battle-title">БОЙ</div>
+      <div class="tokens-label" id="battle-turn-counter">ХОД 0/30</div>
+    </div>
+    <div class="scroll">
+      <div id="battle-hp-player"></div>
+      <div id="battle-hp-enemy"></div>
+      <div class="battle-log" id="battle-log"></div>
+      <div id="battle-actions-wrap"></div>
+      <div id="battle-result-wrap"></div>
+    </div>
+  </div>
+
+  <!-- HEROES LIST -->
+  <div class="screen" id="screen-heroes">
+    <div class="scroll">
+      <div class="hub-header">
+        <div class="eyebrow">ROSTER · LAST ASYLUM</div>
+        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">ГЕРОИ</h2>
+      </div>
+      <div id="heroes-list"></div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <!-- HERO DETAIL -->
+  <div class="screen" id="screen-herodetail">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('heroes')">‹ ГЕРОИ</button>
+      <div class="topbar-title" id="herodetail-title">—</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="herodetail-scroll"></div>
+  </div>
+
+  <!-- WAREHOUSE -->
+  <div class="screen" id="screen-warehouse">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">СКЛАД</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">STORAGE · RESOURCES</div>
+      <h2 style="font-size:19px; margin-top:6px; margin-bottom:14px;">СКЛАД</h2>
+      <div class="warehouse-grid" id="warehouse-main"></div>
+      <div class="section-title">ДЕТАЛИ И ПАЗЛЫ ГЕРОЕВ</div>
+      <div id="warehouse-heroes"></div>
     </div>
   </div>
 
@@ -905,6 +1097,10 @@ p{line-height:1.55; color:var(--text); margin:0;}
     <button class="nav-item" data-tab="quest" onclick="Nav.tab('quest')">
       <svg viewBox="0 0 24 24" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
       КВЕСТ
+    </button>
+    <button class="nav-item" data-tab="heroes" onclick="Nav.tab('heroes')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2 4 4.5.6-3.2 3.2.8 4.5L12 13.2 8 15.3l.8-4.5L5.5 7.6 10 7z"/><path d="M6 21c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+      ГЕРОИ
     </button>
     <button class="nav-item" data-tab="symbols" onclick="Nav.tab('symbols')">
       <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>
@@ -1302,7 +1498,8 @@ const DATA = {
     {id:'SOCIAL', title:'НЕ ОДИН', desc:'Добавить первого друга в список.'},
     {id:'CHATTY', title:'НА СВЯЗИ', desc:'Отправить первое сообщение в мировом чате.'},
     {id:'NIGHT_OWL', title:'НОЧНОЙ ДОЗОР', desc:'Решить загадку глубокой ночью (00:00–05:00).'},
-    {id:'BRAGGART', title:'ХВАСТУН', desc:'Поделиться достижением в мировом чате.'}
+    {id:'BRAGGART', title:'ХВАСТУН', desc:'Поделиться достижением в мировом чате.'},
+    {id:'FIRST_PVP_WIN', title:'ПЕРВАЯ КРОВЬ', desc:'Одержать первую победу в PvP.'}
   ]
 };
 
@@ -1385,6 +1582,166 @@ function checkLevelAchievements(level){
   }
 }
 
+/* ================= HERO / PvP SYSTEM ================= */
+const HEROES = [
+  {
+    id:'craig', name:'КРЕЙГ', role:'ШТУРМОВИК', rarity:'ЭПИЧЕСКИЙ', starter:true,
+    base:{hp:850, atk:180, def:70, spd:98, critChance:15, critDamage:150, accuracy:92, penetration:8, evasion:5, resist:5},
+    ability:{name:'ЯРОСТЬ', desc:'Наносит 150% урона от атаки. Если здоровье противника ниже 40%, урон увеличивается ещё на 30%.', cooldown:3}
+  },
+  {
+    id:'leon', name:'ЛЕОН', role:'ТАНК', rarity:'ЭПИЧЕСКИЙ', starter:false,
+    base:{hp:1400, atk:90, def:150, spd:85, critChance:10, critDamage:130, accuracy:88, penetration:4, evasion:3, resist:15},
+    ability:{name:'БРОНЯ', desc:'Получает щит на 2 хода, поглощающий 35% следующего входящего урона.', cooldown:4}
+  },
+  {
+    id:'sofia', name:'СОФИЯ', role:'ПОДДЕРЖКА', rarity:'РЕДКИЙ', starter:false,
+    base:{hp:950, atk:110, def:90, spd:100, critChance:12, critDamage:140, accuracy:90, penetration:5, evasion:8, resist:10},
+    ability:{name:'СТИМУЛЯТОР', desc:'Восстанавливает 20% максимального здоровья и увеличивает скорость на 15% на 2 хода.', cooldown:4}
+  },
+  {
+    id:'mark', name:'МАРК', role:'УБИЙЦА', rarity:'ЭПИЧЕСКИЙ', starter:false,
+    base:{hp:700, atk:200, def:60, spd:115, critChance:28, critDamage:170, accuracy:95, penetration:12, evasion:12, resist:4},
+    ability:{name:'ТОЧНЫЙ ВЫСТРЕЛ', desc:'Следующая атака получает +50% критического урона. При критическом попадании дополнительно наносит 10% максимального здоровья противника.', cooldown:3}
+  }
+];
+const HERO_MAX_LEVEL = 60;
+const HERO_MAX_STAR = 10;
+const GEAR_SLOTS = ['weapon','gloves','vest','pants'];
+const GEAR_MAX_LEVEL = 20;
+const GEAR_NAMES = {weapon:'ОРУЖИЕ', gloves:'ПЕРЧАТКИ', vest:'ЖИЛЕТ', pants:'ШТАНЫ'};
+const UNLOCK_PARTS_REQUIRED = 100;
+const STAR_PUZZLES_REQUIRED = 20;
+const PVP_TIERS = [
+  {min:0, name:'БРОНЗА'}, {min:1000, name:'СЕРЕБРО'}, {min:1200, name:'ЗОЛОТО'},
+  {min:1450, name:'ПЛАТИНА'}, {min:1700, name:'АЛМАЗ'}, {min:2000, name:'МАСТЕР'}
+];
+function pvpTierName(rating){
+  let t = PVP_TIERS[0];
+  for(const tier of PVP_TIERS){ if(rating>=tier.min) t = tier; }
+  return t.name;
+}
+function findHeroDef(id){ return HEROES.find(h=>h.id===id); }
+function heroState(id){ return state.heroes[id]; }
+function gearBonus(slot, level){
+  // Flat bonuses per gear level, per spec's stat groupings for each slot.
+  if(level<=0) return {};
+  switch(slot){
+    case 'weapon': return {atk: level*8, critChance: level*0.3, penetration: level*0.4};
+    case 'gloves': return {accuracy: level*0.3, critChance: level*0.2, spd: level*0.5};
+    case 'vest':   return {hp: level*15, def: level*4, resist: level*0.3};
+    case 'pants':  return {hp: level*15, def: level*4, evasion: level*0.3};
+    default: return {};
+  }
+}
+function computeHeroStats(heroId){
+  const def = findHeroDef(heroId);
+  const hs = heroState(heroId);
+  if(!def || !hs) return null;
+  const levelMult = 1 + (hs.level-1)*0.035;
+  const starMult = 1 + (hs.yellowStars + hs.redStars)*0.08;
+  const stats = {};
+  ['hp','atk','def','spd','critChance','critDamage','accuracy','penetration','evasion','resist'].forEach(k=>{
+    stats[k] = def.base[k] * levelMult * starMult;
+  });
+  GEAR_SLOTS.forEach(slot=>{
+    const g = hs.gear[slot];
+    const bonus = gearBonus(slot, g.level);
+    Object.keys(bonus).forEach(k=>{ stats[k] = (stats[k]||0) + bonus[k]; });
+  });
+  stats.critChance = Math.min(100, stats.critChance);
+  stats.accuracy = Math.min(100, stats.accuracy);
+  stats.evasion = Math.min(90, stats.evasion);
+  stats.resist = Math.min(90, stats.resist);
+  stats.penetration = Math.min(100, stats.penetration);
+  stats.critDamage = Math.min(500, stats.critDamage);
+  Object.keys(stats).forEach(k=>{ stats[k] = Math.round(stats[k]*100)/100; });
+  stats.hp = Math.round(stats.hp);
+  stats.atk = Math.round(stats.atk);
+  stats.def = Math.round(stats.def);
+  stats.spd = Math.round(stats.spd);
+  return stats;
+}
+function powerFromStats(s){
+  return Math.round(s.hp*0.4 + s.atk*6 + s.def*5 + s.spd*10
+    + s.critChance*15 + Math.max(0,(s.critDamage-100))*3
+    + s.accuracy*5 + s.penetration*10 + s.evasion*8 + s.resist*8);
+}
+function computeHeroPower(heroId){
+  const s = computeHeroStats(heroId);
+  return s ? powerFromStats(s) : 0;
+}
+const BOT_NAMES = ['VALENTIN','KIRA','NOMAD','ASH','ROOK','VESNA','GRIM','TALON','ORCA','LYRA','DRIFT','SABLE','HAZE','RUIN','FENN'];
+function generateBotOpponent(playerPower){
+  const def = HEROES[Math.floor(Math.random()*HEROES.length)];
+  const variance = 0.85 + Math.random()*0.3;
+  const targetPower = Math.max(400, Math.round(playerPower*variance));
+  const basePower = powerFromStats(def.base);
+  const scale = targetPower/basePower;
+  const stats = {};
+  Object.keys(def.base).forEach(k=>{ stats[k] = def.base[k]*scale; });
+  stats.critChance = Math.min(100, stats.critChance);
+  stats.accuracy = Math.min(100, stats.accuracy);
+  stats.evasion = Math.min(90, stats.evasion);
+  stats.resist = Math.min(90, stats.resist);
+  stats.critDamage = Math.min(500, stats.critDamage);
+  stats.penetration = Math.min(100, stats.penetration);
+  Object.keys(stats).forEach(k=>{ stats[k] = Math.round(stats[k]); });
+  return {
+    id: 'bot_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    name: BOT_NAMES[Math.floor(Math.random()*BOT_NAMES.length)],
+    heroDefId: def.id, heroName: def.name, role: def.role,
+    stats, power: powerFromStats(stats), ability: def.ability
+  };
+}
+function levelUpCost(level){ return Math.round(100 * level * (1 + level*0.05)); }
+function gearUpgradeCost(slot, level){
+  const mat = slot==='weapon' ? 'weaponMats' : 'armorMats';
+  return { [mat]: 50*(level+1), universalMats: 10*(level+1) };
+}
+function initHeroSystem(){
+  if(state.heroesInit) return;
+  state.warehouse = { credits:50000, weaponMats:600, armorMats:600, universalMats:400 };
+  state.heroes = {};
+  HEROES.forEach(def=>{
+    state.heroes[def.id] = {
+      owned: !!def.starter,
+      level: def.starter ? 1 : 0,
+      yellowStars: def.starter ? 1 : 0,
+      redStars: 0,
+      parts: def.starter ? UNLOCK_PARTS_REQUIRED : 25,
+      yellowPuzzles: def.starter ? 60 : 0,
+      redPuzzles: 0,
+      gear: { weapon:{level:0}, gloves:{level:0}, vest:{level:0}, pants:{level:0} }
+    };
+  });
+  state.heroesInit = true;
+  saveState();
+}
+function firstLockedHeroId(){
+  const h = HEROES.find(def=>!state.heroes[def.id].owned);
+  return h ? h.id : null;
+}
+function grantHeroReward({credits=0, weaponMats=0, armorMats=0, universalMats=0, parts=0, puzzles=0, toOwnedHero=false} = {}){
+  if(!state.heroesInit) initHeroSystem();
+  const w = state.warehouse;
+  w.credits += credits; w.weaponMats += weaponMats; w.armorMats += armorMats; w.universalMats += universalMats;
+  if(parts>0){
+    const targetId = firstLockedHeroId();
+    if(targetId){ state.heroes[targetId].parts = Math.min(UNLOCK_PARTS_REQUIRED, state.heroes[targetId].parts + parts); }
+  }
+  if(puzzles>0 && toOwnedHero){
+    const ownedIds = HEROES.filter(d=>state.heroes[d.id].owned).map(d=>d.id);
+    if(ownedIds.length){
+      const pick = ownedIds[Math.floor(Math.random()*ownedIds.length)];
+      const hs = state.heroes[pick];
+      if(hs.yellowStars<5) hs.yellowPuzzles += puzzles; else hs.redPuzzles += puzzles;
+    }
+  }
+  saveState();
+}
+
+
 /* ---------------- STATE ---------------- */
 const SAVE_KEY = 'lastAsylum_save_v1';
 let state = null;
@@ -1402,7 +1759,8 @@ function defaultState(){
     role:null, roleTasksDone:{}, sideTasksDone:{},
     pvpStats:{wins:0, losses:0, rating:1000},
     pvpSearch:{date:null, used:0},
-    friends:[], chatMessages:[]
+    friends:[], chatMessages:[],
+    heroesInit:false, heroes:{}, warehouse:{credits:0, weaponMats:0, armorMats:0, universalMats:0}
   };
 }
 
@@ -1535,7 +1893,7 @@ const Nav = {
     document.getElementById('screen-'+screenId).classList.add('active');
     this.current = screenId;
     const nav = document.getElementById('bottomnav');
-    const tabScreens = ['hub','quest','symbols','profile'];
+    const tabScreens = ['hub','quest','heroes','symbols','profile'];
     nav.style.display = (state.registered && tabScreens.includes(screenId)) ? 'flex' : 'none';
     document.querySelectorAll('.nav-item').forEach(el=>{
       el.classList.toggle('active', el.dataset.tab===screenId);
@@ -1550,6 +1908,8 @@ const Nav = {
     if(screenId==='friends') FriendsUI.render();
     if(screenId==='chat') ChatUI.render();
     if(screenId==='pvp') PvpUI.render();
+    if(screenId==='heroes') HeroUI.renderList();
+    if(screenId==='warehouse') HeroUI.renderWarehouse();
   },
   tab(id){ this.go(id); }
 };
@@ -1811,8 +2171,9 @@ const RoleUI = {
     if(!wasDone){
       state.roleTasksDone[taskId] = true;
       state.xp = (state.xp||0) + 5;
+      grantHeroReward({credits:100});
       Audio_.ok();
-      toast('ЗАДАНИЕ РОЛИ ВЫПОЛНЕНО +5 XP');
+      toast('ЗАДАНИЕ РОЛИ ВЫПОЛНЕНО +5 XP · +100 кредитов');
     } else {
       delete state.roleTasksDone[taskId];
     }
@@ -1930,10 +2291,60 @@ const AllianceUI = {
 /* ---------------- PVP (rating shell + throttled opponent search, no real matches yet) ---------------- */
 const PvpUI = {
   render(){
+    this.renderMyHero();
     this.renderRating();
     this.renderSearchState();
     document.getElementById('pvp-find-btn').onclick = ()=> this.findOpponent();
-    document.getElementById('pvp-search-results').innerHTML = '';
+    this.renderSearchResults();
+  },
+  getBattleHeroId(){
+    const ownedIds = HEROES.filter(d=>state.heroes[d.id] && state.heroes[d.id].owned).map(d=>d.id);
+    if(!ownedIds.length) return null;
+    if(state.pvpSelectedHero && ownedIds.includes(state.pvpSelectedHero)) return state.pvpSelectedHero;
+    // default: strongest owned hero
+    let best = ownedIds[0];
+    ownedIds.forEach(id=>{ if(computeHeroPower(id) > computeHeroPower(best)) best = id; });
+    state.pvpSelectedHero = best;
+    return best;
+  },
+  renderMyHero(){
+    const wrap = document.getElementById('pvp-my-hero');
+    wrap.innerHTML = '';
+    if(!state.heroesInit) initHeroSystem();
+    const ownedIds = HEROES.filter(d=>state.heroes[d.id].owned).map(d=>d.id);
+    if(!ownedIds.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:14px 0;">У ТЕБЯ ПОКА НЕТ НИ ОДНОГО ГЕРОЯ.</p>';
+      return;
+    }
+    const currentId = this.getBattleHeroId();
+    const def = findHeroDef(currentId);
+    const power = computeHeroPower(currentId);
+    const hs = heroState(currentId);
+    const card = document.createElement('div');
+    card.className = 'hero-card';
+    card.innerHTML = `
+      <div class="hero-portrait">⚔</div>
+      <div class="hc-body">
+        <div class="hc-name">${def.name}</div>
+        <div class="hc-role">${def.role} · Ур. ${hs.level}</div>
+        <div class="hc-stars">${'★'.repeat(Math.min(5,hs.yellowStars||0))}${hs.redStars>0 ? ' <span style=\"color:var(--danger)\">'+'★'.repeat(hs.redStars)+'</span>' : ''}</div>
+      </div>
+      <div class="hc-power"><div class="val">${power}</div><div class="lbl">СИЛА</div></div>`;
+    card.onclick = ()=> HeroUI.openDetail(currentId);
+    wrap.appendChild(card);
+    if(ownedIds.length>1){
+      const switcher = document.createElement('div');
+      switcher.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;';
+      ownedIds.forEach(id=>{
+        const b = document.createElement('button');
+        b.className = 'btn ghost';
+        b.style.cssText = 'width:auto; padding:8px 12px; font-size:11px;';
+        b.textContent = findHeroDef(id).name + (id===currentId?' ✓':'');
+        b.onclick = ()=>{ state.pvpSelectedHero = id; saveState(); this.render(); };
+        switcher.appendChild(b);
+      });
+      wrap.appendChild(switcher);
+    }
   },
   renderRating(){
     const wrap = document.getElementById('pvp-rating-list');
@@ -1942,7 +2353,6 @@ const PvpUI = {
       wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:16px 0;">НЕТ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ.</p>';
       return;
     }
-    const li = levelInfo(state.xp);
     const pvp = state.pvpStats || {wins:0, losses:0, rating:1000};
     const row = document.createElement('div');
     row.className = 'rating-row';
@@ -1953,7 +2363,7 @@ const PvpUI = {
         <div class="rk-name" style="cursor:pointer;">${escapeHtml(state.name||'—')}</div>
         <div class="rk-server">${escapeHtml(state.server||'—')}${state.allianceTag ? ' · ['+escapeHtml(state.allianceTag)+']' : ''}</div>
       </div>
-      <div class="rk-stats"><div class="lvl">LVL ${li.level}</div><div>${pvp.rating} MMR</div></div>`;
+      <div class="rk-stats"><div class="lvl">${pvpTierName(pvp.rating)}</div><div>${pvp.rating} MMR</div></div>`;
     row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
     wrap.appendChild(row);
     const note = document.createElement('p');
@@ -1965,9 +2375,10 @@ const PvpUI = {
   getSearchState(){
     const today = mskDateKey(Date.now());
     if(!state.pvpSearch || state.pvpSearch.date !== today){
-      state.pvpSearch = {date:today, used:0};
+      state.pvpSearch = {date:today, used:0, results:[]};
       saveState();
     }
+    if(!state.pvpSearch.results) state.pvpSearch.results = [];
     return state.pvpSearch;
   },
   renderSearchState(){
@@ -1979,14 +2390,307 @@ const PvpUI = {
   findOpponent(){
     const s = this.getSearchState();
     if(s.used>=5){ toast('ЛИМИТ ПОИСКА НА СЕГОДНЯ ИСЧЕРПАН. ПОПРОБУЙ ЗАВТРА.'); return; }
+    const heroId = this.getBattleHeroId();
+    if(!heroId){ toast('СНАЧАЛА ОТКРОЙ ХОТЯ БЫ ОДНОГО ГЕРОЯ'); return; }
     s.used++;
+    const myPower = computeHeroPower(heroId);
+    s.results = [];
+    for(let i=0;i<5;i++){ s.results.push(generateBotOpponent(myPower)); }
     saveState();
     Audio_.tap();
     this.renderSearchState();
+    this.renderSearchResults();
+  },
+  renderSearchResults(){
+    const s = this.getSearchState();
     const results = document.getElementById('pvp-search-results');
-    results.innerHTML = `<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 14px; border:1px dashed var(--panel-edge); border-radius:4px; margin-top:14px; line-height:1.6;">🔍 ИГРОКИ НЕ НАЙДЕНЫ.<br>PVP-РЕЖИМ В РАННЕМ ТЕСТИРОВАНИИ — БАЗА ПРОТИВНИКОВ ПОКА ПУСТА.</p>`;
+    results.innerHTML = '';
+    if(!s.results || !s.results.length){
+      results.innerHTML = '<p class="dim" style="font-size:11.5px; text-align:center; padding:16px 0;">НАЖМИ «НАЙТИ ПРОТИВНИКА», ЧТОБЫ УВИДЕТЬ СПИСОК.</p>';
+      return;
+    }
+    const note = document.createElement('p');
+    note.className = 'dim';
+    note.style.cssText = 'font-size:10.5px; margin:10px 0;';
+    note.textContent = 'Реальные игроки пока недоступны — показаны боты, подобранные по силе твоего героя.';
+    results.appendChild(note);
+    s.results.forEach(bot=>{
+      const row = document.createElement('div');
+      row.className = 'hero-card';
+      row.innerHTML = `
+        <div class="hero-portrait">⚔</div>
+        <div class="hc-body">
+          <div class="hc-name">${escapeHtml(bot.name)} <span style="color:var(--danger); font-size:9px;">BOT</span></div>
+          <div class="hc-role">${escapeHtml(bot.heroName)} · ${escapeHtml(bot.role)}</div>
+        </div>
+        <div class="hc-power"><div class="val">${bot.power}</div><div class="lbl">СИЛА</div></div>`;
+      row.onclick = ()=> PvpUI.openCompare(bot);
+      results.appendChild(row);
+    });
+  },
+  openCompare(bot){
+    const heroId = this.getBattleHeroId();
+    if(!heroId){ toast('СНАЧАЛА ОТКРОЙ ХОТЯ БЫ ОДНОГО ГЕРОЯ'); return; }
+    this._compareBot = bot;
+    const def = findHeroDef(heroId);
+    const myStats = computeHeroStats(heroId);
+    const myPower = powerFromStats(myStats);
+    const panel = document.getElementById('pvpcompare-panel');
+    panel.innerHTML = `
+      <div class="vs-side">
+        <div class="vs-portrait">⚔</div>
+        <div class="vs-name">${def.name}</div>
+        <div class="vs-power">${myPower}</div>
+      </div>
+      <div class="vs-mid">VS</div>
+      <div class="vs-side enemy">
+        <div class="vs-portrait">⚔</div>
+        <div class="vs-name">${escapeHtml(bot.name)}</div>
+        <div class="vs-bot-tag">BOT · ${escapeHtml(bot.heroName)}</div>
+        <div class="vs-power">${bot.power}</div>
+      </div>`;
+    const statsWrap = document.getElementById('pvpcompare-stats');
+    const rows = [['HP','hp'],['УРОН','atk'],['ЗАЩИТА','def'],['СКОРОСТЬ','spd']];
+    statsWrap.innerHTML = rows.map(([label,key])=>`
+      <div class="stat-line">
+        <div class="sl-label">${label}</div>
+        <div class="sl-value"><span class="accent">${Math.round(myStats[key])}</span> &nbsp;/&nbsp; <span style="color:var(--danger);">${Math.round(bot.stats[key])}</span></div>
+      </div>`).join('');
+    document.getElementById('pvpcompare-fight-btn').onclick = ()=> Battle.start(heroId, bot);
+    Nav.go('pvpcompare');
   }
 };
+
+/* ================= HEROES UI ================= */
+const HeroUI = {
+  renderList(){
+    if(!state.heroesInit) initHeroSystem();
+    const wrap = document.getElementById('heroes-list');
+    wrap.innerHTML = '';
+    HEROES.forEach(def=>{
+      const hs = heroState(def.id);
+      const card = document.createElement('div');
+      if(hs.owned){
+        const power = computeHeroPower(def.id);
+        card.className = 'hero-card';
+        card.innerHTML = `
+          <div class="hero-portrait">⚔</div>
+          <div class="hc-body">
+            <div class="hc-name">${def.name}</div>
+            <div class="hc-role">${def.role} · ${def.rarity}</div>
+            <div class="hc-stars">${'★'.repeat(Math.min(5,hs.yellowStars))}${hs.redStars>0?' <span style="color:var(--danger)">'+'★'.repeat(hs.redStars)+'</span>':''} &nbsp;УР.${hs.level}</div>
+          </div>
+          <div class="hc-power"><div class="val">${power}</div><div class="lbl">СИЛА</div></div>`;
+        card.onclick = ()=> HeroUI.openDetail(def.id);
+      } else {
+        card.className = 'hero-card locked';
+        card.innerHTML = `
+          <div class="hero-portrait">🔒</div>
+          <div class="hc-body">
+            <div class="hc-name">${def.name}</div>
+            <div class="hc-role">${def.role} · ${def.rarity}</div>
+            <div class="hc-stars" style="color:var(--text-dim);">ДЕТАЛИ ${hs.parts}/${UNLOCK_PARTS_REQUIRED}</div>
+          </div>
+          <div class="hc-lock-tag">🔒 ЗАБЛОКИРОВАН</div>`;
+        card.onclick = ()=> HeroUI.openDetail(def.id);
+      }
+      wrap.appendChild(card);
+    });
+  },
+
+  openDetail(heroId){
+    const def = findHeroDef(heroId);
+    const hs = heroState(heroId);
+    document.getElementById('herodetail-title').textContent = def.name;
+    const scroll = document.getElementById('herodetail-scroll');
+
+    if(!hs.owned){
+      scroll.innerHTML = `
+        <div class="hero-hero-header">
+          <div class="hero-hero-portrait" style="filter:grayscale(1); opacity:.6;">🔒</div>
+          <h2 style="font-family:var(--mono); font-size:19px;">${def.name}</h2>
+          <div class="dim" style="font-size:12px; margin-top:4px;">${def.role} · ${def.rarity}</div>
+        </div>
+        <div class="doc-panel"><div class="q-text">Этот герой ещё не открыт. Собери детали героя, выполняя ветки расследования и задания из игры, чтобы разблокировать его.</div></div>
+        <div class="upgrade-panel">
+          <div class="up-title">РАЗБЛОКИРОВКА</div>
+          <div class="upgrade-cost-row"><span>Детали героя</span><span class="${hs.parts>=UNLOCK_PARTS_REQUIRED?'cost-ok':'cost-bad'}">${hs.parts} / ${UNLOCK_PARTS_REQUIRED}</span></div>
+          <div class="progress-track" style="margin-bottom:14px;"><div class="progress-fill" style="width:${Math.min(100, hs.parts/UNLOCK_PARTS_REQUIRED*100)}%"></div></div>
+          <button class="btn solid" id="hero-unlock-btn" ${hs.parts>=UNLOCK_PARTS_REQUIRED?'':'disabled'}>РАЗБЛОКИРОВАТЬ ГЕРОЯ</button>
+        </div>`;
+      const unlockBtn = document.getElementById('hero-unlock-btn');
+      if(unlockBtn) unlockBtn.onclick = ()=> HeroUI.unlockHero(heroId);
+      Nav.go('herodetail');
+      return;
+    }
+
+    const stats = computeHeroStats(heroId);
+    const power = powerFromStats(stats);
+    scroll.innerHTML = `
+      <div class="hero-hero-header">
+        <div class="hero-hero-portrait">⚔</div>
+        <h2 style="font-family:var(--mono); font-size:19px;">${def.name}</h2>
+        <div class="dim" style="font-size:12px; margin-top:2px;">${def.role} · ${def.rarity}</div>
+        <div class="hero-power-big">${power}</div>
+        <div class="hero-power-lbl">СИЛА</div>
+      </div>
+
+      <div class="section-title">ХАРАКТЕРИСТИКИ</div>
+      <div class="doc-panel">
+        ${statLine('❤️ Здоровье', Math.round(stats.hp))}
+        ${statLine('⚔️ Урон', Math.round(stats.atk))}
+        ${statLine('🛡 Защита', Math.round(stats.def))}
+        ${statLine('⚡ Скорость', Math.round(stats.spd))}
+        ${statLine('🎯 Точность', stats.accuracy.toFixed(1)+'%')}
+        ${statLine('💥 Крит. шанс', stats.critChance.toFixed(1)+'%')}
+        ${statLine('💥 Крит. урон', stats.critDamage.toFixed(0)+'%')}
+        ${statLine('Пробивание', stats.penetration.toFixed(1)+'%')}
+        ${statLine('Уклонение', stats.evasion.toFixed(1)+'%')}
+        ${statLine('Сопротивление', stats.resist.toFixed(1)+'%', true)}
+      </div>
+
+      <div class="section-title">УРОВЕНЬ</div>
+      <div class="upgrade-panel">
+        <div class="up-title">УРОВЕНЬ ${hs.level} / ${HERO_MAX_LEVEL}</div>
+        <div class="upgrade-cost-row"><span>Стоимость (кредиты)</span><span id="level-cost" class="${hs.level<HERO_MAX_LEVEL && state.warehouse.credits>=levelUpCost(hs.level) ? 'cost-ok':'cost-bad'}">${hs.level<HERO_MAX_LEVEL ? levelUpCost(hs.level) : '—'}</span></div>
+        <button class="btn solid" id="hero-levelup-btn" ${hs.level>=HERO_MAX_LEVEL || state.warehouse.credits<levelUpCost(hs.level) ? 'disabled':''}>${hs.level>=HERO_MAX_LEVEL?'МАКСИМАЛЬНЫЙ УРОВЕНЬ':'ПОВЫСИТЬ УРОВЕНЬ'}</button>
+      </div>
+
+      <div class="section-title">ЗВЁЗДЫ</div>
+      <div class="upgrade-panel">
+        <div class="up-title">${'★'.repeat(Math.min(5,hs.yellowStars))}${'☆'.repeat(5-Math.min(5,hs.yellowStars))} ${hs.yellowStars>=5 ? ' '+'★'.repeat(hs.redStars)+'☆'.repeat(5-hs.redStars) : ''}</div>
+        <div class="upgrade-cost-row"><span>${hs.yellowStars<5?'Жёлтые пазлы':'Красные пазлы'}</span><span class="${(hs.yellowStars<5? hs.yellowPuzzles : hs.redPuzzles)>=STAR_PUZZLES_REQUIRED?'cost-ok':'cost-bad'}">${hs.yellowStars<5?hs.yellowPuzzles:hs.redPuzzles} / ${STAR_PUZZLES_REQUIRED}</span></div>
+        <button class="btn solid" id="hero-starup-btn" ${(hs.yellowStars+hs.redStars)>=HERO_MAX_STAR || (hs.yellowStars<5?hs.yellowPuzzles:hs.redPuzzles)<STAR_PUZZLES_REQUIRED ? 'disabled':''}>${(hs.yellowStars+hs.redStars)>=HERO_MAX_STAR?'МАКСИМУМ ЗВЁЗД':'ПОВЫСИТЬ ЗВЕЗДУ'}</button>
+      </div>
+
+      <div class="section-title">ЭКИПИРОВКА</div>
+      <div id="hero-gear-list"></div>
+
+      <div class="section-title">СПОСОБНОСТЬ</div>
+      <div class="doc-panel">
+        <div class="q-text"><strong style="color:var(--accent);">${def.ability.name}</strong><br><br>${def.ability.desc}<br><br><span class="dim">Перезарядка: ${def.ability.cooldown} хода</span></div>
+      </div>
+      <div style="height:10px;"></div>
+    `;
+
+    document.getElementById('hero-levelup-btn').onclick = ()=> HeroUI.levelUp(heroId);
+    document.getElementById('hero-starup-btn').onclick = ()=> HeroUI.starUp(heroId);
+    this.renderGearList(heroId);
+    Nav.go('herodetail');
+  },
+
+  renderGearList(heroId){
+    const hs = heroState(heroId);
+    const wrap = document.getElementById('hero-gear-list');
+    wrap.innerHTML = '';
+    const icons = {weapon:'🔫', gloves:'🧤', vest:'🦺', pants:'👖'};
+    GEAR_SLOTS.forEach(slot=>{
+      const g = hs.gear[slot];
+      const cost = gearUpgradeCost(slot, g.level);
+      const matKey = slot==='weapon' ? 'weaponMats' : 'armorMats';
+      const canAfford = g.level<GEAR_MAX_LEVEL && state.warehouse[matKey]>=cost[matKey] && state.warehouse.universalMats>=cost.universalMats;
+      const row = document.createElement('div');
+      row.className = 'gear-slot';
+      row.innerHTML = `
+        <div class="gear-icon">${icons[slot]}</div>
+        <div class="gs-body">
+          <div class="gs-name">${GEAR_NAMES[slot]} · УР.${g.level}</div>
+          <div class="gs-level">${g.level<GEAR_MAX_LEVEL ? (matKey==='weaponMats'?'Материалы оружия':'Материалы брони')+' '+cost[matKey]+' · Универсальные '+cost.universalMats : 'МАКСИМУМ'}</div>
+        </div>
+        <button class="gs-btn" ${g.level>=GEAR_MAX_LEVEL || !canAfford ? 'disabled':''}>${g.level>=GEAR_MAX_LEVEL?'МАКС':'УЛУЧШИТЬ'}</button>`;
+      row.querySelector('.gs-btn').onclick = ()=> HeroUI.upgradeGear(heroId, slot);
+      wrap.appendChild(row);
+    });
+  },
+
+  unlockHero(heroId){
+    const hs = heroState(heroId);
+    if(hs.parts<UNLOCK_PARTS_REQUIRED) return;
+    hs.owned = true;
+    hs.level = 1;
+    hs.yellowStars = 1;
+    saveState();
+    Audio_.unlock();
+    toast('ГЕРОЙ РАЗБЛОКИРОВАН: '+findHeroDef(heroId).name);
+    HeroUI.openDetail(heroId);
+  },
+
+  levelUp(heroId){
+    const hs = heroState(heroId);
+    if(hs.level>=HERO_MAX_LEVEL) return;
+    const cost = levelUpCost(hs.level);
+    if(state.warehouse.credits<cost){ toast('НЕДОСТАТОЧНО КРЕДИТОВ'); return; }
+    const beforePower = computeHeroPower(heroId);
+    state.warehouse.credits -= cost;
+    hs.level++;
+    const afterPower = computeHeroPower(heroId);
+    saveState();
+    Audio_.ok();
+    toast('УРОВЕНЬ ПОВЫШЕН: '+hs.level+' · СИЛА '+beforePower+' → '+afterPower);
+    HeroUI.openDetail(heroId);
+  },
+
+  starUp(heroId){
+    const hs = heroState(heroId);
+    if((hs.yellowStars+hs.redStars)>=HERO_MAX_STAR) return;
+    const usingRed = hs.yellowStars>=5;
+    const pool = usingRed ? 'redPuzzles' : 'yellowPuzzles';
+    if(hs[pool]<STAR_PUZZLES_REQUIRED){ toast('НЕДОСТАТОЧНО ПАЗЛОВ'); return; }
+    const beforePower = computeHeroPower(heroId);
+    hs[pool] -= STAR_PUZZLES_REQUIRED;
+    if(usingRed) hs.redStars++; else hs.yellowStars++;
+    const afterPower = computeHeroPower(heroId);
+    saveState();
+    Audio_.ok();
+    toast('ЗВЕЗДА ПОВЫШЕНА · СИЛА '+beforePower+' → '+afterPower);
+    HeroUI.openDetail(heroId);
+  },
+
+  upgradeGear(heroId, slot){
+    const hs = heroState(heroId);
+    const g = hs.gear[slot];
+    if(g.level>=GEAR_MAX_LEVEL) return;
+    const cost = gearUpgradeCost(slot, g.level);
+    const matKey = slot==='weapon' ? 'weaponMats' : 'armorMats';
+    if(state.warehouse[matKey]<cost[matKey] || state.warehouse.universalMats<cost.universalMats){ toast('НЕДОСТАТОЧНО МАТЕРИАЛОВ'); return; }
+    const beforePower = computeHeroPower(heroId);
+    state.warehouse[matKey] -= cost[matKey];
+    state.warehouse.universalMats -= cost.universalMats;
+    g.level++;
+    const afterPower = computeHeroPower(heroId);
+    saveState();
+    Audio_.ok();
+    toast(GEAR_NAMES[slot]+' УЛУЧШЕН · СИЛА '+beforePower+' → '+afterPower);
+    HeroUI.openDetail(heroId);
+  },
+
+  renderWarehouse(){
+    if(!state.heroesInit) initHeroSystem();
+    const w = state.warehouse;
+    const main = document.getElementById('warehouse-main');
+    main.innerHTML = `
+      <div class="wh-box"><div class="wh-icon">💰</div><div class="wh-val">${w.credits.toLocaleString('ru-RU')}</div><div class="wh-lbl">КРЕДИТЫ</div></div>
+      <div class="wh-box"><div class="wh-icon">🔫</div><div class="wh-val">${w.weaponMats.toLocaleString('ru-RU')}</div><div class="wh-lbl">МАТЕРИАЛЫ ОРУЖИЯ</div></div>
+      <div class="wh-box"><div class="wh-icon">🛡</div><div class="wh-val">${w.armorMats.toLocaleString('ru-RU')}</div><div class="wh-lbl">МАТЕРИАЛЫ БРОНИ</div></div>
+      <div class="wh-box"><div class="wh-icon">⚙️</div><div class="wh-val">${w.universalMats.toLocaleString('ru-RU')}</div><div class="wh-lbl">УНИВЕРСАЛЬНЫЕ</div></div>`;
+    const heroesWrap = document.getElementById('warehouse-heroes');
+    heroesWrap.innerHTML = '';
+    HEROES.forEach(def=>{
+      const hs = heroState(def.id);
+      const row = document.createElement('div');
+      row.className = 'wh-hero-row';
+      if(hs.owned){
+        row.innerHTML = `<div class="whr-name">${def.name}</div><div class="whr-vals">Жёлт. пазлы ${hs.yellowPuzzles} · Красн. ${hs.redPuzzles}</div>`;
+      } else {
+        row.innerHTML = `<div class="whr-name">${def.name} 🔒</div><div class="whr-vals">Детали ${hs.parts}/${UNLOCK_PARTS_REQUIRED}</div>`;
+      }
+      heroesWrap.appendChild(row);
+    });
+  }
+};
+function statLine(label, value, last){
+  return `<div class="stat-line"${last?' style="border-bottom:none;"':''}><div class="sl-label">${label}</div><div class="sl-value">${value}</div></div>`;
+}
 
 /* ---------------- FRIENDS ---------------- */
 const FriendsUI = {
@@ -2037,6 +2741,278 @@ const FriendsUI = {
       row.querySelector('.fr-remove').onclick = ()=> FriendsUI.removeFriend(f.id);
       wrap.appendChild(row);
     });
+  }
+};
+
+/* ================= BATTLE ENGINE (turn-based PvP, local bots) ================= */
+const HERO_ABILITY_FN = {
+  craig(attacker, defender){
+    const lowHp = defender.hp/defender.maxHp < 0.4;
+    const res = Battle.performAttack(attacker, defender, {dmgMult: lowHp ? 1.95 : 1.5});
+    return Object.assign(res, {text: lowHp ? 'усиленная АТАКА по ослабленному противнику' : 'мощная атака'});
+  },
+  leon(attacker){
+    attacker.shieldAbsorb = 0.35; attacker.shieldTurns = 2;
+    attacker.ultimate = Math.min(100, attacker.ultimate+6);
+    return {hit:true, selfBuff:true, text:'получает щит, поглощающий 35% урona на 2 хода'};
+  },
+  sofia(attacker){
+    const heal = Math.round(attacker.maxHp*0.2);
+    attacker.hp = Math.min(attacker.maxHp, attacker.hp+heal);
+    attacker.spdBuffTurns = 2; attacker.spdBuffBonus = Math.round(attacker.spd*0.15);
+    attacker.ultimate = Math.min(100, attacker.ultimate+6);
+    return {hit:true, selfBuff:true, heal, text:'восстанавливает '+heal+' HP и ускоряется'};
+  },
+  mark(attacker, defender){
+    const res = Battle.performAttack(attacker, defender, {dmgMult:1, criticalBonus:50, critTrueDamagePct:0.10});
+    return Object.assign(res, {text:'точный выстрел'});
+  }
+};
+const Battle = {
+  state:null,
+
+  buildFighter(name, statsSrc, ability, isBot, extra){
+    return Object.assign({
+      name, isBot: !!isBot,
+      maxHp: Math.round(statsSrc.hp), hp: Math.round(statsSrc.hp),
+      atk: statsSrc.atk, def: statsSrc.def, spd: statsSrc.spd,
+      critChance: statsSrc.critChance, critDamage: statsSrc.critDamage,
+      accuracy: statsSrc.accuracy, penetration: statsSrc.penetration,
+      evasion: statsSrc.evasion, resist: statsSrc.resist,
+      ability, cooldown:0, shieldAbsorb:0, shieldTurns:0, defending:false,
+      spdBuffTurns:0, spdBuffBonus:0, ultimate:0,
+      dmgDealt:0, dmgTaken:0, crits:0, abilitiesUsed:0
+    }, extra||{});
+  },
+
+  effectiveSpd(f){ return f.spd + (f.spdBuffTurns>0 ? f.spdBuffBonus : 0); },
+
+  start(heroId, bot){
+    const def = findHeroDef(heroId);
+    const stats = computeHeroStats(heroId);
+    const player = this.buildFighter(def.name, stats, def.ability, false, {heroId, defId:def.id});
+    const enemy = this.buildFighter(bot.name+' (BOT)', bot.stats, bot.ability, true, {defId:bot.heroDefId});
+
+    this.state = {
+      player, enemy,
+      turn: this.effectiveSpd(player) >= this.effectiveSpd(enemy) ? 'player' : 'enemy',
+      actionsTaken:0, maxActions:30, finished:false, log:[], startTime:Date.now()
+    };
+    document.getElementById('battle-title').textContent = def.name+' VS '+bot.name;
+    this.log((this.state.turn==='player'?player.name:enemy.name)+' действует первым (выше скорость).', 'sys');
+    this.render();
+    Nav.go('battle');
+    if(this.state.turn==='enemy'){ setTimeout(()=>this.botTurn(), 800); }
+  },
+
+  log(text, cls){
+    this.state.log.push({text, cls: cls||''});
+    const box = document.getElementById('battle-log');
+    if(box){
+      box.innerHTML = this.state.log.map(l=>`<div class="${l.cls==='me'?'lg-me':l.cls==='enemy'?'lg-enemy':l.cls==='crit'?'lg-crit':''}">${escapeHtml(l.text)}</div>`).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+  },
+
+  rollHit(attacker, defender){
+    const chance = Math.min(99, Math.max(40, 95 - defender.evasion*0.6 + (attacker.accuracy-90)*0.5));
+    return Math.random()*100 < chance;
+  },
+  rollCrit(attacker){ return Math.random()*100 < attacker.critChance; },
+
+  performAttack(attacker, defender, opts){
+    opts = opts||{};
+    if(!(opts.guaranteedHit) && !this.rollHit(attacker, defender)){ return {hit:false}; }
+    const isCrit = this.rollCrit(attacker);
+    const effPen = Math.min(0.95, attacker.penetration/100 + (opts.penBonus||0));
+    const effectiveDef = defender.def*(1-effPen);
+    let raw = Math.max(1, attacker.atk*(opts.dmgMult!==undefined?opts.dmgMult:1) - effectiveDef*0.5);
+    if(isCrit){ raw = raw * ((attacker.critDamage+(opts.criticalBonus||0))/100); }
+    if(defender.defending){ raw = raw*0.5; defender.defending = false; }
+    if(defender.shieldTurns>0 && defender.shieldAbsorb>0){ raw = raw*(1-defender.shieldAbsorb); }
+    let dmg = Math.max(1, Math.round(raw));
+    if(isCrit && opts.critTrueDamagePct){ dmg += Math.round(defender.maxHp*opts.critTrueDamagePct); }
+    defender.hp = Math.max(0, defender.hp-dmg);
+    attacker.dmgDealt += dmg; defender.dmgTaken += dmg;
+    if(isCrit) attacker.crits++;
+    attacker.ultimate = Math.min(100, attacker.ultimate+8);
+    defender.ultimate = Math.min(100, defender.ultimate+4);
+    return {hit:true, dmg, crit:isCrit};
+  },
+
+  tick(actor){
+    if(actor.cooldown>0) actor.cooldown--;
+    if(actor.shieldTurns>0){ actor.shieldTurns--; if(actor.shieldTurns<=0) actor.shieldAbsorb=0; }
+    if(actor.spdBuffTurns>0){ actor.spdBuffTurns--; if(actor.spdBuffTurns<=0) actor.spdBuffBonus=0; }
+  },
+
+  playerAction(type){
+    const s = this.state;
+    if(!s || s.finished || s.turn!=='player') return;
+    const p = s.player, e = s.enemy;
+    this.tick(p);
+    this.act(p, e, type, false);
+    s.actionsTaken++;
+    if(this.checkEnd()) return;
+    s.turn = 'enemy';
+    this.render();
+    setTimeout(()=>this.botTurn(), 900);
+  },
+
+  botTurn(){
+    const s = this.state;
+    if(!s || s.finished) return;
+    const p = s.player, e = s.enemy;
+    this.tick(e);
+    let type = 'attack';
+    if(e.ultimate>=100 && Math.random()<0.55){ type = 'ultimate'; }
+    else if(e.cooldown<=0 && Math.random()<0.6){ type = 'ability'; }
+    else if(e.hp/e.maxHp<0.3 && Math.random()<0.45){ type = 'defend'; }
+    this.act(e, p, type, true);
+    s.actionsTaken++;
+    if(this.checkEnd()) return;
+    s.turn = 'player';
+    this.render();
+  },
+
+  act(actor, target, type, isBot){
+    const s = this.state;
+    const nameTag = isBot ? 'enemy' : 'me';
+    if(type==='attack'){
+      const res = this.performAttack(actor, target, {});
+      if(!res.hit){ this.log(actor.name+' промахивается.', nameTag); }
+      else { this.log(actor.name+' атакует'+(res.crit?' КРИТИЧЕСКИ':'')+' — '+res.dmg+' урона.', res.crit?'crit':nameTag); }
+    } else if(type==='defend'){
+      actor.defending = true;
+      actor.ultimate = Math.min(100, actor.ultimate+5);
+      this.log(actor.name+' занимает оборонительную позицию.', nameTag);
+    } else if(type==='ability'){
+      if(actor.cooldown>0){ // fallback safety, shouldn't trigger from UI since button is disabled
+        const res = this.performAttack(actor, target, {});
+        this.log(actor.name+' атакует — '+ (res.hit? res.dmg+' урона.' : 'промах.'), nameTag);
+      } else {
+        const fn = HERO_ABILITY_FN[actor.defId];
+        const res = fn ? fn(actor, target) : this.performAttack(actor, target, {});
+        actor.cooldown = (actor.ability && actor.ability.cooldown) || 3;
+        actor.abilitiesUsed++;
+        if(res.hit===false){ this.log(actor.name+' использует '+(actor.ability?actor.ability.name:'способность')+', но промахивается.', nameTag); }
+        else { this.log(actor.name+' использует '+(actor.ability?actor.ability.name:'способность')+': '+(res.text||'')+(res.dmg?' — '+res.dmg+' урона.':'.'), res.crit?'crit':nameTag); }
+      }
+    } else if(type==='ultimate'){
+      if(actor.ultimate<100){
+        const res = this.performAttack(actor, target, {});
+        this.log(actor.name+' атакует — '+(res.hit?res.dmg+' урона.':'промах.'), nameTag);
+      } else {
+        actor.ultimate = 0;
+        const res = this.performAttack(actor, target, {dmgMult:2.5, penBonus:0.5});
+        this.log(actor.name+' использует УЛЬТИМАТИВНУЮ СПОСОБНОСТЬ — '+(res.hit? res.dmg+' урона.' : 'промах.'), 'crit');
+      }
+    }
+  },
+
+  checkEnd(){
+    const s = this.state;
+    if(s.player.hp<=0 || s.enemy.hp<=0){
+      this.finish(s.player.hp<=0 && s.enemy.hp<=0 ? 'draw' : (s.enemy.hp<=0 ? 'player' : 'enemy'));
+      return true;
+    }
+    if(s.actionsTaken>=s.maxActions){
+      const pPct = s.player.hp/s.player.maxHp, ePct = s.enemy.hp/s.enemy.maxHp;
+      this.finish(pPct===ePct ? 'draw' : (pPct>ePct?'player':'enemy'));
+      return true;
+    }
+    return false;
+  },
+
+  finish(winnerSide){
+    const s = this.state;
+    s.finished = true;
+    const won = winnerSide==='player';
+    const draw = winnerSide==='draw';
+    this.log(draw ? 'БОЙ ЗАВЕРШЁН — НИЧЬЯ ПО ИСТЕЧЕНИЮ ХОДОВ.' : (won?'ПОБЕДА!':'ПОРАЖЕНИЕ.'), 'sys');
+    this.render();
+
+    let ratingChange = 0;
+    if(!draw){
+      const pvp = state.pvpStats;
+      ratingChange = won ? (18+Math.floor(Math.random()*10)) : -(10+Math.floor(Math.random()*8));
+      pvp.rating = Math.max(0, pvp.rating + ratingChange);
+      if(won){ pvp.wins++; } else { pvp.losses++; }
+    }
+    let rewardCredits = 0, rewardMats = 0;
+    if(won){
+      rewardCredits = 300 + Math.floor(Math.random()*200);
+      rewardMats = 20;
+      grantHeroReward({credits:rewardCredits, universalMats:rewardMats, puzzles:5, toOwnedHero:true});
+      if(!state.achievements.FIRST_PVP_WIN){ state.achievements.FIRST_PVP_WIN = true; toast('ДОСТИЖЕНИЕ: ПЕРВАЯ КРОВЬ'); }
+    } else if(!draw){
+      rewardCredits = 80;
+      grantHeroReward({credits:rewardCredits});
+    }
+    saveState();
+
+    const timeSec = Math.round((Date.now()-s.startTime)/1000);
+    const wrap = document.getElementById('battle-result-wrap');
+    wrap.innerHTML = `
+      <div class="battle-result-panel">
+        <div class="br-title ${draw?'':(won?'win':'lose')}">${draw?'НИЧЬЯ':(won?'ПОБЕДА':'ПОРАЖЕНИЕ')}</div>
+        ${!draw ? `<div class="dim mono" style="font-size:12px; margin-top:6px;">РЕЙТИНГ ${ratingChange>0?'+':''}${ratingChange} → ${state.pvpStats.rating} (${pvpTierName(state.pvpStats.rating)})</div>` : ''}
+        <div class="br-stats">
+          <div class="brs-box"><div class="v">${s.player.dmgDealt}</div><div class="l">УРОН НАНЕСЁН</div></div>
+          <div class="brs-box"><div class="v">${s.player.dmgTaken}</div><div class="l">УРОН ПОЛУЧЕН</div></div>
+          <div class="brs-box"><div class="v">${s.player.crits}</div><div class="l">КРИТ. УДАРОВ</div></div>
+          <div class="brs-box"><div class="v">${s.player.abilitiesUsed}</div><div class="l">СПОСОБНОСТЕЙ ИСПОЛЬЗОВАНО</div></div>
+          <div class="brs-box"><div class="v">${timeSec}с</div><div class="l">ВРЕМЯ БОЯ</div></div>
+          <div class="brs-box"><div class="v">${rewardCredits}</div><div class="l">КРЕДИТЫ НАГРАДА</div></div>
+        </div>
+        <button class="btn solid" id="battle-finish-btn">ЗАВЕРШИТЬ</button>
+      </div>`;
+    document.getElementById('battle-finish-btn').onclick = ()=> Nav.go('pvp');
+    document.getElementById('battle-actions-wrap').innerHTML = '';
+  },
+
+  render(){
+    const s = this.state;
+    if(!s) return;
+    document.getElementById('battle-turn-counter').textContent = 'ХОД '+s.actionsTaken+'/'+s.maxActions;
+    document.getElementById('battle-hp-player').innerHTML = this.hpBlock(s.player);
+    document.getElementById('battle-hp-enemy').innerHTML = this.hpBlock(s.enemy);
+    if(!s.finished){
+      const p = s.player;
+      const isPlayerTurn = s.turn==='player';
+      const abilityReady = p.cooldown<=0;
+      const ultReady = p.ultimate>=100;
+      document.getElementById('battle-actions-wrap').innerHTML = `
+        <div class="dim mono" style="font-size:11px; text-align:center; margin:8px 0;">${isPlayerTurn?'ТВОЙ ХОД':'ХОД ПРОТИВНИКА...'}</div>
+        <div class="battle-actions">
+          <button class="battle-action-btn" id="act-attack" ${isPlayerTurn?'':'disabled'}>АТАКА</button>
+          <button class="battle-action-btn" id="act-ability" ${isPlayerTurn && abilityReady?'':'disabled'}>СПОСОБНОСТЬ${abilityReady?'':`<span class="bab-sub">${p.cooldown} х. до готовности</span>`}</button>
+          <button class="battle-action-btn" id="act-defend" ${isPlayerTurn?'':'disabled'}>ЗАЩИТА</button>
+          <button class="battle-action-btn ult ${ultReady?'ready':''}" id="act-ultimate" ${isPlayerTurn && ultReady?'':'disabled'}>УЛЬТИМАТИВНАЯ${ultReady?'':`<span class="bab-sub">${Math.round(p.ultimate)}%</span>`}</button>
+        </div>`;
+      if(isPlayerTurn){
+        document.getElementById('act-attack').onclick = ()=> this.playerAction('attack');
+        document.getElementById('act-ability').onclick = ()=> this.playerAction('ability');
+        document.getElementById('act-defend').onclick = ()=> this.playerAction('defend');
+        document.getElementById('act-ultimate').onclick = ()=> this.playerAction('ultimate');
+      }
+    }
+  },
+
+  hpBlock(f){
+    const pct = Math.max(0, Math.round((f.hp/f.maxHp)*100));
+    const fillClass = f.isBot ? 'enemy' : (pct<30?'low':'');
+    const effects = [];
+    if(f.shieldTurns>0) effects.push('<span class="effect-tag shield">🛡 ЩИТ '+f.shieldTurns+'х</span>');
+    if(f.spdBuffTurns>0) effects.push('<span class="effect-tag buff">⚡ УСКОРЕНИЕ '+f.spdBuffTurns+'х</span>');
+    if(f.defending) effects.push('<span class="effect-tag">🛡 ЗАЩИТА</span>');
+    return `
+      <div class="hp-bar-wrap">
+        <div class="hp-bar-head"><span class="hp-name">${escapeHtml(f.name)}${f.isBot?' <span style=\"color:var(--danger)\">BOT</span>':''}</span><span class="hp-nums">${f.hp} / ${f.maxHp} HP</span></div>
+        <div class="hp-track"><div class="hp-fill ${fillClass}" style="width:${pct}%"></div></div>
+        <div class="ult-track"><div class="ult-fill" style="width:${Math.round(f.ultimate)}%"></div></div>
+        ${effects.length ? '<div class="battle-effects">'+effects.join('')+'</div>' : ''}
+      </div>`;
   }
 };
 
@@ -2388,12 +3364,13 @@ const Quest = {
     if(!f.type.startsWith('image/')){ toast('ЗАГРУЗИ ФАЙЛ ИЗОБРАЖЕНИЯ (СКРИНШОТ)'); return; }
     state.sideTasksDone[t.id] = new Date().toISOString();
     state.xp = (state.xp||0) + SIDE_TASK_XP;
+    grantHeroReward({credits:250, weaponMats:8, armorMats:8, puzzles:4, toOwnedHero:true});
     saveState();
     Audio_.ok();
     const fb = document.getElementById('puzzle-feedback');
     fb.className = 'feedback show ok';
     fb.innerHTML = '✓ СКРИНШОТ ЗАГРУЖЕН<br>ЗАДАНИЕ АВТОМАТИЧЕСКИ ЗАСЧИТАНО<br><span style="color:var(--text-dim); font-size:10.5px;">(тестовый режим: ручная проверка модератором пока не требуется)</span>'
-      + `<div class="reward-xp" style="margin-top:8px;">+${SIDE_TASK_XP} XP</div>`;
+      + `<div class="reward-xp" style="margin-top:8px;">+${SIDE_TASK_XP} XP · +250 кредитов · +4 пазла герою</div>`;
     const uploadBtn = document.getElementById('task-upload-btn');
     if(uploadBtn) uploadBtn.style.display = 'none';
     Quest.setupNavRow(b);
@@ -2466,10 +3443,13 @@ const Quest = {
         state.achievements.COMPLETIONIST = true; toast('ДОСТИЖЕНИЕ: РАССЛЕДОВАНИЕ ЗАВЕРШЕНО');
       }
       checkLevelAchievements(afterLvl);
+      const heroCredits = 1200*b.order;
+      grantHeroReward({credits:heroCredits, universalMats:25, weaponMats:15, armorMats:15, parts:15, puzzles:12, toOwnedHero:true});
       saveState();
       fb.className = 'feedback show ok';
       fb.innerHTML = 'SEQUENCE VERIFIED\n█████████████ 100%\nARCHIVE DECRYPTED — NEW DATA FOUND'
-        + `<div class="reward-xp" style="margin-top:8px;">+${xpGain} XP БОНУС ЗА ПРОТОКОЛ</div>`;
+        + `<div class="reward-xp" style="margin-top:8px;">+${xpGain} XP БОНУС ЗА ПРОТОКОЛ</div>`
+        + `<div class="reward-xp">+${heroCredits} кредитов · +15 деталей герою · +12 пазлов</div>`;
       if(afterLvl>beforeLvl){ setTimeout(()=>toast('⬆ УРОВЕНЬ ПОВЫШЕН — LVL '+afterLvl), 400); }
       setTimeout(()=>{
         if(nextBranch){ UI.showUnlock('ПРОТОКОЛ ЗАКРЫТ', 'ВЕТКА '+toRoman(nextBranch.order)+' «'+nextBranch.title+'» БУДЕТ ОТКРЫТА '+formatMsk(unlockAt)+'.'); }
@@ -2601,6 +3581,7 @@ const Game = {
   init(){
     loadState();
     Game.ensureRole();
+    if(state.registered && !state.heroesInit){ initHeroSystem(); }
     runBoot();
 
     document.getElementById('boot-start').onclick = ()=>{
@@ -2639,6 +3620,7 @@ const Game = {
       state.registered = true;
       state.startTime = state.startTime || Date.now();
       Game.ensureRole();
+      initHeroSystem();
       if(alliance && !state.achievements.ALLY){ state.achievements.ALLY = true; }
       saveState();
       Audio_.unlock();
