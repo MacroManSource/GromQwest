@@ -1,72 +1,622 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Технические работы</title>
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            color: #222;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-        }
-
-        .container {
-            max-width: 600px;
-            padding: 40px 20px;
-        }
-
-        .icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            margin: 0 0 15px;
-            font-size: 32px;
-        }
-
-        p {
-            margin: 10px 0;
-            font-size: 18px;
-            line-height: 1.5;
-            color: #666;
-        }
-
-        .date {
-            margin-top: 25px;
-            font-weight: bold;
-            color: #222;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LAST ASYLUM: THE LOST PROTOCOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/style.css">
 </head>
-
 <body>
-    <div class="container">
-        <div class="icon">🔧</div>
+<div id="app">
 
-        <h1>Идут технические работы</h1>
+  <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">
+    <span id="conn-status-dot" style="color:var(--accent);">●</span> <span id="conn-status-text">ОНЛАЙН</span> · ⚠ BETA · ТЕСТОВАЯ ВЕРСИЯ
+  </div>
 
-        <p>
-            Сейчас мы проводим технические работы,
-            поэтому сервис временно недоступен.
-        </p>
+  <div id="screen-stack">
 
-        <p class="date">
-            Ориентировочное окончание работ: 07.09.2026
-        </p>
+  <!-- AUTH GATE (Supabase Auth: sign in / sign up) -->
+  <div class="screen active" id="screen-authgate">
+    <div class="scroll" style="display:flex; flex-direction:column; justify-content:center;">
+      <div class="eyebrow" style="text-align:center; display:block;">LAST ASYLUM DATABASE</div>
+      <h2 style="text-align:center; font-size:20px; margin-top:8px;">ДОСТУП К АРХИВУ</h2>
+      <p class="dim" style="text-align:center; font-size:12px; margin-top:8px;">Для входа в архив нужен аккаунт. Прогресс хранится на защищённом сервере, а не в этом браузере.</p>
 
-        <p>
-            Приносим извинения за временные неудобства.
-        </p>
+      <div class="reg-card" style="margin-top:20px;">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="ag-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="field" id="ag-username-field" style="display:none;">
+          <label>Позывной</label>
+          <input type="text" id="ag-username" placeholder="SURVIVOR NAME" maxlength="18">
+        </div>
+        <div class="field">
+          <label>Пароль</label>
+          <input type="password" id="ag-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div id="ag-error" style="color:var(--danger); font-family:var(--mono); font-size:11.5px; min-height:14px; margin-bottom:8px;"></div>
+        <button class="btn solid" id="ag-submit-btn">ВОЙТИ</button>
+        <button class="btn ghost" id="ag-toggle-mode-btn" style="margin-top:10px;">НЕТ АККАУНТА? ЗАРЕГИСТРИРОВАТЬСЯ</button>
+        <button class="btn ghost" id="ag-forgot-btn" style="margin-top:10px; font-size:10.5px;">ЗАБЫЛ ПАРОЛЬ?</button>
+      </div>
+      <div id="ag-status" class="dim mono" style="text-align:center; font-size:11px; margin-top:14px;"></div>
     </div>
+  </div>
+
+  <!-- BOOT -->
+  <div class="screen" id="screen-boot">
+    <div class="boot-wrap">
+      <div class="boot-glyph" id="boot-glyph-click">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="#31ff9c" stroke-width="1.5" fill="none" opacity=".5"/><path d="M32 12 L46 40 L18 40 Z" stroke="#31ff9c" stroke-width="1.6" fill="none"/><circle cx="32" cy="34" r="2.4" fill="#31ff9c"/><rect x="30.6" y="20" width="2.8" height="10" fill="#31ff9c"/></svg>
+      </div>
+      <div id="boot-lines"></div>
+      <button class="btn solid" id="boot-start">НАЧАТЬ РАССЛЕДОВАНИЕ</button>
+      <div class="egg-text" id="egg-text">YOU ARE NOT THE FIRST ONE TO ACCESS THIS ARCHIVE.</div>
+    </div>
+  </div>
+
+  <!-- REGISTRATION -->
+  <div class="screen" id="screen-reg">
+    <div class="scroll">
+      <div class="eyebrow">SURVIVOR PROTOCOL</div>
+      <h2 style="font-size:21px; margin-top:8px;">ИДЕНТИФИКАЦИЯ ВЫЖИВШЕГО</h2>
+      <p class="dim" style="margin-top:8px; font-size:13px;">Система требует подтверждения личности перед выдачей доступа к архиву.</p>
+      <div class="reg-card">
+        <div class="avatar-picker">
+          <div class="avatar-circle" id="reg-avatar-circle" onclick="Avatar.pick()">
+            <div class="edit-badge">+</div>
+          </div>
+          <div class="avatar-hint">НАЖМИ, ЧТОБЫ ЗАГРУЗИТЬ ФОТО</div>
+        </div>
+        <div class="field">
+          <label>Номер сервера</label>
+          <button type="button" class="server-select-btn" id="reg-server-btn" onclick="ServerPicker.open()">ВЫБРАТЬ СЕРВЕР (1–300)</button>
+        </div>
+        <div class="field">
+          <label>Позывной выжившего</label>
+          <input type="text" id="reg-name" placeholder="SURVIVOR NAME" maxlength="18">
+        </div>
+        <div class="field">
+          <label>Тег альянса (опционально)</label>
+          <input type="text" id="reg-alliance" placeholder="НАПР. RATS" maxlength="5" style="text-transform:uppercase;">
+        </div>
+        <button class="btn solid" id="reg-submit">ПОДТВЕРДИТЬ ЛИЧНОСТЬ</button>
+      </div>
+      <div class="player-card" id="reg-preview" style="display:none;">
+        <div class="row"><span>SERVER</span><span id="pv-server" class="mono accent"></span></div>
+        <div class="row"><span>PLAYER</span><span id="pv-name" class="mono accent"></span></div>
+        <div class="row" id="pv-alliance-row" style="display:none;"><span>АЛЬЯНС</span><span id="pv-alliance" class="mono accent"></span></div>
+        <div class="row"><span>STATUS</span><span class="mono accent"><span class="status-dot"></span>ACTIVE</span></div>
+        <div class="row"><span>CLEARANCE</span><span class="mono">LEVEL 0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUB (MAP) -->
+  <div class="screen" id="screen-hub">
+    <div class="scroll">
+      <div class="hub-header">
+        <div class="eyebrow">LAST ASYLUM DATABASE</div>
+        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">КАРТА РАССЛЕДОВАНИЯ</h2>
+
+        <div class="player-strip">
+          <div class="avatar-circle avatar-sm" id="hub-avatar-circle" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
+          <div class="info">
+            <div class="name-row"><span class="nm" id="hub-strip-name">—</span><span class="lvl" id="hub-strip-level">LVL 1</span></div>
+            <div class="xp-track"><div class="xp-fill" id="hub-strip-xpfill" style="width:0%"></div></div>
+            <div class="xp-caption" id="hub-strip-xpcap">0 / 0 XP</div>
+          </div>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-track"><div class="progress-fill" id="hub-progress-fill" style="width:0%"></div></div>
+          <div class="progress-label"><span id="hub-progress-pct">0%</span><span id="hub-progress-txt">0 / 0 РАЗГАДАНО</span></div>
+        </div>
+      </div>
+      <div class="branch-map">
+        <div class="branch-line"></div>
+        <div id="branch-list"></div>
+      </div>
+
+      <div class="section-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <div class="locked-module" id="hub-role-card" style="opacity:1;" onclick="Nav.go('role')">
+        <div class="lm-icon">🎭</div>
+        <div class="lm-body"><div class="lm-title" id="hub-role-title">ТВОЯ РОЛЬ</div><span class="lm-tag" id="hub-role-tag" style="color:var(--accent);">ОТКРЫТЬ ДОСЬЕ</span></div>
+      </div>
+
+      <div class="section-title">ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ</div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('rating')">
+        <div class="lm-icon">🏆</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('alliance')">
+        <div class="lm-icon">🛡</div>
+        <div class="lm-body"><div class="lm-title">АЛЬЯНСЫ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('friends')">
+        <div class="lm-icon">🧑‍🤝‍🧑</div>
+        <div class="lm-body"><div class="lm-title">ДРУЗЬЯ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('chat')">
+        <div class="lm-icon">💬</div>
+        <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag" style="color:var(--accent);">ТЕСТ ФУНКЦИОНАЛА</span></div>
+      </div>
+      <div class="locked-module" style="opacity:1;" onclick="Nav.go('warehouse')">
+        <div class="lm-icon">📦</div>
+        <div class="lm-body"><div class="lm-title">СКЛАД</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <!-- SECRET ROLE -->
+  <div class="screen" id="screen-role">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">CLASSIFIED PERSONNEL FILE</div>
+      <h2 id="role-screen-name" style="font-size:22px; margin-top:8px;">—</h2>
+      <p class="dim" style="margin-top:8px; font-size:12.5px;" id="role-screen-tagline">—</p>
+      <div class="doc-panel" style="margin-top:16px;">
+        <div class="q-text" id="role-screen-desc">—</div>
+      </div>
+      <p class="dim" style="margin-top:6px; font-size:11px;">Задания роли пока не влияют на других выживших — это личный протокол для отслеживания твоего стиля игры.</p>
+      <div class="section-title">ЗАДАНИЯ РОЛИ</div>
+      <div id="role-task-list"></div>
+    </div>
+  </div>
+
+  <!-- RATING (open, single-player self view) -->
+  <div class="screen" id="screen-rating">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">МИРОВОЙ РЕЙТИНГ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">GLOBAL LEADERBOARD · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">МИРОВОЙ РЕЙТИНГ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Рейтинг в раннем тестировании: пока отображаются только данные, зарегистрированные на этом устройстве.</p>
+      <input type="text" class="server-search" id="rating-filter" placeholder="Фильтр по номеру сервера..." inputmode="numeric" style="margin-top:14px;">
+      <div class="rating-sort-row">
+        <select class="rating-select" id="rating-sort-field">
+          <option value="xp">ПО ОЧКАМ (XP)</option>
+          <option value="level">ПО УРОВНЮ</option>
+          <option value="solved">ПО ЗАДАНИЯМ</option>
+        </select>
+        <button class="btn ghost" id="rating-sort-dir" style="width:auto; padding:10px 14px;">↓ БОЛЬШЕ→МЕНЬШЕ</button>
+      </div>
+      <div id="rating-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ALLIANCES -->
+  <div class="screen" id="screen-alliance">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">АЛЬЯНСЫ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">ALLIANCE REGISTRY · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">АЛЬЯНСЫ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;" id="alliance-status-text">—</p>
+      <div id="alliance-list" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="screen" id="screen-friends">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">ДРУЗЬЯ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">CONTACT LIST · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">ДРУЗЬЯ</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Добавляй других выживших по позывному и номеру сервера. Список хранится локально на этом устройстве.</p>
+      <div class="reg-card" style="margin-top:14px; padding:16px;">
+        <div class="field">
+          <label>Позывной</label>
+          <input type="text" id="friend-add-name" placeholder="SURVIVOR NAME" maxlength="18">
+        </div>
+        <div class="field">
+          <label>Номер сервера</label>
+          <input type="text" id="friend-add-server" placeholder="НАПР. 047" maxlength="4" inputmode="numeric">
+        </div>
+        <button class="btn solid" id="friend-add-btn">ДОБАВИТЬ В ДРУЗЬЯ</button>
+      </div>
+      <div class="section-title">СПИСОК ДРУЗЕЙ</div>
+      <div id="friends-list"></div>
+    </div>
+  </div>
+
+  <!-- PVP (rating + search shell open, live matches still in development) -->
+  <div class="screen" id="screen-pvp">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">PVP АРЕНА</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">PVP ARENA · BETA</div>
+      <h2 style="font-size:19px; margin-top:6px;">PVP АРЕНА</h2>
+      <p class="dim" style="margin-top:8px; font-size:12px;">Локальный тестовый режим: бои проходят против ботов, подстроенных под силу твоего героя. Поиск реальных игроков появится позже.</p>
+
+      <div class="section-title">МОЙ БОЕВОЙ ГЕРОЙ</div>
+      <div id="pvp-my-hero"></div>
+
+      <div class="section-title">ЕЖЕДНЕВНЫЕ ЗАДАНИЯ</div>
+      <div id="pvp-daily-missions"></div>
+
+      <div class="section-title">РЕЙТИНГ PVP</div>
+      <div id="pvp-rating-list"></div>
+
+      <div class="locked-module" style="opacity:1; margin-top:4px;" onclick="Nav.go('pvphistory')">
+        <div class="lm-icon">📜</div>
+        <div class="lm-body"><div class="lm-title">ИСТОРИЯ БОЁВ</div><span class="lm-tag" style="color:var(--accent);">ПОСЛЕДНИЕ 30 БОЁВ</span></div>
+      </div>
+
+      <div class="section-title">ПОИСК ПРОТИВНИКА</div>
+      <p class="dim mono" id="pvp-search-counter" style="font-size:10.5px;">ПОПЫТОК СЕГОДНЯ: 0/5</p>
+      <button class="btn solid" id="pvp-find-btn" style="margin-top:10px;">НАЙТИ ПРОТИВНИКА</button>
+      <div id="pvp-search-results"></div>
+    </div>
+  </div>
+
+  <!-- PVP BATTLE HISTORY -->
+  <div class="screen" id="screen-pvphistory">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('pvp')">‹ PVP</button>
+      <div class="topbar-title">ИСТОРИЯ БОЁВ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <p class="dim" style="font-size:12px; margin-bottom:12px;">Последние бои. Нажми на запись, чтобы увидеть подробную статистику и лог ходов.</p>
+      <div id="pvphistory-list"></div>
+    </div>
+  </div>
+
+  <!-- PVP BATTLE HISTORY DETAIL -->
+  <div class="screen" id="screen-pvphistorydetail">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('pvphistory')">‹ ИСТОРИЯ</button>
+      <div class="topbar-title">ДЕТАЛИ БОЯ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="pvphistorydetail-scroll"></div>
+  </div>
+
+  <!-- PVP COMPARE (pre-battle) -->
+  <div class="screen" id="screen-pvpcompare">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('pvp')">‹ PVP</button>
+      <div class="topbar-title">СРАВНЕНИЕ ПЕРЕД БОЕМ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="vs-panel" id="pvpcompare-panel"></div>
+      <div id="pvpcompare-power-diff"></div>
+      <div id="pvpcompare-counter"></div>
+      <div class="section-title">ХАРАКТЕРИСТИКИ</div>
+      <div id="pvpcompare-stats"></div>
+      <button class="btn solid" id="pvpcompare-fight-btn" style="margin-top:16px;">В БОЙ</button>
+    </div>
+  </div>
+
+  <!-- PVP BATTLE -->
+  <div class="screen" id="screen-battle">
+    <div class="topbar">
+      <div class="topbar-title" id="battle-title">БОЙ</div>
+      <div class="tokens-label" id="battle-turn-counter">ХОД 0/30</div>
+    </div>
+    <div class="scroll">
+      <div id="battle-hp-player"></div>
+      <div id="battle-hp-enemy"></div>
+      <div class="battle-log" id="battle-log"></div>
+      <div id="battle-actions-wrap"></div>
+      <div id="battle-result-wrap"></div>
+    </div>
+  </div>
+
+  <!-- HEROES LIST -->
+  <div class="screen" id="screen-heroes">
+    <div class="scroll">
+      <div class="hub-header">
+        <div class="eyebrow">ROSTER · LAST ASYLUM</div>
+        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">ГЕРОИ</h2>
+      </div>
+      <div id="heroes-list"></div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <!-- HERO DETAIL -->
+  <div class="screen" id="screen-herodetail">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('heroes')">‹ ГЕРОИ</button>
+      <div class="topbar-title" id="herodetail-title">—</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="herodetail-scroll"></div>
+  </div>
+
+  <!-- WAREHOUSE -->
+  <div class="screen" id="screen-warehouse">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">СКЛАД</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">STORAGE · RESOURCES</div>
+      <h2 style="font-size:19px; margin-top:6px; margin-bottom:14px;">СКЛАД</h2>
+      <div class="warehouse-grid" id="warehouse-main"></div>
+      <div class="section-title">ДЕТАЛИ И ПАЗЛЫ ГЕРОЕВ</div>
+      <div id="warehouse-heroes"></div>
+    </div>
+  </div>
+
+  <!-- WORLD CHAT (open, local test only) -->
+  <div class="screen" id="screen-chat">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title">МИРОВОЙ ЧАТ</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="chat-scroll" style="flex:1;">
+      <p class="dim" style="font-size:11px; text-align:center; margin-bottom:10px;">ТЕСТОВЫЙ РЕЖИМ — сообщения видны только тебе на этом устройстве.</p>
+      <div id="chat-messages"></div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Сообщение..." maxlength="200">
+      <button class="btn solid" id="chat-send-btn" style="width:auto; padding:12px 16px;">➤</button>
+    </div>
+  </div>
+
+  <!-- QUEST (branch puzzle list) -->
+  <div class="screen" id="screen-quest">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
+      <div class="topbar-title" id="quest-branch-title">—</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll" id="quest-list-wrap"></div>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="screen" id="screen-puzzle">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('quest')">‹ НАЗАД</button>
+      <div class="topbar-title" id="puzzle-branch-title">—</div>
+      <div class="tokens-label" id="puzzle-tokens">💠 0</div>
+    </div>
+    <div class="scroll">
+      <div class="file-tag" id="puzzle-file-tag">FILE #000</div>
+      <div id="puzzle-body"></div>
+      <div class="feedback" id="puzzle-feedback"></div>
+      <div class="puzzle-nav-row" id="puzzle-nav-row" style="display:none;">
+        <button class="btn ghost" id="puzzle-menu-btn" onclick="Quest.goToMenu()">В МЕНЮ</button>
+        <button class="btn solid" id="puzzle-continue-btn" onclick="Quest.goNextPuzzle()">ДАЛЬШЕ →</button>
+      </div>
+      <div class="hint-bar">
+        <button class="hint-btn" id="puzzle-hint-btn">ПОДСКАЗКА</button>
+      </div>
+      <div class="hint-box" id="puzzle-hint-box"></div>
+    </div>
+  </div>
+
+  <!-- FINAL PROTOCOL -->
+  <div class="screen" id="screen-final">
+    <div class="topbar">
+      <button class="back-btn" onclick="Nav.go('quest')">‹ НАЗАД</button>
+      <div class="topbar-title">FINAL PROTOCOL</div>
+      <div class="tokens-label" id="final-tokens">💠 0</div>
+    </div>
+    <div class="scroll">
+      <div class="eyebrow">СБОРКА ФИНАЛЬНОГО ШИФРА</div>
+      <h2 style="font-size:18px; margin-top:8px;" id="final-branch-title">—</h2>
+      <p class="dim" style="margin-top:10px; font-size:13px;">Ты собрал все фрагменты этой ветки. Они не объясняют сами себя. Найди скрытый принцип и расставь символы в правильном порядке. Нажимай на символы снизу, чтобы добавить их в последовательность сверху.</p>
+
+      <div class="order-hint" style="margin-top:16px;">ТЕКУЩАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ</div>
+      <div class="order-seq" id="final-seq"></div>
+      <div class="order-hint">ДОСТУПНЫЕ СИМВОЛЫ</div>
+      <div class="order-pool" id="final-pool"></div>
+
+      <button class="btn solid" style="margin-top:14px;" id="final-check-btn">ПРОВЕРИТЬ ПРОТОКОЛ</button>
+      <button class="btn ghost" style="margin-top:10px;" id="final-clear-btn">ОЧИСТИТЬ</button>
+
+      <div class="feedback" id="final-feedback"></div>
+      <div class="hint-bar">
+        <button class="hint-btn" id="final-hint-btn">ПОДСКАЗКА</button>
+      </div>
+      <div class="hint-box" id="final-hint-box"></div>
+    </div>
+  </div>
+
+  <!-- SYMBOLS ARCHIVE -->
+  <div class="screen" id="screen-symbols">
+    <div class="scroll">
+      <div class="eyebrow">DATA VAULT</div>
+      <h2 style="font-size:20px; margin-top:6px;">АРХИВ СИМВОЛОВ</h2>
+      <p class="dim" style="margin-top:8px; font-size:13px;">Все фрагменты, найденные в ходе расследования. Порядок ничего не значит сам по себе.</p>
+      <div class="sym-grid" id="sym-grid"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen" id="screen-profile">
+    <div class="scroll">
+      <div class="eyebrow">SURVIVOR FILE</div>
+      <h2 style="font-size:20px; margin-top:6px; margin-bottom:16px;">ПРОФИЛЬ</h2>
+
+      <div class="rank-badge">
+        <div class="avatar-circle" id="profile-avatar-circle" style="margin-bottom:12px;" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
+        <div class="dim mono" style="font-size:10.5px; letter-spacing:.15em;" id="prof-server-name">SERVER — PLAYER</div>
+        <div class="rank-name" id="prof-rank">NOVICE</div>
+        <div class="mono" style="font-size:12px; color:var(--amber); margin-top:8px;" id="prof-level">LVL 1</div>
+        <div class="xp-track" style="max-width:220px; margin:8px auto 0;"><div class="xp-fill" id="prof-xpfill" style="width:0%"></div></div>
+        <div class="xp-caption" id="prof-xpcap" style="text-align:center; margin-top:5px;">0 / 0 XP</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box"><div class="v" id="stat-solved">0</div><div class="l">ЗАГАДОК РЕШЕНО</div></div>
+        <div class="stat-box"><div class="v" id="stat-symbols">0</div><div class="l">СИМВОЛОВ НАЙДЕНО</div></div>
+        <div class="stat-box"><div class="v" id="stat-branches">0/3</div><div class="l">ВЕТОК ОТКРЫТО</div></div>
+        <div class="stat-box"><div class="v" id="stat-mistakes">0</div><div class="l">ОШИБОК</div></div>
+        <div class="stat-box"><div class="v" id="stat-hints">0</div><div class="l">ПОДСКАЗОК ИСПОЛЬЗОВАНО</div></div>
+        <div class="stat-box"><div class="v" id="stat-time">0м</div><div class="l">ВРЕМЯ РАССЛЕДОВАНИЯ</div></div>
+      </div>
+
+      <div class="section-title">PVP СТАТИСТИКА <span class="dim" style="text-transform:none; letter-spacing:0;">(режим в разработке)</span></div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="v" id="stat-pvp-rating">1000</div><div class="l">РЕЙТИНГ</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-winrate">—</div><div class="l">% ПОБЕД</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-wins">0</div><div class="l">ПОБЕДЫ</div></div>
+        <div class="stat-box"><div class="v" id="stat-pvp-losses">0</div><div class="l">ПОРАЖЕНИЯ</div></div>
+      </div>
+
+      <div class="section-title">ДОСТИЖЕНИЯ</div>
+      <div id="ach-list"></div>
+
+      <div class="section-title">НАСТРОЙКИ</div>
+      <div class="settings-row">
+        <span class="mono" style="font-size:12.5px;">SOUND</span>
+        <div class="toggle" id="sound-toggle"><div class="dot"></div></div>
+      </div>
+      <div class="settings-row">
+        <span class="mono" style="font-size:12.5px;">ПОЗЫВНОЙ</span>
+        <span class="mono accent" id="settings-name" style="font-size:12.5px;">—</span>
+      </div>
+      <div class="settings-row">
+        <span class="mono" style="font-size:12.5px;">СЕРВЕР</span>
+        <span class="mono accent" id="settings-server" style="font-size:12.5px;">—</span>
+      </div>
+      <div class="settings-row" style="border-bottom:none; gap:10px;">
+        <span class="mono" style="font-size:12.5px; white-space:nowrap;">ТЕГ АЛЬЯНСА</span>
+        <input type="text" id="settings-alliance" maxlength="5" placeholder="—" style="text-transform:uppercase; text-align:right; width:90px; background:none; border:none; border-bottom:1px solid var(--panel-edge); color:var(--accent); font-family:var(--mono); font-size:12.5px; padding:4px 2px; outline:none;">
+      </div>
+
+      <button class="btn danger" style="margin-top:22px;" id="reset-btn">СБРОСИТЬ ПРОГРЕСС</button>
+      <div style="height:20px;"></div>
+    </div>
+  </div>
+
+  </div><!-- /screen-stack -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav" id="bottomnav" style="display:none;">
+    <button class="nav-item" data-tab="hub" onclick="Nav.tab('hub')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg>
+      АРХИВ
+    </button>
+    <button class="nav-item" data-tab="quest" onclick="Nav.tab('quest')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+      КВЕСТ
+    </button>
+    <button class="nav-item" data-tab="heroes" onclick="Nav.tab('heroes')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2 4 4.5.6-3.2 3.2.8 4.5L12 13.2 8 15.3l.8-4.5L5.5 7.6 10 7z"/><path d="M6 21c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+      ГЕРОИ
+    </button>
+    <button class="nav-item" data-tab="pvp" onclick="Nav.tab('pvp')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/><circle cx="6.5" cy="6.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/><circle cx="17.5" cy="6.5" r="2"/><circle cx="6.5" cy="17.5" r="2"/></svg>
+      PVP
+    </button>
+    <button class="nav-item" data-tab="symbols" onclick="Nav.tab('symbols')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>
+      СИМВОЛЫ
+    </button>
+    <button class="nav-item" data-tab="profile" onclick="Nav.tab('profile')">
+      <svg viewBox="0 0 24 24" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5S18 16 19.5 20"/></svg>
+      ПРОФИЛЬ
+    </button>
+  </div>
+
+  <!-- MODAL (confirm reset) -->
+  <div class="overlay" id="overlay-confirm">
+    <div class="modal">
+      <h3>СБРОСИТЬ ПРОГРЕСС?</h3>
+      <p>Все загадки, символы и достижения будут удалены безвозвратно. Отменить это действие нельзя.</p>
+      <div class="row">
+        <button class="btn ghost" onclick="UI.closeOverlay()">ОТМЕНА</button>
+        <button class="btn danger" onclick="Game.resetProgress()">СБРОСИТЬ</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+
+  <!-- MODAL (server select) -->
+  <div class="overlay" id="overlay-server">
+    <div class="modal server-modal">
+      <h3 style="margin-bottom:12px;">ВЫБОР СЕРВЕРА</h3>
+      <input type="text" class="server-search" id="server-search" placeholder="Поиск по номеру..." inputmode="numeric">
+      <div class="server-grid" id="server-grid"></div>
+      <button class="btn ghost" style="margin-top:14px;" onclick="UI.closeOverlay()">ОТМЕНА</button>
+    </div>
+  </div>
+
+  <!-- MODAL (branch unlock) -->
+  <div class="overlay" id="overlay-unlock">
+    <div class="modal">
+      <h3 id="unlock-title">ACCESS GRANTED</h3>
+      <p id="unlock-text">Новая ветка расследования разблокирована.</p>
+      <button class="btn solid" onclick="UI.closeOverlay()">ПРОДОЛЖИТЬ</button>
+    </div>
+  </div>
+
+  <!-- MODAL (secret role reveal) -->
+  <div class="overlay" id="overlay-role">
+    <div class="modal">
+      <div class="eyebrow" style="justify-content:center; display:block; text-align:center;">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
+      <h3 id="role-reveal-name" style="margin-top:10px; font-size:19px;">РОЛЬ</h3>
+      <p id="role-reveal-tagline" style="margin-top:10px;">—</p>
+      <button class="btn solid" id="role-reveal-continue">ПРИНЯТЬ РОЛЬ</button>
+    </div>
+  </div>
+
+  <!-- MODAL (where to get resource) -->
+  <div class="overlay" id="overlay-source">
+    <div class="modal">
+      <h3 id="source-title" style="font-size:16px;">ГДЕ ПОЛУЧИТЬ</h3>
+      <ul class="source-list" id="source-list"></ul>
+      <button class="btn solid" style="margin-top:16px;" onclick="UI.closeOverlay()">ПОНЯТНО</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="glitch-flash" id="glitch-flash"></div>
+  <div class="grain"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+</div>
+
+
+<!-- Supabase SDK (client code only ever uses the publishable key — see js/config.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Fill in js/config.js with your project URL + publishable key before deploying -->
+<script src="./js/config.js"></script>
+<script src="./js/supabase.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/database.js"></script>
+<script src="./js/pvp.js"></script>
+<script src="./js/quests.js"></script>
+<script src="./js/chat.js"></script>
+<script src="./js/notifications.js"></script>
+
+<!-- The existing game (unchanged apart from no longer auto-booting) -->
+<script src="./js/game.js"></script>
+
+<!-- Wires the login/signup screen to Supabase Auth and boots the game -->
+<script src="./js/authgate.js"></script>
+
 </body>
 </html>
-```
