@@ -58,6 +58,28 @@
     const screen = el('screen-authgate');
     if (screen) screen.classList.remove('active');
     if (window.startLastAsylumGame) window.startLastAsylumGame();
+
+    // Game.init() only calls Nav.go('hub') itself for players who already
+    // have local progress (state.registered === true, the OLD local-only
+    // flag from before Supabase existed). For everyone else it just starts
+    // the boot animation without ever marking #screen-boot active — that
+    // used to be fine because #screen-boot had class="screen active" by
+    // default in the HTML. Now that #screen-authgate takes that spot, we
+    // have to explicitly show the boot screen ourselves in that case, or
+    // no screen ends up visible at all (the black-screen bug).
+    //
+    // NOTE: `Nav` and `state` are declared with `const`/`let` inside
+    // game.js, so — unlike `var` or function declarations — they do NOT
+    // become `window.Nav` / `window.state`. They're still reachable as
+    // bare identifiers here because classic (non-module) <script> tags
+    // share one global lexical scope, but `typeof` is used below instead
+    // of a direct reference so this can't throw a ReferenceError if
+    // game.js somehow failed to load.
+    const navAvailable = typeof Nav !== 'undefined';
+    const alreadyRegisteredLocally = typeof state !== 'undefined' && state && state.registered;
+    if (navAvailable && !alreadyRegisteredLocally) {
+      Nav.go('boot');
+    }
   }
 
   function wireConnectionDot() {

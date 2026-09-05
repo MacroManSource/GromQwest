@@ -69,6 +69,11 @@
     // generic message rather than ever showing a raw Postgres error to players.
     let userMessage = 'Не удалось выполнить операцию. Попробуй ещё раз.';
     if (/network|fetch|Failed to fetch/i.test(raw)) userMessage = 'Нет соединения с сервером.';
+    else if (/Email not confirmed/i.test(raw)) userMessage = 'Email не подтверждён. Перейди по ссылке из письма, затем войди снова. (Или отключи "Confirm email" в Supabase → Authentication → Providers → Email, если это тестовый проект.)';
+    else if (/Invalid login credentials/i.test(raw)) userMessage = 'Неверный email или пароль.';
+    else if (/User already registered|already registered|already exists/i.test(raw)) userMessage = 'Этот email уже зарегистрирован — попробуй войти вместо регистрации.';
+    else if (/rate limit|Email rate limit exceeded/i.test(raw)) userMessage = 'Слишком много попыток. Подожди немного и попробуй снова.';
+    else if (/redirect_to|redirect uri|Unable to validate redirect/i.test(raw)) userMessage = 'Некорректный redirect URL. Проверь Site URL и Redirect URLs в Supabase → Authentication → URL Configuration.';
     else if (/JWT|token|session/i.test(raw)) userMessage = 'Сессия истекла. Войди снова.';
     else if (/Недостаточно|уже получена|уже разблокирован|не разблокирован|не выполнено|Максимальный|Максимум/i.test(raw)) userMessage = raw; // our own RPC messages are already player-facing
     return { raw, userMessage };

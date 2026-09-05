@@ -5,6 +5,18 @@
 // that instead of calling supabase.auth.* directly, so there is one
 // obvious place to look when debugging "who does the app think is logged in".
 
+// Only ever pass an explicit redirect URL when we're actually served over
+// http(s) — over file:// (common while testing locally by double-clicking
+// index.html) this would send Supabase a "file:///Users/..." URL that
+// almost certainly isn't in the project's Redirect URLs allowlist, which
+// can make signUp()/resetPasswordForEmail() fail outright. When we skip
+// it, Supabase falls back to the Site URL configured in the dashboard,
+// which is the safer default anyway.
+function safeRedirectUrl() {
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') return null;
+  return location.origin + location.pathname; // strip any ?query or #hash
+}
+
 window.AuthState = {
   user: null,
   session: null,
@@ -67,13 +79,10 @@ window.Auth = {
     if (password.length < 6) {
       return { data: null, error: { userMessage: 'Пароль должен быть не короче 6 символов.' } };
     }
-    const { data, error } = await safeCall(() => window.supabaseClient.auth.signUp({
-      email, password,
-      options: {
-        data: { username },
-        emailRedirectTo: window.location.href // GitHub Pages URL, see js/config.js notes
-      }
-    }));
+    const options = { data: { username } };
+    const redirect = safeRedirectUrl();
+    if (redirect) options.emailRedirectTo = redirect;
+    const { data, error } = await safeCall(() => window.supabaseClient.auth.signUp({ email, password, options }));
     return { data, error };
   },
 
@@ -92,9 +101,10 @@ window.Auth = {
   },
 
   async sendPasswordReset(email) {
-    const { data, error } = await safeCall(() => window.supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.href
-    }));
+    const opts = {};
+    const redirect = safeRedirectUrl();
+    if (redirect) opts.redirectTo = redirect;
+    const { data, error } = await safeCall(() => window.supabaseClient.auth.resetPasswordForEmail(email, opts));
     return { data, error };
   },
 
