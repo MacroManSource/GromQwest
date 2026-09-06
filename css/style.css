@@ -701,3 +701,17 @@ p{line-height:1.55; color:var(--text); margin:0;}
 .resource-missing-row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;}
 .resource-missing-tag{font-family:var(--mono); font-size:10px; color:var(--danger);}
 .where-btn{font-family:var(--mono); font-size:9.5px; padding:5px 8px; border-radius:3px; border:1px solid var(--amber); color:var(--amber); background:none; cursor:pointer; white-space:nowrap;}
+/* Стили для сообщений других игроков */
+.chat-bubble.other {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.chat-bubble.other .cb-body {
+    align-items: flex-start;
+    text-align: left;
+}
+.chat-bubble.other .cb-name {
+    color: #4ac8ff;
+    font-weight: bold;
+}
