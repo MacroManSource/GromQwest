@@ -31,7 +31,8 @@
         </div>
         <div class="field" id="ag-username-field" style="display:none;">
           <label>Позывной</label>
-          <input type="text" id="ag-username" placeholder="SURVIVOR NAME" maxlength="18">
+          <input type="text" id="ag-username" placeholder="SURVIVOR NAME" maxlength="20">
+          <div id="ag-username-hint" style="font-family:var(--mono); font-size:10.5px; margin-top:5px; min-height:13px;"></div>
         </div>
         <div class="field">
           <label>Пароль</label>
@@ -482,6 +483,9 @@
         <div class="stat-box"><div class="v" id="stat-pvp-wins">0</div><div class="l">ПОБЕДЫ</div></div>
         <div class="stat-box"><div class="v" id="stat-pvp-losses">0</div><div class="l">ПОРАЖЕНИЯ</div></div>
       </div>
+
+      <div class="section-title">УВЕДОМЛЕНИЯ <span id="notif-unread-badge" class="dim" style="text-transform:none; letter-spacing:0;"></span></div>
+      <div id="notif-list"></div>
 
       <div class="section-title">ДОСТИЖЕНИЯ</div>
       <div id="ach-list"></div>
