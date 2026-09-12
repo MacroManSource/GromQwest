@@ -1036,12 +1036,38 @@ const UI = {
     document.getElementById('stat-hints').textContent = state.totalHintsUsed;
     document.getElementById('stat-time').textContent = state.startTime ? fmtTime(Date.now()-state.startTime) : '0м';
 
-    const pvp = state.pvpStats || {wins:0,losses:0,rating:1000};
+    const pvp = window.GameData.pvpRating || {wins:0,losses:0,rating:1000};
     document.getElementById('stat-pvp-rating').textContent = pvp.rating;
     document.getElementById('stat-pvp-wins').textContent = pvp.wins;
     document.getElementById('stat-pvp-losses').textContent = pvp.losses;
     const totalMatches = pvp.wins+pvp.losses;
     document.getElementById('stat-pvp-winrate').textContent = totalMatches>0 ? Math.round((pvp.wins/totalMatches)*100)+'%' : '—';
+
+    const notifWrap = document.getElementById('notif-list');
+    const notifBadge = document.getElementById('notif-unread-badge');
+    if(notifWrap && window.Notifications){
+      const list = window.Notifications.list();
+      const unread = window.Notifications.unreadCount();
+      notifBadge.textContent = unread>0 ? '('+unread+' новых)' : '';
+      notifWrap.innerHTML = '';
+      if(!list.length){
+        notifWrap.innerHTML = '<p class="dim" style="font-size:12px; text-align:center; padding:12px 0;">УВЕДОМЛЕНИЙ ПОКА НЕТ.</p>';
+      } else {
+        list.slice(0,15).forEach(n=>{
+          const row = document.createElement('div');
+          row.className = 'notif-row'+(n.is_read?'':' unread');
+          row.innerHTML = `
+            <div class="nf-icon">${window.Notifications.icon(n.type)}</div>
+            <div style="flex:1;">
+              <div class="nf-title">${escapeHtml(n.title)}</div>
+              <div class="nf-msg">${escapeHtml(n.message)}</div>
+              <div class="nf-time">${formatShortTime(n.created_at)}</div>
+            </div>`;
+          if(!n.is_read){ row.onclick = async ()=>{ await window.Notifications.markRead(n.id); UI.renderProfile(); }; }
+          notifWrap.appendChild(row);
+        });
+      }
+    }
 
     const achWrap = document.getElementById('ach-list');
     achWrap.innerHTML = '';
@@ -1308,112 +1334,177 @@ const PvpUI = {
     document.getElementById('pvp-find-btn').onclick = ()=> this.findOpponent();
     this.renderSearchResults();
   },
+
+  // ---- AUDIT NOTE ----------------------------------------------------
+  // Every method below used to read/write the local `state.*` object
+  // (state.heroes, state.pvpStats, state.pvpSearch...) — a second,
+  // disconnected copy of the game that never touched Supabase at all.
+  // Rewired to read from window.GameData (loaded by js/database.js
+  // after login) and to call window.PvP for anything that mutates
+  // server data. Local `state` is no longer used anywhere in this module.
+  // ----------------------------------------------------------------------
+
+  ownedHeroes(){
+    return (window.GameData.heroes || []).filter(h => h.playerHero && h.playerHero.is_unlocked);
+  },
+
+  getBattleHeroId(){
+    const owned = this.ownedHeroes();
+    if(!owned.length) return null;
+    if(state.pvpSelectedHero && owned.some(h=>h.def.id===state.pvpSelectedHero)) return state.pvpSelectedHero;
+    let best = owned[0];
+    owned.forEach(h=>{ if((h.playerHero.power||0) > (best.playerHero.power||0)) best = h; });
+    state.pvpSelectedHero = best.def.id;
+    saveState();
+    return best.def.id;
+  },
+
   renderDailyMissions(){
     const wrap = document.getElementById('pvp-daily-missions');
     wrap.innerHTML = '';
-    const missions = getDailyMissions();
-    missions.forEach(m=>{
-      const tpl = DAILY_MISSION_POOL.find(t=>t.id===m.id);
-      if(!tpl) return;
-      const pct = Math.min(100, Math.round((m.progress/tpl.target)*100));
-      const ready = m.progress>=tpl.target && !m.claimed;
+    if(!window.Quests){ return; }
+    const missions = window.Quests.today();
+    if(!missions.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12px; text-align:center; padding:14px 0;">ЗАГРУЗКА...</p>';
+      return;
+    }
+    missions.forEach(qp=>{
+      const q = qp.quests;
+      if(!q) return;
+      const target = qp.target || q.target;
+      const pct = Math.min(100, Math.round((qp.progress/target)*100));
+      const ready = window.Quests.canClaim(qp);
+      const rewardParts = [];
+      if(q.reward_currency) rewardParts.push('+'+q.reward_currency+' кредитов');
+      if(q.reward_xp) rewardParts.push('+'+q.reward_xp+' XP');
+      const item = q.reward_item||{};
+      if(item.pvp_rating) rewardParts.push('+'+item.pvp_rating+' PvP-очков');
+      if(item.parts) rewardParts.push('+'+item.parts+' деталей герою');
+      if(item.yellow_puzzles) rewardParts.push('+'+item.yellow_puzzles+' жёлтых пазлов');
+      if(item.universal_mats) rewardParts.push('+'+item.universal_mats+' универсальных материалов');
+      if(item.weapon_mats) rewardParts.push('+'+item.weapon_mats+' материалов оружия');
+      if(item.armor_mats) rewardParts.push('+'+item.armor_mats+' материалов брони');
+
       const row = document.createElement('div');
-      row.className = 'mission-row'+(m.claimed?' claimed':'');
+      row.className = 'mission-row'+(qp.claimed?' claimed':'');
       row.innerHTML = `
-        <div class="mr-desc">${escapeHtml(tpl.desc)}</div>
-        <div class="mr-progress-row"><span>${Math.min(m.progress,tpl.target).toLocaleString('ru-RU')} / ${tpl.target.toLocaleString('ru-RU')}</span><span>${pct}%</span></div>
+        <div class="mr-desc">${escapeHtml(q.description||q.title)}</div>
+        <div class="mr-progress-row"><span>${Math.min(qp.progress,target).toLocaleString('ru-RU')} / ${target.toLocaleString('ru-RU')}</span><span>${pct}%</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-        <div class="mr-reward">НАГРАДА: ${escapeHtml(tpl.rewardLabel)}</div>
-        <button class="mr-claim-btn" ${ready?'':'disabled'}>${m.claimed?'ПОЛУЧЕНО ✓':(ready?'ЗАБРАТЬ':'ЕЩЁ НЕ ГОТОВО')}</button>`;
-      if(ready){ row.querySelector('.mr-claim-btn').onclick = ()=> PvpUI.claimMission(m.id); }
+        <div class="mr-reward">НАГРАДА: ${escapeHtml(rewardParts.join(' · ')||'—')}</div>
+        <button class="mr-claim-btn" ${ready?'':'disabled'}>${qp.claimed?'ПОЛУЧЕНО ✓':(ready?'ЗАБРАТЬ':'ЕЩЁ НЕ ГОТОВО')}</button>`;
+      if(ready){
+        const btn = row.querySelector('.mr-claim-btn');
+        btn.onclick = async ()=>{
+          btn.disabled = true;
+          const { error } = await window.Quests.claim(qp);
+          if(error){ toast(error.userMessage||'Не удалось получить награду'); btn.disabled = false; return; }
+          Audio_.ok(); toast('НАГРАДА ПОЛУЧЕНА');
+          PvpUI.renderDailyMissions(); PvpUI.renderRating(); PvpUI.renderMyHero();
+        };
+      }
       wrap.appendChild(row);
     });
   },
-  claimMission(missionId){
-    if(claimDailyMission(missionId)){
-      Audio_.ok();
-      toast('НАГРАДА ПОЛУЧЕНА');
-      this.renderDailyMissions();
-      this.renderRating();
-      this.renderMyHero();
-    }
-  },
-  getBattleHeroId(){
-    const ownedIds = HEROES.filter(d=>state.heroes[d.id] && state.heroes[d.id].owned).map(d=>d.id);
-    if(!ownedIds.length) return null;
-    if(state.pvpSelectedHero && ownedIds.includes(state.pvpSelectedHero)) return state.pvpSelectedHero;
-    // default: strongest owned hero
-    let best = ownedIds[0];
-    ownedIds.forEach(id=>{ if(computeHeroPower(id) > computeHeroPower(best)) best = id; });
-    state.pvpSelectedHero = best;
-    return best;
-  },
+
   renderMyHero(){
     const wrap = document.getElementById('pvp-my-hero');
     wrap.innerHTML = '';
-    if(!state.heroesInit) initHeroSystem();
-    const ownedIds = HEROES.filter(d=>state.heroes[d.id].owned).map(d=>d.id);
-    if(!ownedIds.length){
+    const owned = this.ownedHeroes();
+    if(!owned.length){
       wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:14px 0;">У ТЕБЯ ПОКА НЕТ НИ ОДНОГО ГЕРОЯ.</p>';
       return;
     }
     const currentId = this.getBattleHeroId();
-    const def = findHeroDef(currentId);
-    const power = computeHeroPower(currentId);
-    const hs = heroState(currentId);
+    const entry = owned.find(h=>h.def.id===currentId);
+    const def = entry.def, ph = entry.playerHero;
     const card = document.createElement('div');
     card.className = 'hero-card';
     card.innerHTML = `
       <div class="hero-portrait">⚔</div>
       <div class="hc-body">
         <div class="hc-name">${def.name}</div>
-        <div class="hc-role">${def.role} · Ур. ${hs.level}</div>
-        <div class="hc-stars">${'★'.repeat(Math.min(5,hs.yellowStars||0))}${hs.redStars>0 ? ' <span style=\"color:var(--danger)\">'+'★'.repeat(hs.redStars)+'</span>' : ''}</div>
+        <div class="hc-role">${def.role} · Ур. ${ph.level}</div>
+        <div class="hc-stars">${'★'.repeat(Math.min(5,ph.yellow_stars||0))}${ph.red_stars>0 ? ' <span style="color:var(--danger)">'+'★'.repeat(ph.red_stars)+'</span>' : ''}</div>
       </div>
-      <div class="hc-power"><div class="val">${power}</div><div class="lbl">СИЛА</div></div>`;
+      <div class="hc-power"><div class="val">${ph.power}</div><div class="lbl">СИЛА</div></div>`;
     card.onclick = ()=> HeroUI.openDetail(currentId);
     wrap.appendChild(card);
-    if(ownedIds.length>1){
+    if(owned.length>1){
       const switcher = document.createElement('div');
       switcher.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;';
-      ownedIds.forEach(id=>{
+      owned.forEach(h=>{
         const b = document.createElement('button');
         b.className = 'btn ghost';
         b.style.cssText = 'width:auto; padding:8px 12px; font-size:11px;';
-        b.textContent = findHeroDef(id).name + (id===currentId?' ✓':'');
-        b.onclick = ()=>{ state.pvpSelectedHero = id; saveState(); this.render(); };
+        b.textContent = h.def.name + (h.def.id===currentId?' ✓':'');
+        b.onclick = ()=>{ state.pvpSelectedHero = h.def.id; saveState(); this.render(); };
         switcher.appendChild(b);
       });
       wrap.appendChild(switcher);
     }
   },
-  renderRating(){
+
+  async renderRating(){
     const wrap = document.getElementById('pvp-rating-list');
+    wrap.innerHTML = '<p class="dim" style="font-size:12px; text-align:center; padding:14px 0;">ЗАГРУЗКА...</p>';
+    const profile = window.GameData.profile;
+    if(!profile){ return; }
+
+    const { data: top, error } = await window.loadPagedLeaderboard(0, 20);
     wrap.innerHTML = '';
-    if(!state.registered){
-      wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:16px 0;">НЕТ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ.</p>';
-      return;
+    if(error){ wrap.innerHTML = '<p class="dim" style="font-size:12px; text-align:center; padding:14px 0;">НЕ УДАЛОСЬ ЗАГРУЗИТЬ РЕЙТИНГ.</p>'; return; }
+
+    const myId = window.AuthState.user && window.AuthState.user.id;
+    let meInTop = false;
+    top.forEach((p, i)=>{
+      const isMe = p.id === myId;
+      if(isMe) meInTop = true;
+      const row = document.createElement('div');
+      row.className = 'rating-row';
+      row.innerHTML = `
+        <div class="rk-pos">#${i+1}</div>
+        <div class="avatar-circle avatar-sm" style="cursor:default;">${isMe ? Avatar.markup() : DEFAULT_AVATAR_SVG}</div>
+        <div class="rk-info">
+          <div class="rk-name" style="cursor:pointer;">${escapeHtml(p.username||'—')}${isMe?' <span class="dim" style="font-size:9px;">(ТЫ)</span>':''}</div>
+          <div class="rk-server">${p.alliance_tag ? '['+escapeHtml(p.alliance_tag)+']' : ''}</div>
+        </div>
+        <div class="rk-stats"><div class="lvl">${window.PvP.tierName(p.rating)}</div><div>${p.rating} MMR</div><div>${p.wins}П / ${p.losses}П</div></div>`;
+      row.querySelector('.rk-name').onclick = ()=> isMe ? Nav.go('profile') : null;
+      wrap.appendChild(row);
+    });
+
+    if(!meInTop && window.GameData.pvpRating){
+      const pvp = window.GameData.pvpRating;
+      const sep = document.createElement('p');
+      sep.className = 'dim mono';
+      sep.style.cssText = 'font-size:10px; text-align:center; margin:8px 0;';
+      sep.textContent = '···';
+      wrap.appendChild(sep);
+      const row = document.createElement('div');
+      row.className = 'rating-row';
+      row.innerHTML = `
+        <div class="rk-pos">—</div>
+        <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
+        <div class="rk-info">
+          <div class="rk-name" style="cursor:pointer;">${escapeHtml(profile.username||'—')} <span class="dim" style="font-size:9px;">(ТЫ)</span></div>
+          <div class="rk-server">${profile.alliance_tag ? '['+escapeHtml(profile.alliance_tag)+']' : ''}</div>
+        </div>
+        <div class="rk-stats"><div class="lvl">${window.PvP.tierName(pvp.rating)}</div><div>${pvp.rating} MMR</div><div>${pvp.wins}П / ${pvp.losses}П</div></div>`;
+      row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
+      wrap.appendChild(row);
     }
-    const pvp = state.pvpStats || {wins:0, losses:0, rating:1000};
-    const row = document.createElement('div');
-    row.className = 'rating-row';
-    row.innerHTML = `
-      <div class="rk-pos">#1</div>
-      <div class="avatar-circle avatar-sm" style="cursor:default;">${Avatar.markup()}</div>
-      <div class="rk-info">
-        <div class="rk-name" style="cursor:pointer;">${escapeHtml(state.name||'—')}</div>
-        <div class="rk-server">${escapeHtml(state.server||'—')}${state.allianceTag ? ' · ['+escapeHtml(state.allianceTag)+']' : ''}</div>
-      </div>
-      <div class="rk-stats"><div class="lvl">${pvpTierName(pvp.rating)}</div><div>${pvp.rating} MMR</div></div>`;
-    row.querySelector('.rk-name').onclick = ()=> Nav.go('profile');
-    wrap.appendChild(row);
-    const note = document.createElement('p');
-    note.className = 'dim';
-    note.style.cssText = 'font-size:11px; text-align:center; margin-top:12px;';
-    note.textContent = '#1 из 1 известных участников PvP-рейтинга на данный момент.';
-    wrap.appendChild(note);
+
+    if(!top.length){
+      wrap.innerHTML = '<p class="dim" style="font-size:12px; text-align:center; padding:14px 0;">РЕЙТИНГ ПОКА ПУСТ.</p>';
+    }
   },
+
   getSearchState(){
+    // Cosmetic daily search-attempt counter only (limits how many bot
+    // "opponent cards" you can roll per day) — not security-relevant,
+    // the fight's outcome is always server-decided regardless. Kept
+    // local for simplicity.
     const today = mskDateKey(Date.now());
     if(!state.pvpSearch || state.pvpSearch.date !== today){
       state.pvpSearch = {date:today, used:0, results:[]};
@@ -1434,9 +1525,7 @@ const PvpUI = {
     const heroId = this.getBattleHeroId();
     if(!heroId){ toast('СНАЧАЛА ОТКРОЙ ХОТЯ БЫ ОДНОГО ГЕРОЯ'); return; }
     s.used++;
-    const myPower = computeHeroPower(heroId);
-    s.results = [];
-    for(let i=0;i<5;i++){ s.results.push(generateBotOpponent(myPower)); }
+    s.results = window.PvP.findOpponents(heroId);
     saveState();
     Audio_.tap();
     this.renderSearchState();
@@ -1473,9 +1562,9 @@ const PvpUI = {
     const heroId = this.getBattleHeroId();
     if(!heroId){ toast('СНАЧАЛА ОТКРОЙ ХОТЯ БЫ ОДНОГО ГЕРОЯ'); return; }
     this._compareBot = bot;
-    const def = findHeroDef(heroId);
-    const myStats = computeHeroStats(heroId);
-    const myPower = powerFromStats(myStats);
+    const entry = this.ownedHeroes().find(h=>h.def.id===heroId);
+    const def = entry.def, ph = entry.playerHero;
+    const myPower = ph.power;
     const panel = document.getElementById('pvpcompare-panel');
     panel.innerHTML = `
       <div class="vs-side">
@@ -1516,72 +1605,81 @@ const PvpUI = {
     }
 
     const statsWrap = document.getElementById('pvpcompare-stats');
-    const rows = [['HP','hp'],['УРОН','atk'],['ЗАЩИТА','def'],['СКОРОСТЬ','spd']];
-    statsWrap.innerHTML = rows.map(([label,key])=>`
-      <div class="stat-line">
-        <div class="sl-label">${label}</div>
-        <div class="sl-value"><span class="accent">${Math.round(myStats[key])}</span> &nbsp;/&nbsp; <span style="color:var(--danger);">${Math.round(bot.stats[key])}</span></div>
-      </div>`).join('');
+    statsWrap.innerHTML = `
+      <div class="stat-line"><div class="sl-label">СИЛА</div><div class="sl-value"><span class="accent">${myPower}</span> &nbsp;/&nbsp; <span style="color:var(--danger);">${bot.power}</span></div></div>`;
     document.getElementById('pvpcompare-fight-btn').onclick = ()=> Battle.start(heroId, bot);
     Nav.go('pvpcompare');
   }
 };
 
-/* ================= BATTLE HISTORY UI ================= */
 const HistoryUI = {
-  renderList(){
+  // AUDIT NOTE: used to read state.pvpHistory, a local array nothing
+  // ever wrote to any more once the local Battle engine was removed —
+  // "история боёв" was permanently empty. Rewired to the real
+  // pvp_battles table via window.PvP.loadHistory().
+  _cache: [],
+
+  async renderList(){
     const wrap = document.getElementById('pvphistory-list');
+    wrap.innerHTML = '<p class="dim" style="font-size:12px; text-align:center; padding:16px 0;">ЗАГРУЗКА...</p>';
+    const { data, error } = await window.PvP.loadHistory(30);
+    this._cache = data || [];
     wrap.innerHTML = '';
-    const history = state.pvpHistory || [];
-    if(!history.length){
+    if(error){ wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">НЕ УДАЛОСЬ ЗАГРУЗИТЬ ИСТОРИЮ.</p>'; return; }
+    if(!this._cache.length){
       wrap.innerHTML = '<p class="dim" style="font-size:12.5px; text-align:center; padding:20px 0;">ИСТОРИЯ БОЁВ ПОКА ПУСТА.</p>';
       return;
     }
-    history.forEach(h=>{
+    const myId = window.AuthState.user && window.AuthState.user.id;
+    this._cache.forEach(h=>{
+      const isAttacker = h.attacker_id === myId;
+      const myPower = isAttacker ? h.attacker_power : h.defender_power;
+      const enemyPower = isAttacker ? h.defender_power : h.attacker_power;
+      const enemyName = h.is_bot_defender ? 'BOT' : 'Соперник';
+      const ratingChange = isAttacker ? h.attacker_rating_change : h.defender_rating_change;
       const row = document.createElement('div');
       row.className = 'history-row';
       const badgeClass = h.result==='win'?'win':(h.result==='loss'?'loss':'draw');
       const badgeText = h.result==='win'?'ПОБЕДА':(h.result==='loss'?'ПОРАЖЕНИЕ':'НИЧЬЯ');
-      const d = new Date(h.timestamp);
+      const d = new Date(h.created_at);
       const dateStr = String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
       row.innerHTML = `
         <div class="hr-badge ${badgeClass}">${badgeText}</div>
         <div class="hr-body">
-          <div class="hr-vs">${escapeHtml(h.myName)} <span class="dim">vs</span> ${escapeHtml(h.enemyName)}</div>
-          <div class="hr-date">${dateStr} · сила ${h.myPower} vs ${h.enemyPower}</div>
+          <div class="hr-vs">${escapeHtml(state.name||'Ты')} <span class="dim">vs</span> ${escapeHtml(enemyName)}</div>
+          <div class="hr-date">${dateStr} · сила ${myPower} vs ${enemyPower}</div>
         </div>
-        <div class="hr-rating ${h.ratingChange>0?'pos':(h.ratingChange<0?'neg':'')}">${h.ratingChange>0?'+':''}${h.ratingChange||0}</div>`;
+        <div class="hr-rating ${ratingChange>0?'pos':(ratingChange<0?'neg':'')}">${ratingChange>0?'+':''}${ratingChange||0}</div>`;
       row.onclick = ()=> HistoryUI.openDetail(h.id);
       wrap.appendChild(row);
     });
   },
+
   openDetail(historyId){
-    const h = (state.pvpHistory||[]).find(x=>x.id===historyId);
+    const h = this._cache.find(x=>x.id===historyId);
     if(!h) return;
     const scroll = document.getElementById('pvphistorydetail-scroll');
-    const badgeClass = h.result==='win'?'win':(h.result==='loss'?'loss':'lose');
-    const d = new Date(h.timestamp);
+    const d = new Date(h.created_at);
     const dateStr = String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    const myId = window.AuthState.user && window.AuthState.user.id;
+    const isAttacker = h.attacker_id === myId;
+    const myPower = isAttacker ? h.attacker_power : h.defender_power;
+    const enemyPower = isAttacker ? h.defender_power : h.attacker_power;
+    const ratingChange = isAttacker ? h.attacker_rating_change : h.defender_rating_change;
     scroll.innerHTML = `
       <div class="battle-result-panel" style="padding-top:6px;">
         <div class="br-title ${h.result==='win'?'win':(h.result==='loss'?'lose':'')}">${h.result==='win'?'ПОБЕДА':(h.result==='loss'?'ПОРАЖЕНИЕ':'НИЧЬЯ')}</div>
         <div class="dim mono" style="font-size:11px; margin-top:6px;">${dateStr}</div>
-        <div class="dim" style="font-size:12.5px; margin-top:10px;">${escapeHtml(h.myName)} (${h.myPower} силы) vs ${escapeHtml(h.enemyName)} (${h.enemyPower} силы)</div>
-        ${h.ratingChange ? `<div class="mono" style="font-size:13px; margin-top:8px; color:${h.ratingChange>0?'var(--accent)':'var(--danger)'};">РЕЙТИНГ ${h.ratingChange>0?'+':''}${h.ratingChange}</div>` : ''}
+        <div class="dim" style="font-size:12.5px; margin-top:10px;">Сила ${myPower} vs ${enemyPower}${h.is_bot_defender?' (BOT)':''}</div>
+        ${ratingChange ? `<div class="mono" style="font-size:13px; margin-top:8px; color:${ratingChange>0?'var(--accent)':'var(--danger)'};">РЕЙТИНГ ${ratingChange>0?'+':''}${ratingChange}</div>` : ''}
         <div class="br-stats">
           <div class="brs-box"><div class="v">${h.turns}</div><div class="l">ХОДОВ</div></div>
-          <div class="brs-box"><div class="v">${h.dmgDealt}</div><div class="l">УРОН НАНЕСЁН</div></div>
-          <div class="brs-box"><div class="v">${h.dmgTaken}</div><div class="l">УРОН ПОЛУЧЕН</div></div>
+          <div class="brs-box"><div class="v">${h.damage_dealt}</div><div class="l">УРОН НАНЕСЁН</div></div>
+          <div class="brs-box"><div class="v">${h.damage_taken}</div><div class="l">УРОН ПОЛУЧЕН</div></div>
           <div class="brs-box"><div class="v">${h.crits}</div><div class="l">КРИТ. УДАРОВ</div></div>
-          <div class="brs-box"><div class="v">${h.abilitiesUsed}</div><div class="l">СПОСОБНОСТЕЙ</div></div>
-          <div class="brs-box"><div class="v">${h.finalHpPct}%</div><div class="l">ФИНАЛЬНОЕ ЗДОРОВЬЕ</div></div>
-          <div class="brs-box"><div class="v">${h.rewardCredits}</div><div class="l">НАГРАДА (КРЕДИТЫ)</div></div>
-          <div class="brs-box"><div class="v">${h.timeSec}с</div><div class="l">ВРЕМЯ БОЯ</div></div>
+          <div class="brs-box"><div class="v">${h.abilities_used}</div><div class="l">СПОСОБНОСТЕЙ</div></div>
+          <div class="brs-box"><div class="v">${h.reward_credits}</div><div class="l">НАГРАДА (КРЕДИТЫ)</div></div>
         </div>
-      </div>
-      <div class="section-title">ПОСЛЕДОВАТЕЛЬНОСТЬ ХОДОВ</div>
-      <div class="battle-log" style="height:220px;">
-        ${(h.log||[]).map(l=>`<div class="${l.cls==='me'?'lg-me':l.cls==='enemy'?'lg-enemy':l.cls==='crit'?'lg-crit':''}">${escapeHtml(l.text)}</div>`).join('')}
       </div>
       <div style="height:10px;"></div>`;
     Nav.go('pvphistorydetail');
@@ -1590,25 +1688,46 @@ const HistoryUI = {
 
 /* ================= HEROES UI ================= */
 const HeroUI = {
+  // ------------------------------------------------------------------
+  // AUDIT NOTE: every read used to go through heroState()/HEROES/
+  // findHeroDef() (all local-only), and every write mutated that local
+  // object directly then called saveState() — Supabase was never in
+  // the loop, so nothing here ever persisted past a browser refresh.
+  // Rewired to read window.GameData.heroes (loaded by js/database.js)
+  // and to write exclusively through window.Database's RPC wrappers,
+  // which themselves call the SECURITY DEFINER functions in
+  // schema.sql — the same functions that already existed and were
+  // already correct, just never called.
+  //
+  // Simplification made here: the old "before/after" preview numbers
+  // (computed by mutating a local copy of hero state and re-running the
+  // stat formula) are not reproduced, since the formula's source of
+  // truth is now a Postgres function, not JS. Current stats and costs
+  // are still shown in full; only the predictive "what happens if I
+  // upgrade" preview is gone. See README.md for the documented option
+  // to add it back as a non-authoritative client-side estimate later.
+  // ------------------------------------------------------------------
+
+  entry(heroId){
+    return (window.GameData.heroes || []).find(h => h.def.id === heroId) || null;
+  },
+
   renderList(){
-    if(!state.heroesInit) initHeroSystem();
     const wrap = document.getElementById('heroes-list');
     wrap.innerHTML = '';
-    HEROES.forEach(def=>{
-      const hs = heroState(def.id);
+    (window.GameData.heroes || []).forEach(entry=>{
+      const { def, playerHero: ph } = entry;
       const card = document.createElement('div');
-      if(hs.owned){
-        const power = computeHeroPower(def.id);
+      if(ph && ph.is_unlocked){
         card.className = 'hero-card';
         card.innerHTML = `
           <div class="hero-portrait">⚔</div>
           <div class="hc-body">
             <div class="hc-name">${def.name}</div>
             <div class="hc-role">${def.role} · ${def.rarity}</div>
-            <div class="hc-stars">${'★'.repeat(Math.min(5,hs.yellowStars))}${hs.redStars>0?' <span style="color:var(--danger)">'+'★'.repeat(hs.redStars)+'</span>':''} &nbsp;УР.${hs.level}</div>
+            <div class="hc-stars">${'★'.repeat(Math.min(5,ph.yellow_stars))}${ph.red_stars>0?' <span style="color:var(--danger)">'+'★'.repeat(ph.red_stars)+'</span>':''} &nbsp;УР.${ph.level}</div>
           </div>
-          <div class="hc-power"><div class="val">${power}</div><div class="lbl">СИЛА</div></div>`;
-        card.onclick = ()=> HeroUI.openDetail(def.id);
+          <div class="hc-power"><div class="val">${ph.power}</div><div class="lbl">СИЛА</div></div>`;
       } else {
         card.className = 'hero-card locked';
         card.innerHTML = `
@@ -1616,22 +1735,24 @@ const HeroUI = {
           <div class="hc-body">
             <div class="hc-name">${def.name}</div>
             <div class="hc-role">${def.role} · ${def.rarity}</div>
-            <div class="hc-stars" style="color:var(--text-dim);">ДЕТАЛИ ${hs.parts}/${UNLOCK_PARTS_REQUIRED}</div>
+            <div class="hc-stars" style="color:var(--text-dim);">ДЕТАЛИ ${ph?ph.parts:0}/100</div>
           </div>
           <div class="hc-lock-tag">🔒 ЗАБЛОКИРОВАН</div>`;
-        card.onclick = ()=> HeroUI.openDetail(def.id);
       }
+      card.onclick = ()=> HeroUI.openDetail(def.id);
       wrap.appendChild(card);
     });
   },
 
   openDetail(heroId){
-    const def = findHeroDef(heroId);
-    const hs = heroState(heroId);
+    const entry = this.entry(heroId);
+    if(!entry) return;
+    const { def, playerHero: ph } = entry;
     document.getElementById('herodetail-title').textContent = def.name;
     const scroll = document.getElementById('herodetail-scroll');
 
-    if(!hs.owned){
+    if(!ph || !ph.is_unlocked){
+      const parts = ph ? ph.parts : 0;
       scroll.innerHTML = `
         <div class="hero-hero-header">
           <div class="hero-hero-portrait" style="filter:grayscale(1); opacity:.6;">🔒</div>
@@ -1641,10 +1762,10 @@ const HeroUI = {
         <div class="doc-panel"><div class="q-text">Этот герой ещё не открыт. Собери детали героя, выполняя ветки расследования и задания из игры, чтобы разблокировать его.</div></div>
         <div class="upgrade-panel">
           <div class="up-title">РАЗБЛОКИРОВКА</div>
-          <div class="upgrade-cost-row"><span>Детали героя</span><span class="${hs.parts>=UNLOCK_PARTS_REQUIRED?'cost-ok':'cost-bad'}">${hs.parts} / ${UNLOCK_PARTS_REQUIRED}</span></div>
-          <div class="progress-track" style="margin-bottom:10px;"><div class="progress-fill" style="width:${Math.min(100, hs.parts/UNLOCK_PARTS_REQUIRED*100)}%"></div></div>
-          ${hs.parts<UNLOCK_PARTS_REQUIRED ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${UNLOCK_PARTS_REQUIRED-hs.parts} ДЕТАЛЕЙ</span><button class="where-btn" onclick="UI.showResourceSource('parts','детали героя')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
-          <button class="btn solid" id="hero-unlock-btn" style="margin-top:12px;" ${hs.parts>=UNLOCK_PARTS_REQUIRED?'':'disabled'}>РАЗБЛОКИРОВАТЬ ГЕРОЯ</button>
+          <div class="upgrade-cost-row"><span>Детали героя</span><span class="${parts>=100?'cost-ok':'cost-bad'}">${parts} / 100</span></div>
+          <div class="progress-track" style="margin-bottom:10px;"><div class="progress-fill" style="width:${Math.min(100,parts)}%"></div></div>
+          ${parts<100 ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${100-parts} ДЕТАЛЕЙ</span><button class="where-btn" onclick="UI.showResourceSource('parts','детали героя')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
+          <button class="btn solid" id="hero-unlock-btn" style="margin-top:12px;" ${parts>=100?'':'disabled'}>РАЗБЛОКИРОВАТЬ ГЕРОЯ</button>
         </div>`;
       const unlockBtn = document.getElementById('hero-unlock-btn');
       if(unlockBtn) unlockBtn.onclick = ()=> HeroUI.unlockHero(heroId);
@@ -1652,59 +1773,49 @@ const HeroUI = {
       return;
     }
 
-    const stats = computeHeroStats(heroId);
-    const power = powerFromStats(stats);
-
-    const levelPreview = hs.level<HERO_MAX_LEVEL ? previewHeroStats(heroId, h=>{ h.level++; }) : null;
-    const levelPowerAfter = levelPreview ? powerFromStats(levelPreview) : power;
-    const usingRed = hs.yellowStars>=5;
-    const starPool = usingRed ? 'redPuzzles' : 'yellowPuzzles';
-    const starPreview = (hs.yellowStars+hs.redStars)<HERO_MAX_STAR ? previewHeroStats(heroId, h=>{ if(usingRed) h.redStars++; else h.yellowStars++; }) : null;
-    const starPowerAfter = starPreview ? powerFromStats(starPreview) : power;
+    const levelCost = Math.round(100 * ph.level * (1 + ph.level*0.05));
+    const usingRed = ph.yellow_stars >= 5;
+    const starPool = usingRed ? ph.red_puzzles : ph.yellow_puzzles;
+    const starLabel = usingRed ? 'Красные пазлы' : 'Жёлтые пазлы';
+    const credits = window.GameData.resources ? window.GameData.resources.credits : 0;
 
     scroll.innerHTML = `
       <div class="hero-hero-header">
         <div class="hero-hero-portrait">⚔</div>
         <h2 style="font-family:var(--mono); font-size:19px;">${def.name}</h2>
         <div class="dim" style="font-size:12px; margin-top:2px;">${def.role} · ${def.rarity}</div>
-        <div class="hero-power-big">${power}</div>
+        <div class="hero-power-big">${ph.power}</div>
         <div class="hero-power-lbl">СИЛА</div>
       </div>
 
       <div class="section-title">ХАРАКТЕРИСТИКИ</div>
       <div class="doc-panel">
-        ${statLine('❤️ Здоровье', Math.round(stats.hp))}
-        ${statLine('⚔️ Урон', Math.round(stats.atk))}
-        ${statLine('🛡 Защита', Math.round(stats.def))}
-        ${statLine('⚡ Скорость', Math.round(stats.spd))}
-        ${statLine('🎯 Точность', stats.accuracy.toFixed(1)+'%')}
-        ${statLine('💥 Крит. шанс', stats.critChance.toFixed(1)+'%')}
-        ${statLine('💥 Крит. урон', stats.critDamage.toFixed(0)+'%')}
-        ${statLine('Пробивание', stats.penetration.toFixed(1)+'%')}
-        ${statLine('Уклонение', stats.evasion.toFixed(1)+'%')}
-        ${statLine('Сопротивление', stats.resist.toFixed(1)+'%', true)}
+        ${statLine('❤️ Здоровье', Math.round(ph.health))}
+        ${statLine('⚔️ Урон', Math.round(ph.attack))}
+        ${statLine('🛡 Защита', Math.round(ph.defense))}
+        ${statLine('⚡ Скорость', Math.round(ph.speed))}
+        ${statLine('🎯 Точность', Number(ph.accuracy).toFixed(1)+'%')}
+        ${statLine('💥 Крит. шанс', Number(ph.crit_chance).toFixed(1)+'%')}
+        ${statLine('💥 Крит. урон', Number(ph.crit_damage).toFixed(0)+'%')}
+        ${statLine('Пробивание', Number(ph.penetration).toFixed(1)+'%')}
+        ${statLine('Уклонение', Number(ph.evasion).toFixed(1)+'%')}
+        ${statLine('Сопротивление', Number(ph.resist).toFixed(1)+'%', true)}
       </div>
 
       <div class="section-title">УРОВЕНЬ</div>
       <div class="upgrade-panel">
-        <div class="up-title">УРОВЕНЬ ${hs.level} / ${HERO_MAX_LEVEL}</div>
-        <div class="upgrade-cost-row"><span>Стоимость (кредиты)</span><span id="level-cost" class="${hs.level<HERO_MAX_LEVEL && state.warehouse.credits>=levelUpCost(hs.level) ? 'cost-ok':'cost-bad'}">${hs.level<HERO_MAX_LEVEL ? levelUpCost(hs.level).toLocaleString('ru-RU') : '—'}</span></div>
-        ${hs.level<HERO_MAX_LEVEL && state.warehouse.credits<levelUpCost(hs.level) ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${(levelUpCost(hs.level)-state.warehouse.credits).toLocaleString('ru-RU')} КРЕДИТОВ</span><button class="where-btn" onclick="UI.showResourceSource('credits','кредиты')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
-        ${levelPreview ? `<div class="dim" style="font-size:10.5px; margin-top:10px; line-height:1.7;">
-          ❤️ ${Math.round(stats.hp).toLocaleString('ru-RU')} → ${Math.round(levelPreview.hp).toLocaleString('ru-RU')} (+${Math.round(levelPreview.hp-stats.hp)})<br>
-          ⚔️ ${Math.round(stats.atk).toLocaleString('ru-RU')} → ${Math.round(levelPreview.atk).toLocaleString('ru-RU')} (+${Math.round(levelPreview.atk-stats.atk)})<br>
-          СИЛА ${power.toLocaleString('ru-RU')} → ${levelPowerAfter.toLocaleString('ru-RU')} (+${levelPowerAfter-power})
-        </div>` : ''}
-        <button class="btn solid" id="hero-levelup-btn" style="margin-top:12px;" ${hs.level>=HERO_MAX_LEVEL || state.warehouse.credits<levelUpCost(hs.level) ? 'disabled':''}>${hs.level>=HERO_MAX_LEVEL?'МАКСИМАЛЬНЫЙ УРОВЕНЬ':'ПОВЫСИТЬ УРОВЕНЬ'}</button>
+        <div class="up-title">УРОВЕНЬ ${ph.level} / 60</div>
+        <div class="upgrade-cost-row"><span>Стоимость (кредиты)</span><span id="level-cost" class="${ph.level<60 && credits>=levelCost ? 'cost-ok':'cost-bad'}">${ph.level<60 ? levelCost.toLocaleString('ru-RU') : '—'}</span></div>
+        ${ph.level<60 && credits<levelCost ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${(levelCost-credits).toLocaleString('ru-RU')} КРЕДИТОВ</span><button class="where-btn" onclick="UI.showResourceSource('credits','кредиты')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
+        <button class="btn solid" id="hero-levelup-btn" style="margin-top:12px;" ${ph.level>=60 || credits<levelCost ? 'disabled':''}>${ph.level>=60?'МАКСИМАЛЬНЫЙ УРОВЕНЬ':'ПОВЫСИТЬ УРОВЕНЬ'}</button>
       </div>
 
       <div class="section-title">ЗВЁЗДЫ</div>
       <div class="upgrade-panel">
-        <div class="up-title">${'★'.repeat(Math.min(5,hs.yellowStars))}${'☆'.repeat(5-Math.min(5,hs.yellowStars))} ${hs.yellowStars>=5 ? ' '+'★'.repeat(hs.redStars)+'☆'.repeat(5-hs.redStars) : ''}</div>
-        <div class="upgrade-cost-row"><span>${usingRed?'Красные пазлы':'Жёлтые пазлы'}</span><span class="${hs[starPool]>=STAR_PUZZLES_REQUIRED?'cost-ok':'cost-bad'}">${hs[starPool]} / ${STAR_PUZZLES_REQUIRED}</span></div>
-        ${hs[starPool]<STAR_PUZZLES_REQUIRED ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${STAR_PUZZLES_REQUIRED-hs[starPool]} ПАЗЛОВ</span><button class="where-btn" onclick="UI.showResourceSource('${starPool}','${usingRed?'красные пазлы':'жёлтые пазлы'}')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
-        ${starPreview ? `<div class="dim" style="font-size:10.5px; margin-top:10px;">СИЛА ${power.toLocaleString('ru-RU')} → ${starPowerAfter.toLocaleString('ru-RU')} (+${starPowerAfter-power})</div>` : ''}
-        <button class="btn solid" id="hero-starup-btn" style="margin-top:12px;" ${(hs.yellowStars+hs.redStars)>=HERO_MAX_STAR || hs[starPool]<STAR_PUZZLES_REQUIRED ? 'disabled':''}>${(hs.yellowStars+hs.redStars)>=HERO_MAX_STAR?'МАКСИМУМ ЗВЁЗД':'ПОВЫСИТЬ ЗВЕЗДУ'}</button>
+        <div class="up-title">${'★'.repeat(Math.min(5,ph.yellow_stars))}${'☆'.repeat(5-Math.min(5,ph.yellow_stars))} ${ph.yellow_stars>=5 ? ' '+'★'.repeat(ph.red_stars)+'☆'.repeat(5-ph.red_stars) : ''}</div>
+        <div class="upgrade-cost-row"><span>${starLabel}</span><span class="${starPool>=20?'cost-ok':'cost-bad'}">${starPool} / 20</span></div>
+        ${starPool<20 ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${20-starPool} ПАЗЛОВ</span><button class="where-btn" onclick="UI.showResourceSource('${usingRed?'redPuzzles':'yellowPuzzles'}','${usingRed?'красные пазлы':'жёлтые пазлы'}')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
+        <button class="btn solid" id="hero-starup-btn" style="margin-top:12px;" ${(ph.yellow_stars+ph.red_stars)>=10 || starPool<20 ? 'disabled':''}>${(ph.yellow_stars+ph.red_stars)>=10?'МАКСИМУМ ЗВЁЗД':'ПОВЫСИТЬ ЗВЕЗДУ'}</button>
       </div>
 
       <div class="section-title">ЭКИПИРОВКА</div>
@@ -1715,7 +1826,7 @@ const HeroUI = {
 
       <div class="section-title">СПОСОБНОСТЬ</div>
       <div class="doc-panel">
-        <div class="q-text"><strong style="color:var(--accent);">${def.ability.name}</strong><br><br>${def.ability.desc}<br><br><span class="dim">Перезарядка: ${def.ability.cooldown} хода</span></div>
+        <div class="q-text"><strong style="color:var(--accent);">${def.ability_name||''}</strong><br><br>${def.ability_desc||''}<br><br><span class="dim">Перезарядка: ${def.ability_cooldown||3} хода</span></div>
       </div>
 
       <div class="section-title">РАЗВИТИЕ ГЕРОЯ</div>
@@ -1723,8 +1834,10 @@ const HeroUI = {
       <div style="height:10px;"></div>
     `;
 
-    document.getElementById('hero-levelup-btn').onclick = ()=> HeroUI.levelUp(heroId);
-    document.getElementById('hero-starup-btn').onclick = ()=> HeroUI.starUp(heroId);
+    const lvlBtn = document.getElementById('hero-levelup-btn');
+    if(lvlBtn) lvlBtn.onclick = ()=> HeroUI.levelUp(heroId);
+    const starBtn = document.getElementById('hero-starup-btn');
+    if(starBtn) starBtn.onclick = ()=> HeroUI.starUp(heroId);
     this.renderGearList(heroId);
     this.renderTalentList(heroId);
     this.renderDevMissions(heroId);
@@ -1732,107 +1845,124 @@ const HeroUI = {
   },
 
   renderGearList(heroId){
-    const hs = heroState(heroId);
+    const entry = this.entry(heroId);
     const wrap = document.getElementById('hero-gear-list');
     wrap.innerHTML = '';
     const icons = {weapon:'🔫', gloves:'🧤', vest:'🦺', pants:'👖'};
-    const currentPower = computeHeroPower(heroId);
-    GEAR_SLOTS.forEach(slot=>{
-      const g = hs.gear[slot];
-      const cost = gearUpgradeCost(slot, g.level);
-      const matKey = slot==='weapon' ? 'weaponMats' : 'armorMats';
-      const matLabel = matKey==='weaponMats' ? 'материалы оружия' : 'материалы брони';
-      const hasMats = state.warehouse[matKey]>=cost[matKey];
-      const hasUniversal = state.warehouse.universalMats>=cost.universalMats;
-      const canAfford = g.level<GEAR_MAX_LEVEL && hasMats && hasUniversal;
-      let powerDelta = 0;
-      if(g.level<GEAR_MAX_LEVEL){
-        const preview = previewHeroStats(heroId, h=>{ h.gear[slot].level++; });
-        powerDelta = powerFromStats(preview) - currentPower;
-      }
+    const names = {weapon:'ОРУЖИЕ', gloves:'ПЕРЧАТКИ', vest:'ЖИЛЕТ', pants:'ШТАНЫ'};
+    const res = window.GameData.resources || {weaponMats:0, armorMats:0, universalMats:0};
+    ['weapon','gloves','vest','pants'].forEach(slot=>{
+      const g = entry.gear.find(x=>x.slot===slot) || {level:0};
+      const cost = { mat: 50*(g.level+1), universal: 10*(g.level+1) };
+      const matKey = slot==='weapon' ? 'weapon_mats' : 'armor_mats';
+      const matLabel = slot==='weapon' ? 'материалы оружия' : 'материалы брони';
+      const hasMats = (res[matKey]||0) >= cost.mat;
+      const hasUniversal = (res.universal_mats||0) >= cost.universal;
+      const canAfford = g.level<20 && hasMats && hasUniversal;
       const row = document.createElement('div');
       row.className = 'gear-slot';
       row.innerHTML = `
         <div class="gear-icon">${icons[slot]}</div>
         <div class="gs-body">
-          <div class="gs-name">${GEAR_NAMES[slot]} · УР.${g.level}</div>
-          <div class="gs-level">${g.level<GEAR_MAX_LEVEL ? matLabel+' '+cost[matKey]+' · универсальные '+cost.universalMats+' · СИЛА +'+powerDelta : 'МАКСИМУМ'}</div>
-          ${g.level<GEAR_MAX_LEVEL && !canAfford ? `<div class="resource-missing-row"><span class="resource-missing-tag">${!hasMats?'НЕ ХВАТАЕТ '+(cost[matKey]-state.warehouse[matKey])+' '+matLabel.toUpperCase() : 'НЕ ХВАТАЕТ '+(cost.universalMats-state.warehouse.universalMats)+' УНИВЕРСАЛЬНЫХ'}</span><button class="where-btn" onclick="UI.showResourceSource('${!hasMats?matKey:'universalMats'}','${!hasMats?matLabel:'универсальные материалы'}')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
+          <div class="gs-name">${names[slot]} · УР.${g.level}</div>
+          <div class="gs-level">${g.level<20 ? matLabel+' '+cost.mat+' · универсальные '+cost.universal : 'МАКСИМУМ'}</div>
+          ${g.level<20 && !canAfford ? `<div class="resource-missing-row"><span class="resource-missing-tag">${!hasMats?'НЕ ХВАТАЕТ '+(cost.mat-(res[matKey]||0))+' '+matLabel.toUpperCase() : 'НЕ ХВАТАЕТ '+(cost.universal-(res.universal_mats||0))+' УНИВЕРСАЛЬНЫХ'}</span><button class="where-btn" onclick="UI.showResourceSource('${!hasMats?(slot==='weapon'?'weaponMats':'armorMats'):'universalMats'}','${!hasMats?matLabel:'универсальные материалы'}')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}
         </div>
-        <button class="gs-btn" ${g.level>=GEAR_MAX_LEVEL || !canAfford ? 'disabled':''}>${g.level>=GEAR_MAX_LEVEL?'МАКС':'УЛУЧШИТЬ'}</button>`;
+        <button class="gs-btn" ${g.level>=20 || !canAfford ? 'disabled':''}>${g.level>=20?'МАКС':'УЛУЧШИТЬ'}</button>`;
       row.querySelector('.gs-btn').onclick = ()=> HeroUI.upgradeGear(heroId, slot);
       wrap.appendChild(row);
     });
   },
 
   renderTalentList(heroId){
-    const def = findHeroDef(heroId);
-    const hs = heroState(heroId);
+    const entry = this.entry(heroId);
     const wrap = document.getElementById('hero-talent-list');
     wrap.innerHTML = '';
-    (def.talents||[]).forEach(t=>{
-      const lvl = hs.talents[t.id] || 0;
-      const nextLvl = Math.min(TALENT_MAX_LEVEL, lvl+1);
-      const curVal = talentValue(t, lvl);
-      const nextVal = talentValue(t, nextLvl);
-      const cost = lvl<TALENT_MAX_LEVEL ? talentCost(lvl) : null;
-      const canAfford = cost!==null && hs.parts>=cost;
-      const dots = Array.from({length:TALENT_MAX_LEVEL}).map((_,i)=>i<lvl?'●':'○').join('');
+    (entry.talentDefs||[]).forEach(t=>{
+      const prog = (entry.talentProgress||[]).find(p=>p.talent_id===t.id);
+      const lvl = prog ? prog.level : 0;
+      const nextLvl = Math.min(t.max_level, lvl+1);
+      const curVal = lvl>0 ? (t.base_value + (lvl-1)*t.step_value) : 0;
+      const nextVal = t.base_value + (nextLvl-1)*t.step_value;
+      const cost = lvl<t.max_level ? (20 + lvl*10) : null;
+      const parts = entry.playerHero.parts;
+      const canAfford = cost!==null && parts>=cost;
+      const dots = Array.from({length:t.max_level}).map((_,i)=>i<lvl?'●':'○').join('');
       const row = document.createElement('div');
       row.className = 'talent-row';
       row.innerHTML = `
         <div class="tr-head"><span class="tr-name">${t.name}</span><span class="tr-dots">${dots}</span></div>
-        <div class="tr-desc">${t.desc.replace('{v}', lvl>0? curVal.toFixed(0) : '—')}</div>
+        <div class="tr-desc">${(t.description||'').replace('{v}', lvl>0? curVal.toFixed(0) : '—')}</div>
         <div class="tr-cost-row">
-          <span class="tr-cost ${lvl>=TALENT_MAX_LEVEL ? 'dim' : (canAfford?'cost-ok':'cost-bad')}">${lvl>=TALENT_MAX_LEVEL ? 'МАКС. УРОВЕНЬ' : (curVal.toFixed(0)+'% → '+nextVal.toFixed(0)+'% · '+cost+' деталей ('+hs.parts+')')}</span>
-          <button class="tr-btn" ${lvl>=TALENT_MAX_LEVEL || !canAfford ? 'disabled':''}>${lvl>=TALENT_MAX_LEVEL?'МАКС':(lvl===0?'ИЗУЧИТЬ':'УЛУЧШИТЬ')}</button>
+          <span class="tr-cost ${lvl>=t.max_level ? 'dim' : (canAfford?'cost-ok':'cost-bad')}">${lvl>=t.max_level ? 'МАКС. УРОВЕНЬ' : (curVal.toFixed(0)+'% → '+nextVal.toFixed(0)+'% · '+cost+' деталей ('+parts+')')}</span>
+          <button class="tr-btn" ${lvl>=t.max_level || !canAfford ? 'disabled':''}>${lvl>=t.max_level?'МАКС':(lvl===0?'ИЗУЧИТЬ':'УЛУЧШИТЬ')}</button>
         </div>
-        ${lvl<TALENT_MAX_LEVEL && !canAfford ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${cost-hs.parts} ДЕТАЛЕЙ</span><button class="where-btn" onclick="UI.showResourceSource('parts','детали героя')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}`;
+        ${lvl<t.max_level && !canAfford ? `<div class="resource-missing-row"><span class="resource-missing-tag">НЕ ХВАТАЕТ ${cost-parts} ДЕТАЛЕЙ</span><button class="where-btn" onclick="UI.showResourceSource('parts','детали героя')">ГДЕ ПОЛУЧИТЬ</button></div>` : ''}`;
       row.querySelector('.tr-btn').onclick = ()=> HeroUI.upgradeTalent(heroId, t.id);
       wrap.appendChild(row);
     });
   },
-  upgradeTalent(heroId, talentId){
-    const def = findHeroDef(heroId);
-    const hs = heroState(heroId);
-    const t = (def.talents||[]).find(x=>x.id===talentId);
-    const lvl = hs.talents[talentId] || 0;
-    if(!t || lvl>=TALENT_MAX_LEVEL) return;
-    const cost = talentCost(lvl);
-    if(hs.parts<cost){ toast('НЕДОСТАТОЧНО ДЕТАЛЕЙ ГЕРОЯ'); return; }
-    hs.parts -= cost;
-    hs.talents[talentId] = lvl+1;
-    saveState();
-    Audio_.ok();
-    toast('ТАЛАНТ «'+t.name+'» УЛУЧШЕН ДО УРОВНЯ '+(lvl+1));
-    HeroUI.openDetail(heroId);
-  },
 
   renderDevMissions(heroId){
+    const entry = this.entry(heroId);
     const wrap = document.getElementById('hero-devmissions-list');
     wrap.innerHTML = '';
-    const hs = heroState(heroId);
-    const missions = heroDevMissions(heroId);
-    let allDone = true;
+    const ph = entry.playerHero;
+    const missions = (entry.devMissions||[]).slice().sort((a,b)=>a.step_index-b.step_index);
+
+    const checkDone = (m)=>{
+      switch(m.check_kind){
+        case 'owned': return true; // if we're here at all, it's unlocked
+        case 'level_at_least': return ph.level >= m.check_value;
+        case 'gear_equipped': return entry.gear.some(g=>g.slot==='weapon' && g.level>=1);
+        case 'stars_at_least': return ph.yellow_stars >= m.check_value;
+        case 'pvp_wins_at_least': return ph.pvp_wins >= m.check_value;
+        default: return false;
+      }
+    };
+
     missions.forEach(m=>{
-      const done = m.check();
-      if(!done) allDone = false;
-      const claimed = !!hs.devMissionsClaimed[m.idx];
+      const done = checkDone(m);
+      const progressRow = (entry.devProgress||[]).find(p=>p.step_index===m.step_index);
+      const claimed = !!(progressRow && progressRow.claimed);
       const canClaim = done && !claimed;
+      const item = m.reward_item || {};
+      const rewardParts = [];
+      if(item.parts) rewardParts.push('+'+item.parts+' деталей');
+      if(item.yellow_puzzles) rewardParts.push('+'+item.yellow_puzzles+' жёлтых пазлов');
+      if(item.weapon_mats) rewardParts.push('+'+item.weapon_mats+' материалов оружия');
+      if(item.armor_mats) rewardParts.push('+'+item.armor_mats+' материалов брони');
+      if(item.universal_mats) rewardParts.push('+'+item.universal_mats+' универсальных материалов');
       const row = document.createElement('div');
       row.className = 'devmission-row'+(claimed?' done':'');
       row.innerHTML = `
         <div class="dm-check">${claimed?'✓':(done?'●':'')}</div>
         <div class="dm-body">
-          <div class="dm-desc">${m.idx+1}. ${escapeHtml(m.desc)}</div>
-          <div class="dm-reward">НАГРАДА: ${escapeHtml(m.rewardLabel)}</div>
+          <div class="dm-desc">${m.step_index+1}. ${escapeHtml(m.description)}</div>
+          <div class="dm-reward">НАГРАДА: ${escapeHtml(rewardParts.join(' · ')||'—')}</div>
         </div>
         ${canClaim ? '<button class="dm-claim">ЗАБРАТЬ</button>' : ''}`;
-      if(canClaim){ row.querySelector('.dm-claim').onclick = ()=> HeroUI.claimDevMission(heroId, m.idx); }
+      if(canClaim){
+        const btn = row.querySelector('.dm-claim');
+        btn.onclick = async ()=>{
+          btn.disabled = true;
+          const { error } = await window.Database.claimHeroDevMission(heroId, m.step_index);
+          if(error){ toast(error.userMessage||'Не удалось получить награду'); btn.disabled=false; return; }
+          Audio_.ok(); toast('МИССИЯ ВЫПОЛНЕНА');
+          HeroUI.openDetail(heroId);
+        };
+      }
       wrap.appendChild(row);
     });
-    const allClaimed = missions.every(m=>hs.devMissionsClaimed[m.idx]);
-    if(allClaimed && !hs.fullyDevelopedClaimed){
+
+    const allDone = missions.length>0 && missions.every(m=>checkDone(m));
+    const allClaimed = missions.length>0 && missions.every(m=>{
+      const p = (entry.devProgress||[]).find(x=>x.step_index===m.step_index);
+      return p && p.claimed;
+    });
+    const bonusClaimed = (entry.devProgress||[]).some(p=>p.step_index===-1 && p.claimed);
+
+    if(allClaimed && !bonusClaimed){
       const bonusRow = document.createElement('div');
       bonusRow.className = 'devmission-row';
       bonusRow.style.borderColor = 'var(--amber)';
@@ -1840,12 +1970,17 @@ const HeroUI = {
         <div class="dm-check" style="border-color:var(--amber); color:var(--amber);">★</div>
         <div class="dm-body">
           <div class="dm-desc" style="color:var(--amber);">ГЕРОЙ ПОЛНОСТЬЮ РАЗВИТ</div>
-          <div class="dm-reward">НАГРАДА: +${HERO_FULLY_DEVELOPED_BONUS.credits} кредитов · +${HERO_FULLY_DEVELOPED_BONUS.universalMats} универсальных материалов</div>
+          <div class="dm-reward">НАГРАДА: +2000 кредитов · +60 универсальных материалов</div>
         </div>
         <button class="dm-claim">ЗАБРАТЬ</button>`;
-      bonusRow.querySelector('.dm-claim').onclick = ()=> HeroUI.claimFullyDeveloped(heroId);
+      bonusRow.querySelector('.dm-claim').onclick = async ()=>{
+        const { error } = await window.Database.claimHeroFullyDeveloped(heroId);
+        if(error){ toast(error.userMessage||'Не удалось получить бонус'); return; }
+        Audio_.unlock(); toast('ГЕРОЙ ПОЛНОСТЬЮ РАЗВИТ! Бонус получен.');
+        HeroUI.openDetail(heroId);
+      };
       wrap.appendChild(bonusRow);
-    } else if(allClaimed && hs.fullyDevelopedClaimed){
+    } else if(allClaimed && bonusClaimed){
       const doneRow = document.createElement('div');
       doneRow.className = 'dim mono';
       doneRow.style.cssText = 'text-align:center; font-size:11px; padding:10px 0;';
@@ -1853,118 +1988,88 @@ const HeroUI = {
       wrap.appendChild(doneRow);
     }
   },
-  claimDevMission(heroId, idx){
-    const hs = heroState(heroId);
-    const missions = heroDevMissions(heroId);
-    const m = missions.find(x=>x.idx===idx);
-    if(!m || !m.check() || hs.devMissionsClaimed[idx]) return;
-    hs.devMissionsClaimed[idx] = true;
-    grantHeroReward({
-      credits:m.reward.credits||0, weaponMats:m.reward.weaponMats||0, armorMats:m.reward.armorMats||0,
-      universalMats:m.reward.universalMats||0, parts:m.reward.parts||0,
-      puzzles:m.reward.yellowPuzzles||0, toOwnedHero: !!m.reward.yellowPuzzles
-    });
-    saveState();
-    Audio_.ok();
-    toast('МИССИЯ ВЫПОЛНЕНА: '+m.rewardLabel);
-    HeroUI.openDetail(heroId);
-  },
-  claimFullyDeveloped(heroId){
-    const hs = heroState(heroId);
-    if(hs.fullyDevelopedClaimed) return;
-    hs.fullyDevelopedClaimed = true;
-    grantHeroReward(HERO_FULLY_DEVELOPED_BONUS);
-    saveState();
+
+  async unlockHero(heroId){
+    const btn = document.getElementById('hero-unlock-btn');
+    if(btn) btn.disabled = true;
+    const { error } = await window.Database.unlockHero(heroId);
+    if(error){ toast(error.userMessage || 'Не удалось разблокировать героя'); if(btn) btn.disabled=false; return; }
     Audio_.unlock();
-    toast('ГЕРОЙ ПОЛНОСТЬЮ РАЗВИТ! Бонус получен.');
+    toast('ГЕРОЙ РАЗБЛОКИРОВАН: '+HeroUI.entry(heroId).def.name);
     HeroUI.openDetail(heroId);
   },
 
-  unlockHero(heroId){
-    const hs = heroState(heroId);
-    if(hs.parts<UNLOCK_PARTS_REQUIRED) return;
-    hs.owned = true;
-    hs.level = 1;
-    hs.yellowStars = 1;
-    saveState();
-    Audio_.unlock();
-    toast('ГЕРОЙ РАЗБЛОКИРОВАН: '+findHeroDef(heroId).name);
-    HeroUI.openDetail(heroId);
-  },
-
-  levelUp(heroId){
-    const hs = heroState(heroId);
-    if(hs.level>=HERO_MAX_LEVEL) return;
-    const cost = levelUpCost(hs.level);
-    if(state.warehouse.credits<cost){ toast('НЕДОСТАТОЧНО КРЕДИТОВ'); return; }
-    const beforePower = computeHeroPower(heroId);
-    state.warehouse.credits -= cost;
-    hs.level++;
-    const afterPower = computeHeroPower(heroId);
-    saveState();
+  async levelUp(heroId){
+    const btn = document.getElementById('hero-levelup-btn');
+    if(btn) btn.disabled = true;
+    const before = this.entry(heroId).playerHero.power;
+    const { error } = await window.Database.levelUpHero(heroId);
+    if(error){ toast(error.userMessage || 'Не удалось повысить уровень'); if(btn) btn.disabled=false; return; }
+    const after = this.entry(heroId).playerHero.power;
     Audio_.ok();
-    toast('УРОВЕНЬ ПОВЫШЕН: '+hs.level+' · СИЛА '+beforePower+' → '+afterPower);
+    toast('УРОВЕНЬ ПОВЫШЕН · СИЛА '+before+' → '+after);
     HeroUI.openDetail(heroId);
   },
 
-  starUp(heroId){
-    const hs = heroState(heroId);
-    if((hs.yellowStars+hs.redStars)>=HERO_MAX_STAR) return;
-    const usingRed = hs.yellowStars>=5;
-    const pool = usingRed ? 'redPuzzles' : 'yellowPuzzles';
-    if(hs[pool]<STAR_PUZZLES_REQUIRED){ toast('НЕДОСТАТОЧНО ПАЗЛОВ'); return; }
-    const beforePower = computeHeroPower(heroId);
-    hs[pool] -= STAR_PUZZLES_REQUIRED;
-    if(usingRed) hs.redStars++; else hs.yellowStars++;
-    const afterPower = computeHeroPower(heroId);
-    saveState();
+  async starUp(heroId){
+    const btn = document.getElementById('hero-starup-btn');
+    if(btn) btn.disabled = true;
+    const before = this.entry(heroId).playerHero.power;
+    const { error } = await window.Database.starUpHero(heroId);
+    if(error){ toast(error.userMessage || 'Не удалось повысить звезду'); if(btn) btn.disabled=false; return; }
+    const after = this.entry(heroId).playerHero.power;
     Audio_.ok();
-    toast('ЗВЕЗДА ПОВЫШЕНА · СИЛА '+beforePower+' → '+afterPower);
+    toast('ЗВЕЗДА ПОВЫШЕНА · СИЛА '+before+' → '+after);
     HeroUI.openDetail(heroId);
   },
 
-  upgradeGear(heroId, slot){
-    const hs = heroState(heroId);
-    const g = hs.gear[slot];
-    if(g.level>=GEAR_MAX_LEVEL) return;
-    const cost = gearUpgradeCost(slot, g.level);
-    const matKey = slot==='weapon' ? 'weaponMats' : 'armorMats';
-    if(state.warehouse[matKey]<cost[matKey] || state.warehouse.universalMats<cost.universalMats){ toast('НЕДОСТАТОЧНО МАТЕРИАЛОВ'); return; }
-    const beforePower = computeHeroPower(heroId);
-    state.warehouse[matKey] -= cost[matKey];
-    state.warehouse.universalMats -= cost.universalMats;
-    g.level++;
-    const afterPower = computeHeroPower(heroId);
-    saveState();
+  async upgradeGear(heroId, slot){
+    const before = this.entry(heroId).playerHero.power;
+    const { error } = await window.Database.upgradeGear(heroId, slot);
+    if(error){ toast(error.userMessage || 'Не удалось улучшить экипировку'); return; }
+    const after = this.entry(heroId).playerHero.power;
     Audio_.ok();
-    toast(GEAR_NAMES[slot]+' УЛУЧШЕН · СИЛА '+beforePower+' → '+afterPower);
+    const names = {weapon:'ОРУЖИЕ', gloves:'ПЕРЧАТКИ', vest:'ЖИЛЕТ', pants:'ШТАНЫ'};
+    toast(names[slot]+' УЛУЧШЕН · СИЛА '+before+' → '+after);
+    HeroUI.openDetail(heroId);
+  },
+
+  async upgradeTalent(heroId, talentId){
+    const { error } = await window.Database.upgradeTalent(heroId, talentId);
+    if(error){ toast(error.userMessage || 'Не удалось улучшить талант'); return; }
+    Audio_.ok();
+    toast('ТАЛАНТ УЛУЧШЕН');
     HeroUI.openDetail(heroId);
   },
 
   renderWarehouse(){
-    if(!state.heroesInit) initHeroSystem();
-    const w = state.warehouse;
+    const res = window.GameData.resources;
     const main = document.getElementById('warehouse-main');
+    if(!res){ main.innerHTML = '<p class="dim" style="text-align:center; padding:14px 0;">ЗАГРУЗКА...</p>'; return; }
     main.innerHTML = `
-      <div class="wh-box"><div class="wh-icon">💰</div><div class="wh-val">${w.credits.toLocaleString('ru-RU')}</div><div class="wh-lbl">КРЕДИТЫ</div></div>
-      <div class="wh-box"><div class="wh-icon">🔫</div><div class="wh-val">${w.weaponMats.toLocaleString('ru-RU')}</div><div class="wh-lbl">МАТЕРИАЛЫ ОРУЖИЯ</div></div>
-      <div class="wh-box"><div class="wh-icon">🛡</div><div class="wh-val">${w.armorMats.toLocaleString('ru-RU')}</div><div class="wh-lbl">МАТЕРИАЛЫ БРОНИ</div></div>
-      <div class="wh-box"><div class="wh-icon">⚙️</div><div class="wh-val">${w.universalMats.toLocaleString('ru-RU')}</div><div class="wh-lbl">УНИВЕРСАЛЬНЫЕ</div></div>`;
+      <div class="wh-box"><div class="wh-icon">💰</div><div class="wh-val">${res.credits.toLocaleString('ru-RU')}</div><div class="wh-lbl">КРЕДИТЫ</div></div>
+      <div class="wh-box"><div class="wh-icon">🔫</div><div class="wh-val">${res.weapon_mats.toLocaleString('ru-RU')}</div><div class="wh-lbl">МАТЕРИАЛЫ ОРУЖИЯ</div></div>
+      <div class="wh-box"><div class="wh-icon">🛡</div><div class="wh-val">${res.armor_mats.toLocaleString('ru-RU')}</div><div class="wh-lbl">МАТЕРИАЛЫ БРОНИ</div></div>
+      <div class="wh-box"><div class="wh-icon">⚙️</div><div class="wh-val">${res.universal_mats.toLocaleString('ru-RU')}</div><div class="wh-lbl">УНИВЕРСАЛЬНЫЕ</div></div>`;
     const heroesWrap = document.getElementById('warehouse-heroes');
     heroesWrap.innerHTML = '';
-    HEROES.forEach(def=>{
-      const hs = heroState(def.id);
+    (window.GameData.heroes||[]).forEach(entry=>{
+      const { def, playerHero: ph } = entry;
       const row = document.createElement('div');
       row.className = 'wh-hero-row';
-      if(hs.owned){
-        row.innerHTML = `<div class="whr-name">${def.name}</div><div class="whr-vals">Жёлт. пазлы ${hs.yellowPuzzles} · Красн. ${hs.redPuzzles}</div>`;
+      if(ph && ph.is_unlocked){
+        row.innerHTML = `<div class="whr-name">${def.name}</div><div class="whr-vals">Жёлт. пазлы ${ph.yellow_puzzles} · Красн. ${ph.red_puzzles}</div>`;
       } else {
-        row.innerHTML = `<div class="whr-name">${def.name} 🔒</div><div class="whr-vals">Детали ${hs.parts}/${UNLOCK_PARTS_REQUIRED}</div>`;
+        row.innerHTML = `<div class="whr-name">${def.name} 🔒</div><div class="whr-vals">Детали ${ph?ph.parts:0}/100</div>`;
       }
       heroesWrap.appendChild(row);
     });
   }
 };
+function statLine(label, value, last){
+  return `<div class="stat-line"${last?' style="border-bottom:none;"':''}><div class="sl-label">${label}</div><div class="sl-value">${value}</div></div>`;
+}
+
 function statLine(label, value, last){
   return `<div class="stat-line"${last?' style="border-bottom:none;"':''}><div class="sl-label">${label}</div><div class="sl-value">${value}</div></div>`;
 }
@@ -2050,389 +2155,190 @@ const HERO_ABILITY_FN = {
   }
 };
 const Battle = {
-  state:null,
+  // ---------------------------------------------------------------------
+  // AUDIT NOTE: this module used to run a full local turn-based
+  // simulation (buildFighter/performAttack/playerAction/botTurn/...)
+  // and decide win/loss itself using client-side RNG. That is exactly
+  // the "client determines the winner" hole the audit was asked to
+  // close — resolve_pvp_battle_bot() in Supabase already existed and
+  // already did this correctly, it just was never called from here.
+  //
+  // The fix: the server decides the entire outcome (win/loss, rating
+  // change, damage/turns/crits, rewards) in one authoritative call
+  // BEFORE any animation happens. The client's job is now to reveal
+  // that already-decided result, not to compute one of its own. The
+  // old per-turn action buttons (attack/ability/defend/ultimate) are
+  // gone because there is nothing left for them to decide — see
+  // README.md "Что реально сделано" for the fuller explanation and the
+  // documented upgrade path to a real per-turn server round-trip later.
+  // ---------------------------------------------------------------------
 
-  buildFighter(name, statsSrc, ability, isBot, extra){
-    return Object.assign({
-      name, isBot: !!isBot,
-      maxHp: Math.round(statsSrc.hp), hp: Math.round(statsSrc.hp),
-      atk: statsSrc.atk, def: statsSrc.def, spd: statsSrc.spd,
-      critChance: statsSrc.critChance, critDamage: statsSrc.critDamage,
-      accuracy: statsSrc.accuracy, penetration: statsSrc.penetration,
-      evasion: statsSrc.evasion, resist: statsSrc.resist,
-      ability, cooldown:0, shieldAbsorb:0, shieldTurns:0, defending:false,
-      spdBuffTurns:0, spdBuffBonus:0, ultimate:0,
-      dmgDealt:0, dmgTaken:0, crits:0, abilitiesUsed:0,
-      role:'', talentDefs:[], talentLevels:{}
-    }, extra||{});
-  },
+  state: null,
 
-  getTalentLevel(fighter, talentId){ return (fighter.talentLevels && fighter.talentLevels[talentId]) || 0; },
-  getTalentDef(fighter, talentId){ return (fighter.talentDefs||[]).find(t=>t.id===talentId); },
-  talentBonus(fighter, talentId){
-    const def = this.getTalentDef(fighter, talentId);
-    const lvl = this.getTalentLevel(fighter, talentId);
-    if(!def || lvl<=0) return 0;
-    return talentValue(def, lvl);
-  },
-  counterMods(attacker, defender){
-    let dmgMult=1, defReduction=0, critDmgBonus=0, healBonus=0;
-    const iAmCountering = getCounterInfo(attacker.role, defender.role);
-    if(iAmCountering.status==='advantage'){
-      if(iAmCountering.pair.effect==='atk_dmg') dmgMult *= (1+iAmCountering.pair.value);
-      if(iAmCountering.pair.effect==='crit_dmg') critDmgBonus += iAmCountering.pair.value*100;
-      if(iAmCountering.pair.effect==='heal_effect') healBonus += iAmCountering.pair.value;
-    }
-    const theyCounterMe = getCounterInfo(defender.role, attacker.role);
-    if(theyCounterMe.status==='advantage' && theyCounterMe.pair.effect==='dmg_reduction'){
-      defReduction += theyCounterMe.pair.value;
-    }
-    return {dmgMult, defReduction, critDmgBonus, healBonus};
-  },
-
-  effectiveSpd(f){ return f.spd + (f.spdBuffTurns>0 ? f.spdBuffBonus : 0); },
-
-  start(heroId, bot){
-    const def = findHeroDef(heroId);
-    const stats = computeHeroStats(heroId);
-    const hs = heroState(heroId);
-    const player = this.buildFighter(def.name, stats, def.ability, false, {
-      heroId, defId:def.id, role:def.role, talentDefs:def.talents||[], talentLevels:Object.assign({}, hs.talents)
-    });
-    const botDef = findHeroDef(bot.heroDefId);
-    const enemy = this.buildFighter(bot.name+' (BOT)', bot.stats, bot.ability, true, {
-      defId:bot.heroDefId, role: bot.role || (botDef?botDef.role:''), talentDefs:[], talentLevels:{}
-    });
-
-    this.state = {
-      player, enemy,
-      turn: this.effectiveSpd(player) >= this.effectiveSpd(enemy) ? 'player' : 'enemy',
-      actionsTaken:0, maxActions:30, finished:false, log:[], startTime:Date.now()
-    };
-    document.getElementById('battle-title').textContent = def.name+' VS '+bot.name;
-    const counter = getCounterInfo(player.role, enemy.role);
-    if(counter.status==='advantage'){ this.log('🟢 У ТЕБЯ ПРЕИМУЩЕСТВО КЛАССА: '+counter.pair.label, 'sys'); }
-    else if(counter.status==='disadvantage'){ this.log('🔴 НЕБЛАГОПРИЯТНЫЙ КЛАСС: соперник получает бонус.', 'sys'); }
-    this.log((this.state.turn==='player'?player.name:enemy.name)+' действует первым (выше скорость).', 'sys');
-    trackDailyProgress('fights', 1);
-    this.render();
+  async start(heroId, bot) {
+    const entry = HeroUI.entry(heroId);
+    const def = entry ? entry.def : { name: '???' };
+    document.getElementById('battle-title').textContent = def.name + ' VS ' + bot.name;
+    document.getElementById('battle-turn-counter').textContent = '';
+    document.getElementById('battle-hp-player').innerHTML = this.hpBlock({ name: def.name, hp: 1, maxHp: 1, isBot: false, ultimate: 0 });
+    document.getElementById('battle-hp-enemy').innerHTML = this.hpBlock({ name: bot.name, hp: 1, maxHp: 1, isBot: true, ultimate: 0 });
+    document.getElementById('battle-log').innerHTML = '<div class="dim mono" style="text-align:center; padding:18px 0;">СЕРВЕР ОБРАБАТЫВАЕТ БОЙ...</div>';
+    document.getElementById('battle-actions-wrap').innerHTML = '';
+    document.getElementById('battle-result-wrap').innerHTML = '';
     Nav.go('battle');
-    if(this.state.turn==='enemy'){ setTimeout(()=>this.botTurn(), 800); }
-  },
 
-  log(text, cls){
-    this.state.log.push({text, cls: cls||''});
-    const box = document.getElementById('battle-log');
-    if(box){
-      box.innerHTML = this.state.log.map(l=>`<div class="${l.cls==='me'?'lg-me':l.cls==='enemy'?'lg-enemy':l.cls==='crit'?'lg-crit':''}">${escapeHtml(l.text)}</div>`).join('');
-      box.scrollTop = box.scrollHeight;
-    }
-  },
-
-  rollHit(attacker, defender){
-    const chance = Math.min(99, Math.max(40, 95 - defender.evasion*0.6 + (attacker.accuracy-90)*0.5));
-    return Math.random()*100 < chance;
-  },
-  rollCrit(attacker){ return Math.random()*100 < attacker.critChance; },
-
-  performAttack(attacker, defender, opts){
-    opts = opts||{};
-    let critChanceOverride = attacker.critChance;
-    if(defender.hp/defender.maxHp < 0.5){
-      critChanceOverride += this.talentBonus(attacker, 'hunter');
-    }
-    if(!(opts.guaranteedHit) && !this.rollHit(attacker, defender)){ return {hit:false}; }
-    const isCrit = Math.random()*100 < critChanceOverride;
-    const cm = this.counterMods(attacker, defender);
-    let dmgMult = (opts.dmgMult!==undefined?opts.dmgMult:1) * cm.dmgMult;
-    if(attacker.hp/attacker.maxHp < 0.4){ dmgMult *= (1+this.talentBonus(attacker,'adrenaline')/100); }
-    if(attacker.hp/attacker.maxHp < 0.2){ dmgMult *= (1+this.talentBonus(attacker,'lastchance')/100); }
-    let effDefBonusPct = 0;
-    if(defender.hp/defender.maxHp < 0.3){ effDefBonusPct += this.talentBonus(defender,'lastline'); }
-    const effPen = Math.min(0.95, attacker.penetration/100 + (opts.penBonus||0));
-    const effectiveDef = defender.def*(1+effDefBonusPct/100)*(1-effPen);
-    let raw = Math.max(1, attacker.atk*dmgMult - effectiveDef*0.5);
-    if(isCrit){
-      let critDmgPct = attacker.critDamage + (opts.criticalBonus||0) + cm.critDmgBonus + this.talentBonus(attacker,'deadlyaccuracy');
-      critDmgPct -= this.talentBonus(defender,'unshakable');
-      raw = raw * (Math.max(50, critDmgPct)/100);
-    }
-    raw *= (1-cm.defReduction);
-    if(defender.defending){ raw = raw*0.5; defender.defending = false; }
-    if(defender.shieldTurns>0 && defender.shieldAbsorb>0){ raw = raw*(1-defender.shieldAbsorb); }
-    let dmg = Math.max(1, Math.round(raw));
-    if(isCrit && opts.critTrueDamagePct){ dmg += Math.round(defender.maxHp*opts.critTrueDamagePct); }
-    defender.hp = Math.max(0, defender.hp-dmg);
-    attacker.dmgDealt += dmg; defender.dmgTaken += dmg;
-    if(isCrit) attacker.crits++;
-    attacker.ultimate = Math.min(100, attacker.ultimate+8);
-    defender.ultimate = Math.min(100, defender.ultimate+4);
-    if(!attacker.isBot){ trackDailyProgress('damage', dmg); }
-    return {hit:true, dmg, crit:isCrit};
-  },
-
-  tick(actor){
-    if(actor.cooldown>0) actor.cooldown--;
-    if(actor.shieldTurns>0){ actor.shieldTurns--; if(actor.shieldTurns<=0) actor.shieldAbsorb=0; }
-    if(actor.spdBuffTurns>0){ actor.spdBuffTurns--; if(actor.spdBuffTurns<=0) actor.spdBuffBonus=0; }
-  },
-
-  playerAction(type){
-    const s = this.state;
-    if(!s || s.finished || s.turn!=='player') return;
-    const p = s.player, e = s.enemy;
-    this.tick(p);
-    this.act(p, e, type, false);
-    s.actionsTaken++;
-    if(this.checkEnd()) return;
-    s.turn = 'enemy';
-    this.render();
-    setTimeout(()=>this.botTurn(), 900);
-  },
-
-  botTurn(){
-    const s = this.state;
-    if(!s || s.finished) return;
-    const p = s.player, e = s.enemy;
-    this.tick(e);
-    let type = 'attack';
-    if(e.ultimate>=100 && Math.random()<0.55){ type = 'ultimate'; }
-    else if(e.cooldown<=0 && Math.random()<0.6){ type = 'ability'; }
-    else if(e.hp/e.maxHp<0.3 && Math.random()<0.45){ type = 'defend'; }
-    this.act(e, p, type, true);
-    s.actionsTaken++;
-    if(this.checkEnd()) return;
-    s.turn = 'player';
-    this.render();
-  },
-
-  act(actor, target, type, isBot){
-    const s = this.state;
-    const nameTag = isBot ? 'enemy' : 'me';
-    if(type==='attack'){
-      const res = this.performAttack(actor, target, {});
-      if(!res.hit){ this.log(actor.name+' промахивается.', nameTag); }
-      else { this.log(actor.name+' атакует'+(res.crit?' КРИТИЧЕСКИ':'')+' — '+res.dmg+' урона.', res.crit?'crit':nameTag); }
-    } else if(type==='defend'){
-      actor.defending = true;
-      actor.ultimate = Math.min(100, actor.ultimate+5);
-      this.log(actor.name+' занимает оборонительную позицию.', nameTag);
-    } else if(type==='ability'){
-      if(actor.cooldown>0){ // fallback safety, shouldn't trigger from UI since button is disabled
-        const res = this.performAttack(actor, target, {});
-        this.log(actor.name+' атакует — '+ (res.hit? res.dmg+' урона.' : 'промах.'), nameTag);
-      } else {
-        const fn = HERO_ABILITY_FN[actor.defId];
-        const res = fn ? fn(actor, target) : this.performAttack(actor, target, {});
-        actor.cooldown = (actor.ability && actor.ability.cooldown) || 3;
-        actor.abilitiesUsed++;
-        if(!isBot){ trackDailyProgress('abilities', 1); }
-        if(res.hit===false){ this.log(actor.name+' использует '+(actor.ability?actor.ability.name:'способность')+', но промахивается.', nameTag); }
-        else { this.log(actor.name+' использует '+(actor.ability?actor.ability.name:'способность')+': '+(res.text||'')+(res.dmg?' — '+res.dmg+' урона.':'.'), res.crit?'crit':nameTag); }
-      }
-    } else if(type==='ultimate'){
-      if(actor.ultimate<100){
-        const res = this.performAttack(actor, target, {});
-        this.log(actor.name+' атакует — '+(res.hit?res.dmg+' урона.':'промах.'), nameTag);
-      } else {
-        actor.ultimate = 0;
-        const res = this.performAttack(actor, target, {dmgMult:2.5, penBonus:0.5});
-        this.log(actor.name+' использует УЛЬТИМАТИВНУЮ СПОСОБНОСТЬ — '+(res.hit? res.dmg+' урона.' : 'промах.'), 'crit');
-      }
-    }
-  },
-
-  checkEnd(){
-    const s = this.state;
-    if(s.player.hp<=0 || s.enemy.hp<=0){
-      this.finish(s.player.hp<=0 && s.enemy.hp<=0 ? 'draw' : (s.enemy.hp<=0 ? 'player' : 'enemy'));
-      return true;
-    }
-    if(s.actionsTaken>=s.maxActions){
-      const pPct = s.player.hp/s.player.maxHp, ePct = s.enemy.hp/s.enemy.maxHp;
-      this.finish(pPct===ePct ? 'draw' : (pPct>ePct?'player':'enemy'));
-      return true;
-    }
-    return false;
-  },
-
-  finish(winnerSide){
-    const s = this.state;
-    s.finished = true;
-    const won = winnerSide==='player';
-    const draw = winnerSide==='draw';
-    this.log(draw ? 'БОЙ ЗАВЕРШЁН — НИЧЬЯ ПО ИСТЕЧЕНИЮ ХОДОВ.' : (won?'ПОБЕДА!':'ПОРАЖЕНИЕ.'), 'sys');
-    this.render();
-
-    let ratingChange = 0;
-    if(!draw){
-      const pvp = state.pvpStats;
-      ratingChange = won ? (18+Math.floor(Math.random()*10)) : -(10+Math.floor(Math.random()*8));
-      pvp.rating = Math.max(0, pvp.rating + ratingChange);
-      if(won){ pvp.wins++; } else { pvp.losses++; }
-    }
-    if(won){
-      state.pvpWinStreak = (state.pvpWinStreak||0) + 1;
-      trackDailyProgress('wins', 1);
-      trackDailyProgress('winstreak', state.pvpWinStreak);
-      if(s.player.heroId){ const hs = heroState(s.player.heroId); if(hs) hs.pvpWins = (hs.pvpWins||0)+1; }
-    } else if(!draw){
-      state.pvpWinStreak = 0;
-    }
-    let rewardCredits = 0, rewardMats = 0;
-    if(won){
-      rewardCredits = 300 + Math.floor(Math.random()*200);
-      rewardMats = 20;
-      grantHeroReward({credits:rewardCredits, universalMats:rewardMats, puzzles:5, toOwnedHero:true});
-      if(!state.achievements.FIRST_PVP_WIN){ state.achievements.FIRST_PVP_WIN = true; toast('ДОСТИЖЕНИЕ: ПЕРВАЯ КРОВЬ'); }
-    } else if(!draw){
-      rewardCredits = 80;
-      grantHeroReward({credits:rewardCredits});
+    if (!window.PvP || !window.AuthState || !window.AuthState.user) {
+      toast('PvP недоступен: нет соединения с сервером.');
+      Nav.go('pvp');
+      return;
     }
 
-    const timeSec = Math.round((Date.now()-s.startTime)/1000);
-    state.pvpHistory = state.pvpHistory || [];
-    state.pvpHistory.unshift({
-      id:'bh_'+Date.now(), timestamp:new Date().toISOString(),
-      result: draw?'draw':(won?'win':'loss'),
-      myName: s.player.name, myPower: powerFromStats(computeHeroStats(s.player.heroId)||{hp:s.player.maxHp,atk:s.player.atk,def:s.player.def,spd:s.player.spd,critChance:s.player.critChance,critDamage:s.player.critDamage,accuracy:s.player.accuracy,penetration:s.player.penetration,evasion:s.player.evasion,resist:s.player.resist}),
-      enemyName: s.enemy.name, enemyPower: powerFromStats({hp:s.enemy.maxHp,atk:s.enemy.atk,def:s.enemy.def,spd:s.enemy.spd,critChance:s.enemy.critChance,critDamage:s.enemy.critDamage,accuracy:s.enemy.accuracy,penetration:s.enemy.penetration,evasion:s.enemy.evasion,resist:s.enemy.resist}),
-      ratingChange, turns:s.actionsTaken, dmgDealt:s.player.dmgDealt, dmgTaken:s.player.dmgTaken,
-      crits:s.player.crits, abilitiesUsed:s.player.abilitiesUsed,
-      finalHpPct: Math.round((s.player.hp/s.player.maxHp)*100), timeSec, rewardCredits,
-      log: s.log.slice()
+    const { data: result, error } = await window.PvP.fight(heroId, bot.power);
+    if (error) {
+      toast(error.userMessage || 'Не удалось провести бой.');
+      Nav.go('pvp');
+      return;
+    }
+
+    this.revealServerResult(result, def, bot);
+  },
+
+  /** Turns the already-decided server result into the same visual
+   * battle-log + HP-bar + result-panel presentation the old local
+   * engine used, so the screen still feels like "last asylum combat"
+   * even though nothing is computed client-side anymore. */
+  revealServerResult(result, def, bot) {
+    const won = result.result === 'win';
+    const draw = result.result === 'draw';
+
+    const playerFinalPct = won ? 100 : (draw ? 50 : 0);
+    const enemyFinalPct = won ? 0 : (draw ? 50 : 100);
+
+    document.getElementById('battle-hp-player').innerHTML = this.hpBlock({
+      name: def.name, hp: playerFinalPct, maxHp: 100, isBot: false, ultimate: 100
     });
-    if(state.pvpHistory.length>30){ state.pvpHistory.length = 30; }
-    saveState();
+    document.getElementById('battle-hp-enemy').innerHTML = this.hpBlock({
+      name: bot.name, hp: enemyFinalPct, maxHp: 100, isBot: true, ultimate: 100
+    });
+    document.getElementById('battle-turn-counter').textContent = 'ХОДОВ: ' + result.turns;
+
+    const log = window.PvP.buildReplayLog(result);
+    const logBox = document.getElementById('battle-log');
+    logBox.innerHTML = log.map(l => `<div class="${l.cls === 'me' ? 'lg-me' : l.cls === 'enemy' ? 'lg-enemy' : ''}">${escapeHtml(l.text)}</div>`).join('');
 
     const wrap = document.getElementById('battle-result-wrap');
     wrap.innerHTML = `
       <div class="battle-result-panel">
-        <div class="br-title ${draw?'':(won?'win':'lose')}">${draw?'НИЧЬЯ':(won?'ПОБЕДА':'ПОРАЖЕНИЕ')}</div>
-        ${!draw ? `<div class="dim mono" style="font-size:12px; margin-top:6px;">РЕЙТИНГ ${ratingChange>0?'+':''}${ratingChange} → ${state.pvpStats.rating} (${pvpTierName(state.pvpStats.rating)})</div>` : ''}
+        <div class="br-title ${draw ? '' : (won ? 'win' : 'lose')}">${draw ? 'НИЧЬЯ' : (won ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ')}</div>
+        ${!draw ? `<div class="dim mono" style="font-size:12px; margin-top:6px;">РЕЙТИНГ ${result.rating_change > 0 ? '+' : ''}${result.rating_change} → ${result.rating}</div>` : ''}
         <div class="br-stats">
-          <div class="brs-box"><div class="v">${s.player.dmgDealt}</div><div class="l">УРОН НАНЕСЁН</div></div>
-          <div class="brs-box"><div class="v">${s.player.dmgTaken}</div><div class="l">УРОН ПОЛУЧЕН</div></div>
-          <div class="brs-box"><div class="v">${s.player.crits}</div><div class="l">КРИТ. УДАРОВ</div></div>
-          <div class="brs-box"><div class="v">${s.player.abilitiesUsed}</div><div class="l">СПОСОБНОСТЕЙ ИСПОЛЬЗОВАНО</div></div>
-          <div class="brs-box"><div class="v">${timeSec}с</div><div class="l">ВРЕМЯ БОЯ</div></div>
-          <div class="brs-box"><div class="v">${rewardCredits}</div><div class="l">КРЕДИТЫ НАГРАДА</div></div>
+          <div class="brs-box"><div class="v">${result.damage_dealt}</div><div class="l">УРОН НАНЕСЁН</div></div>
+          <div class="brs-box"><div class="v">${result.damage_taken}</div><div class="l">УРОН ПОЛУЧЕН</div></div>
+          <div class="brs-box"><div class="v">${result.crits}</div><div class="l">КРИТ. УДАРОВ</div></div>
+          <div class="brs-box"><div class="v">${result.abilities_used}</div><div class="l">СПОСОБНОСТЕЙ</div></div>
+          <div class="brs-box"><div class="v">${result.turns}</div><div class="l">ХОДОВ</div></div>
+          <div class="brs-box"><div class="v">${result.reward_credits}</div><div class="l">КРЕДИТЫ НАГРАДА</div></div>
         </div>
         <button class="btn solid" id="battle-finish-btn">ЗАВЕРШИТЬ</button>
       </div>`;
-    document.getElementById('battle-finish-btn').onclick = ()=> Nav.go('pvp');
-    document.getElementById('battle-actions-wrap').innerHTML = '';
-  },
+    document.getElementById('battle-finish-btn').onclick = () => Nav.go('pvp');
 
-  render(){
-    const s = this.state;
-    if(!s) return;
-    document.getElementById('battle-turn-counter').textContent = 'ХОД '+s.actionsTaken+'/'+s.maxActions;
-    document.getElementById('battle-hp-player').innerHTML = this.hpBlock(s.player);
-    document.getElementById('battle-hp-enemy').innerHTML = this.hpBlock(s.enemy);
-    if(!s.finished){
-      const p = s.player;
-      const isPlayerTurn = s.turn==='player';
-      const abilityReady = p.cooldown<=0;
-      const ultReady = p.ultimate>=100;
-      document.getElementById('battle-actions-wrap').innerHTML = `
-        <div class="dim mono" style="font-size:11px; text-align:center; margin:8px 0;">${isPlayerTurn?'ТВОЙ ХОД':'ХОД ПРОТИВНИКА...'}</div>
-        <div class="battle-actions">
-          <button class="battle-action-btn" id="act-attack" ${isPlayerTurn?'':'disabled'}>АТАКА</button>
-          <button class="battle-action-btn" id="act-ability" ${isPlayerTurn && abilityReady?'':'disabled'}>СПОСОБНОСТЬ${abilityReady?'':`<span class="bab-sub">${p.cooldown} х. до готовности</span>`}</button>
-          <button class="battle-action-btn" id="act-defend" ${isPlayerTurn?'':'disabled'}>ЗАЩИТА</button>
-          <button class="battle-action-btn ult ${ultReady?'ready':''}" id="act-ultimate" ${isPlayerTurn && ultReady?'':'disabled'}>УЛЬТИМАТИВНАЯ${ultReady?'':`<span class="bab-sub">${Math.round(p.ultimate)}%</span>`}</button>
-        </div>`;
-      if(isPlayerTurn){
-        document.getElementById('act-attack').onclick = ()=> this.playerAction('attack');
-        document.getElementById('act-ability').onclick = ()=> this.playerAction('ability');
-        document.getElementById('act-defend').onclick = ()=> this.playerAction('defend');
-        document.getElementById('act-ultimate').onclick = ()=> this.playerAction('ultimate');
-      }
+    if (won && !state.achievements.FIRST_PVP_WIN) {
+      state.achievements.FIRST_PVP_WIN = true; saveState();
+      toast('ДОСТИЖЕНИЕ: ПЕРВАЯ КРОВЬ');
     }
   },
 
-  hpBlock(f){
-    const pct = Math.max(0, Math.round((f.hp/f.maxHp)*100));
-    const fillClass = f.isBot ? 'enemy' : (pct<30?'low':'');
-    const effects = [];
-    if(f.shieldTurns>0) effects.push('<span class="effect-tag shield">🛡 ЩИТ '+f.shieldTurns+'х</span>');
-    if(f.spdBuffTurns>0) effects.push('<span class="effect-tag buff">⚡ УСКОРЕНИЕ '+f.spdBuffTurns+'х</span>');
-    if(f.defending) effects.push('<span class="effect-tag">🛡 ЗАЩИТА</span>');
+  hpBlock(f) {
+    const pct = Math.max(0, Math.round((f.hp / f.maxHp) * 100));
+    const fillClass = f.isBot ? 'enemy' : (pct < 30 ? 'low' : '');
     return `
       <div class="hp-bar-wrap">
-        <div class="hp-bar-head"><span class="hp-name">${escapeHtml(f.name)}${f.isBot?' <span style=\"color:var(--danger)\">BOT</span>':''}</span><span class="hp-nums">${f.hp} / ${f.maxHp} HP</span></div>
+        <div class="hp-bar-head"><span class="hp-name">${escapeHtml(f.name)}${f.isBot ? ' <span style="color:var(--danger)">BOT</span>' : ''}</span><span class="hp-nums">${pct}%</span></div>
         <div class="hp-track"><div class="hp-fill ${fillClass}" style="width:${pct}%"></div></div>
-        <div class="ult-track"><div class="ult-fill" style="width:${Math.round(f.ultimate)}%"></div></div>
-        ${effects.length ? '<div class="battle-effects">'+effects.join('')+'</div>' : ''}
       </div>`;
   }
 };
 
+
 /* ---------------- CHAT (local test only, no networking) ---------------- */
 const ChatUI = {
-  seeded:false,
-  render(){
-    if(!this.seeded && state.chatMessages.length===0){
-      state.chatMessages.push({
-        id:'sys_1', system:true, text:'СОЕДИНЕНИЕ УСТАНОВЛЕНО. ЭТО ТЕСТОВЫЙ РЕЖИМ ЧАТА — СООБЩЕНИЯ НЕ ОТПРАВЛЯЮТСЯ ДРУГИМ ВЫЖИВШИМ.',
-        timestamp: new Date().toISOString()
-      });
-      saveState();
-      this.seeded = true;
-    }
+  // AUDIT NOTE: this used to be a local array (state.chatMessages) that
+  // only ever talked to itself — "СООБЩЕНИЯ НЕ ОТПРАВЛЯЮТСЯ ДРУГИМ
+  // ВЫЖИВШИМ" was literally true. Rewired to window.Chat, which is
+  // backed by the real chat_messages table + a Realtime subscription
+  // (see js/chat.js and supabase/patch_001_audit_fixes.sql — Realtime
+  // was never turned on for this table before the patch, so even a
+  // correctly-wired subscription would have received nothing).
+  subscribed:false,
+
+  async render(){
     document.getElementById('chat-send-btn').onclick = ()=> this.send();
     const input = document.getElementById('chat-input');
     input.onkeydown = (e)=>{ if(e.key==='Enter') this.send(); };
+
+    await window.Chat.loadRecent(50);
     this.renderMessages();
+
+    if(!this.subscribed){
+      window.Chat.subscribe(()=> this.renderMessages());
+      this.subscribed = true;
+    }
   },
-  send(){
+
+  async send(){
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if(!text) return;
-    state.chatMessages.push({
-      id:'msg_'+Date.now(), fromMe:true, text, timestamp:new Date().toISOString()
-    });
-    const sentCount = state.chatMessages.filter(m=>m.fromMe).length;
-    if(sentCount===1 && !state.achievements.CHATTY){
-      state.achievements.CHATTY = true;
+    input.disabled = true;
+    const { error } = await window.Chat.send(text);
+    input.disabled = false;
+    if(error){ toast(error.userMessage || 'Не удалось отправить сообщение'); return; }
+
+    if(!state.achievements.CHATTY){
+      state.achievements.CHATTY = true; saveState();
       setTimeout(()=>toast('ДОСТИЖЕНИЕ: НА СВЯЗИ'), 200);
     }
-    saveState();
     input.value = '';
     Audio_.tap();
+    // Realtime subscription will also deliver this message back to us
+    // and re-render; render once immediately too so it feels instant.
     this.renderMessages();
   },
+
   renderMessages(){
     const wrap = document.getElementById('chat-messages');
+    if(!wrap) return;
     wrap.innerHTML = '';
-    state.chatMessages.forEach(m=>{
+    const myId = window.AuthState.user && window.AuthState.user.id;
+    (window.Chat.messages||[]).forEach(m=>{
+      if(m.is_deleted) return;
+      const isMe = m.user_id === myId;
+      const author = m.profiles || {};
       const bubble = document.createElement('div');
-      if(m.system){
-        bubble.className = 'chat-bubble system';
-        bubble.innerHTML = `<div class="cb-body" style="max-width:100%;"><div class="cb-text">${escapeHtml(m.text)}</div></div>`;
-      } else {
-        bubble.className = 'chat-bubble me';
-        bubble.innerHTML = `
-          <div class="cb-avatar">${Avatar.markup()}</div>
-          <div class="cb-body">
-            <div class="cb-name">${escapeHtml(state.name||'ТЫ')}</div>
-            <div class="cb-text">${escapeHtml(m.text)}</div>
-            <div class="cb-time">${formatShortTime(m.timestamp)}</div>
-          </div>`;
+      bubble.className = 'chat-bubble' + (isMe ? ' me' : '');
+      bubble.innerHTML = `
+        <div class="cb-avatar">${isMe ? Avatar.markup() : DEFAULT_AVATAR_SVG}</div>
+        <div class="cb-body">
+          <div class="cb-name">${escapeHtml(isMe ? (state.name||'ТЫ') : (author.username||'???'))}</div>
+          <div class="cb-text">${escapeHtml(m.message)}${m.edited_at ? ' <span class="dim" style="font-size:9px;">(ред.)</span>' : ''}</div>
+          <div class="cb-time">${formatShortTime(m.created_at)}</div>
+        </div>`;
+      if(isMe){
         bubble.querySelector('.cb-avatar').onclick = ()=> Nav.go('profile');
         bubble.querySelector('.cb-name').onclick = ()=> Nav.go('profile');
       }
       wrap.appendChild(bubble);
     });
     const scroller = document.getElementById('chat-scroll');
-    scroller.scrollTop = scroller.scrollHeight;
+    if(scroller) scroller.scrollTop = scroller.scrollHeight;
   },
-  shareAchievement(ach){
+
+  async shareAchievement(ach){
     const text = '🏆 ДОСТИЖЕНИЕ РАЗБЛОКИРОВАНО: '+ach.title+' — '+ach.desc;
-    state.chatMessages.push({ id:'msg_'+Date.now(), fromMe:true, text, timestamp:new Date().toISOString() });
-    if(!state.achievements.BRAGGART){ state.achievements.BRAGGART = true; }
-    saveState();
+    const { error } = await window.Chat.send(text);
+    if(error){ toast(error.userMessage || 'Не удалось отправить в чат'); return; }
+    if(!state.achievements.BRAGGART){ state.achievements.BRAGGART = true; saveState(); }
     toast('ДОСТИЖЕНИЕ ОТПРАВЛЕНО В ЧАТ');
     Nav.go('chat');
   }
@@ -2442,6 +2348,7 @@ function formatShortTime(iso){
   const pad = n=>String(n).padStart(2,'0');
   return pad(d.getHours())+':'+pad(d.getMinutes());
 }
+
 
 
 /* ---------------- QUEST / PUZZLE ENGINE ---------------- */
@@ -2962,9 +2869,10 @@ const Game = {
 
     document.getElementById('reg-name').addEventListener('input', updateRegPreview);
     document.getElementById('reg-alliance').addEventListener('input', updateRegPreview);
-    document.getElementById('reg-submit').onclick = ()=>{
+    document.getElementById('reg-submit').onclick = async ()=>{
       const server = ServerPicker.selected;
-      const name = document.getElementById('reg-name').value.trim();
+      const realUsername = window.GameData.profile ? window.GameData.profile.username : '';
+      const name = realUsername || document.getElementById('reg-name').value.trim();
       const alliance = document.getElementById('reg-alliance').value.trim().toUpperCase();
       if(!server){ toast('ВЫБЕРИ НОМЕР СЕРВЕРА'); return; }
       if(!name){ toast('ВВЕДИ ПОЗЫВНОЙ'); return; }
@@ -2978,6 +2886,22 @@ const Game = {
       if(alliance && !state.achievements.ALLY){ state.achievements.ALLY = true; }
       saveState();
       Audio_.unlock();
+
+      // AUDIT FIX: this screen used to only ever touch local `state` —
+      // server_number/alliance_tag on the real Supabase profile were
+      // never written, so "Профиль" and any future multiplayer surface
+      // would never see them. Username itself is NOT re-submitted here:
+      // it was already chosen once, uniquely, at Supabase sign-up
+      // (see js/authgate.js) — asking for a second, unrelated local
+      // "nickname" was a leftover from before accounts existed.
+      if(window.Database && window.AuthState && window.AuthState.user){
+        const { error } = await window.Database.updateProfileFields({
+          server_number: parseInt(server, 10),
+          alliance_tag: alliance || null
+        });
+        if(error){ console.error('[reg-submit] profile sync failed:', error.raw); }
+      }
+
       RoleUI.showReveal();
     };
 
@@ -2990,12 +2914,16 @@ const Game = {
 
     document.getElementById('reset-btn').onclick = ()=> UI.openOverlay('overlay-confirm');
 
-    document.getElementById('settings-alliance').addEventListener('change', (e)=>{
+    document.getElementById('settings-alliance').addEventListener('change', async (e)=>{
       state.allianceTag = e.target.value.trim().toUpperCase().slice(0,5);
       e.target.value = state.allianceTag;
       let newAlly = false;
       if(state.allianceTag && !state.achievements.ALLY){ state.achievements.ALLY = true; newAlly = true; }
       saveState();
+      if(window.Database && window.AuthState && window.AuthState.user){
+        const { error } = await window.Database.updateProfileFields({ alliance_tag: state.allianceTag || null });
+        if(error){ console.error('[settings-alliance] profile sync failed:', error.raw); }
+      }
       if(newAlly){ toast('ДОСТИЖЕНИЕ: СОЮЗНИК · ТЕГ АЛЬЯНСА ОБНОВЛЁН'); }
       else { toast(state.allianceTag ? 'ТЕГ АЛЬЯНСА ОБНОВЛЁН' : 'ТЕГ АЛЬЯНСА УДАЛЁН'); }
     });

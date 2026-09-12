@@ -89,8 +89,10 @@ window.PvP = {
    * authoritative outcome. `heroId` must be one of the caller's own
    * unlocked heroes (enforced inside the RPC).
    */
-  async fight(heroId) {
-    const { data, error } = await safeCall(() => window.supabaseClient.rpc('resolve_pvp_battle_bot', { p_hero_id: heroId }));
+  async fight(heroId, opponentPower) {
+    const params = { p_hero_id: heroId };
+    if (opponentPower !== undefined && opponentPower !== null) params.p_opponent_power = Math.round(opponentPower);
+    const { data, error } = await safeCall(() => window.supabaseClient.rpc('resolve_pvp_battle_bot', params));
     if (error) return { data: null, error };
 
     // Refresh everything the fight could have touched.
@@ -98,7 +100,8 @@ window.PvP = {
       window.Database.loadResources(window.AuthState.user.id),
       window.Database.loadPvpRating(window.AuthState.user.id),
       window.Database.loadHeroes(window.AuthState.user.id),
-      window.Database.loadTodayQuests()
+      window.Database.loadTodayQuests(),
+      window.Database.loadNotifications(window.AuthState.user.id)
     ]);
 
     return { data, error: null };

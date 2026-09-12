@@ -17,9 +17,33 @@
     el('ag-submit-btn').textContent = mode === 'signup' ? 'ЗАРЕГИСТРИРОВАТЬСЯ' : 'ВОЙТИ';
     el('ag-toggle-mode-btn').textContent = mode === 'signup' ? 'УЖЕ ЕСТЬ АККАУНТ? ВОЙТИ' : 'НЕТ АККАУНТА? ЗАРЕГИСТРИРОВАТЬСЯ';
     el('ag-error').textContent = '';
+    if (el('ag-username-hint')) el('ag-username-hint').textContent = '';
   }
 
   function showError(msg) { el('ag-error').textContent = msg || ''; }
+
+  const USERNAME_RE = /^[a-zA-Zа-яА-ЯёЁ0-9_]{3,20}$/;
+  let usernameCheckToken = 0;
+
+  async function checkUsernameLive() {
+    const hint = el('ag-username-hint');
+    const username = el('ag-username').value.trim();
+    if (!hint) return;
+    if (!username) { hint.textContent = ''; return; }
+    if (!USERNAME_RE.test(username)) {
+      hint.style.color = 'var(--danger)';
+      hint.textContent = '3–20 символов: буквы, цифры, "_"';
+      return;
+    }
+    hint.style.color = 'var(--text-dim)';
+    hint.textContent = 'проверка...';
+    const myToken = ++usernameCheckToken;
+    const { available, error } = await Auth.checkUsernameAvailable(username);
+    if (myToken !== usernameCheckToken) return; // a newer check superseded this one
+    if (error) { hint.textContent = ''; return; }
+    hint.style.color = available ? 'var(--accent)' : 'var(--danger)';
+    hint.textContent = available ? 'никнейм свободен' : 'этот никнейм уже занят';
+  }
 
   async function handleSubmit() {
     const email = el('ag-email').value.trim();
@@ -36,6 +60,7 @@
     try {
       if (mode === 'signup') {
         if (!username) { showError('Введи позывной.'); return; }
+        if (!USERNAME_RE.test(username)) { showError('Никнейм: 3–20 символов, только буквы, цифры и "_".'); return; }
         const { data, error } = await Auth.signUp(email, password, username);
         if (error) { showError(error.userMessage || error.raw || 'Не удалось зарегистрироваться.'); return; }
         if (data && data.session) {
@@ -94,12 +119,26 @@
     window.SupabaseStatus.onChange(render);
   }
 
+  // database.js dispatches this whenever its Realtime subscription
+  // delivers a new row in `notifications` — surface it immediately
+  // rather than waiting for the player to happen to open Profile.
+  document.addEventListener('notifications:new', (e) => {
+    if (typeof toast === 'function') {
+      const n = e.detail || {};
+      toast((window.Notifications ? window.Notifications.icon(n.type) : '🔔') + ' ' + (n.title || 'Новое уведомление'));
+    }
+    if (typeof Nav !== 'undefined' && Nav.current === 'profile' && typeof UI !== 'undefined') {
+      UI.renderProfile();
+    }
+  });
+
   document.addEventListener('DOMContentLoaded', async () => {
     wireConnectionDot();
 
     el('ag-submit-btn').onclick = handleSubmit;
     el('ag-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
     el('ag-toggle-mode-btn').onclick = () => setMode(mode === 'signin' ? 'signup' : 'signin');
+    el('ag-username').addEventListener('blur', checkUsernameLive);
     el('ag-forgot-btn').onclick = async () => {
       const email = el('ag-email').value.trim();
       if (!email) { showError('Сначала введи email.'); return; }

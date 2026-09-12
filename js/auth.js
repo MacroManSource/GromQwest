@@ -92,6 +92,7 @@ window.Auth = {
   },
 
   async signOut() {
+    if (window.Database) window.Database.teardownOnSignOut();
     const { error } = await safeCall(() => window.supabaseClient.auth.signOut());
     window.AuthState.user = null;
     window.AuthState.session = null;
@@ -106,6 +107,21 @@ window.Auth = {
     if (redirect) opts.redirectTo = redirect;
     const { data, error } = await safeCall(() => window.supabaseClient.auth.resetPasswordForEmail(email, opts));
     return { data, error };
+  },
+
+  /**
+   * Calls check_username_available() — a stable, security-definer RPC
+   * that's granted to `anon` too, since this needs to work before the
+   * player has an account. This is a UX nicety only; the real backstop
+   * is the case-insensitive unique index + the USERNAME_TAKEN error
+   * signUp() surfaces if two people still race for the same name.
+   */
+  async checkUsernameAvailable(username) {
+    const { data, error } = await safeCall(() =>
+      window.supabaseClient.rpc('check_username_available', { p_username: username })
+    );
+    if (error) return { available: null, error };
+    return { available: data === true, error: null };
   },
 
   isLoggedIn() {

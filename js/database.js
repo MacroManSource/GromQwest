@@ -83,19 +83,29 @@ window.Database = {
     const { data: playerTalents, error: e5 } = await safeCall(() =>
       window.supabaseClient.from('player_hero_talents').select('*').eq('player_id', uid)
     );
-    if (e3 || e4 || e5) { console.error('[Database] loadHeroes (gear/talents) failed'); }
+    const { data: devMissions, error: e6 } = await safeCall(() =>
+      window.supabaseClient.from('hero_dev_missions').select('*').order('step_index', { ascending: true })
+    );
+    const { data: devProgress, error: e7 } = await safeCall(() =>
+      window.supabaseClient.from('player_hero_dev_progress').select('*').eq('player_id', uid)
+    );
+    if (e3 || e4 || e5 || e6 || e7) { console.error('[Database] loadHeroes (gear/talents/dev-missions) failed'); }
 
     window.GameData.heroes = (heroDefs || []).map(def => {
       const ph = (playerHeroes || []).find(p => p.hero_id === def.id) || null;
       const heroGear = (gear || []).filter(g => g.hero_id === def.id);
       const heroTalentDefs = (talents || []).filter(t => t.hero_id === def.id);
       const heroTalentProgress = (playerTalents || []).filter(t => t.hero_id === def.id);
+      const heroDevMissions = (devMissions || []).filter(m => m.hero_id === def.id);
+      const heroDevProgress = (devProgress || []).filter(p => p.hero_id === def.id);
       return {
         def,
         playerHero: ph,
         gear: heroGear,
         talentDefs: heroTalentDefs,
-        talentProgress: heroTalentProgress
+        talentProgress: heroTalentProgress,
+        devMissions: heroDevMissions,
+        devProgress: heroDevProgress
       };
     });
   },
@@ -117,6 +127,11 @@ window.Database = {
   },
 
   async loadTodayQuests() {
+    // Rows for today only get created lazily otherwise (inside a PvP
+    // battle) — call this first so a player who hasn't fought yet today
+    // still sees all of today's quests at 0 progress, not an empty list.
+    await safeCall(() => window.supabaseClient.rpc('ensure_daily_quests'));
+
     const today = mskDateKeyISO();
     const { data, error } = await safeCall(() =>
       window.supabaseClient
@@ -185,6 +200,11 @@ window.Database = {
     if (!error) { await this.loadHeroes(window.AuthState.user.id); await this.loadResources(window.AuthState.user.id); }
     return { data, error };
   },
+  async claimHeroFullyDeveloped(heroId) {
+    const { data, error } = await safeCall(() => window.supabaseClient.rpc('claim_hero_fully_developed', { p_hero_id: heroId }));
+    if (!error) { await this.loadHeroes(window.AuthState.user.id); await this.loadResources(window.AuthState.user.id); }
+    return { data, error };
+  },
 
   // ---- realtime + presence ------------------------------------------------
 
@@ -206,6 +226,13 @@ window.Database = {
       });
   },
 
+  disconnectRealtime() {
+    if (this._realtimeChannel) {
+      window.supabaseClient.removeChannel(this._realtimeChannel);
+      this._realtimeChannel = null;
+    }
+  },
+
   startOnlineHeartbeat(uid) {
     if (this._heartbeatTimer) return;
     const ping = async () => {
@@ -215,11 +242,20 @@ window.Database = {
     };
     ping();
     this._heartbeatTimer = setInterval(ping, 45000); // every 45s, per spec §24 ("раз в 30–60 секунд")
-    window.addEventListener('beforeunload', () => {
-      // best-effort; browsers may not honour this, which is exactly why
-      // last_seen (not is_online alone) is the thing other clients trust.
-      navigator.sendBeacon && navigator.sendBeacon; // no-op placeholder, kept simple intentionally
-    });
+  },
+
+  stopOnlineHeartbeat() {
+    if (this._heartbeatTimer) { clearInterval(this._heartbeatTimer); this._heartbeatTimer = null; }
+  },
+
+  /** Call this from Auth.signOut() so nothing keeps running for a
+   * logged-out session (spec §18: subscriptions must actually tear
+   * down on logout, not just get abandoned). */
+  teardownOnSignOut() {
+    this.disconnectRealtime();
+    this.stopOnlineHeartbeat();
+    if (window.Chat) window.Chat.unsubscribe();
+    window.GameData.loaded = false;
   }
 };
 

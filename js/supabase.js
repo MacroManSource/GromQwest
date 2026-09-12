@@ -69,6 +69,8 @@
     // generic message rather than ever showing a raw Postgres error to players.
     let userMessage = 'Не удалось выполнить операцию. Попробуй ещё раз.';
     if (/network|fetch|Failed to fetch/i.test(raw)) userMessage = 'Нет соединения с сервером.';
+    else if (/USERNAME_TAKEN/i.test(raw)) userMessage = 'Этот никнейм уже занят — выбери другой.';
+    else if (/profiles_username_format/i.test(raw)) userMessage = 'Никнейм: 3–20 символов, только буквы, цифры и "_".';
     else if (/Email not confirmed/i.test(raw)) userMessage = 'Email не подтверждён. Перейди по ссылке из письма, затем войди снова. (Или отключи "Confirm email" в Supabase → Authentication → Providers → Email, если это тестовый проект.)';
     else if (/Invalid login credentials/i.test(raw)) userMessage = 'Неверный email или пароль.';
     else if (/User already registered|already registered|already exists/i.test(raw)) userMessage = 'Этот email уже зарегистрирован — попробуй войти вместо регистрации.';
