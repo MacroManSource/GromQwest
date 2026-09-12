@@ -325,6 +325,13 @@ p{line-height:1.55; color:var(--text); margin:0;}
 .stat-box .v{font-family:var(--mono); font-size:20px; color:var(--accent);}
 .stat-box .l{font-family:var(--mono); font-size:9.5px; color:var(--text-dim); letter-spacing:.1em; margin-top:2px;}
 .ach-row{display:flex; gap:12px; align-items:center; padding:11px 12px; border:1px solid var(--panel-edge); border-radius:4px; margin-bottom:8px; background:var(--panel);}
+.notif-row{display:flex; gap:12px; align-items:flex-start; padding:11px 12px; border:1px solid var(--panel-edge); border-radius:4px; margin-bottom:8px; background:var(--panel); cursor:pointer;}
+.notif-row.unread{border-color:var(--accent-dim); background:rgba(49,255,156,.04);}
+.notif-row .nf-icon{font-size:16px; min-width:20px; text-align:center;}
+.notif-row .nf-title{font-size:12.5px; color:var(--text);}
+.notif-row.unread .nf-title{color:var(--accent);}
+.notif-row .nf-msg{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+.notif-row .nf-time{font-family:var(--mono); font-size:9px; color:var(--text-dim); margin-top:4px;}
 .ach-row.locked{opacity:.35;}
 .ach-icon{width:30px; height:30px; min-width:30px; border-radius:50%; border:1px solid var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:14px;}
 .ach-row.locked .ach-icon{border-color:var(--panel-edge);}
@@ -701,17 +708,3 @@ p{line-height:1.55; color:var(--text); margin:0;}
 .resource-missing-row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;}
 .resource-missing-tag{font-family:var(--mono); font-size:10px; color:var(--danger);}
 .where-btn{font-family:var(--mono); font-size:9.5px; padding:5px 8px; border-radius:3px; border:1px solid var(--amber); color:var(--amber); background:none; cursor:pointer; white-space:nowrap;}
-/* Стили для сообщений других игроков */
-.chat-bubble.other {
-    align-self: flex-start;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.chat-bubble.other .cb-body {
-    align-items: flex-start;
-    text-align: left;
-}
-.chat-bubble.other .cb-name {
-    color: #4ac8ff;
-    font-weight: bold;
-}
