@@ -1,626 +1,193 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>LAST ASYLUM: THE LOST PROTOCOL</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BaoMudao — интерактивный концепт кастомизации</title>
+<style>
+:root{
+ --bg:#0a0f1d;--panel:#111a2b;--panel2:#17243a;--line:#293852;--text:#eff5ff;--muted:#9caec8;
+ --mint:#79d8b3;--blue:#78c9ff;--purple:#b7a1ff;--gold:#f5d071;--radius:18px;
+}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(ellipse at 45% -15%,#263c60 0%,var(--bg) 48%);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button,select,input{color:var(--text)}button{cursor:pointer}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;padding:12px 22px;background:#0b1221eF;border-bottom:1px solid #293852;backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:850;font-size:18px;letter-spacing:.2px;white-space:nowrap}.brandmark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#71d8b1,#6cb9ff 60%,#b5a0ff);display:grid;place-items:center;color:#091323;font-size:20px}
+.topnav{display:flex;gap:6px;flex-wrap:wrap}.navbtn,.softbtn{border:1px solid transparent;border-radius:11px;background:transparent;padding:9px 12px;color:#b7c6dc}.navbtn.active,.navbtn:hover{background:#1c2b43;color:#fff;border-color:#304766}.spacer{flex:1}.demo-pill{font-size:11px;color:#9ddfc7;border:1px solid #3b7567;background:#16352f;padding:5px 9px;border-radius:999px}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;max-width:1600px;margin:0 auto;padding:18px}
+.sidebar{align-self:start;position:sticky;top:76px;max-height:calc(100vh - 94px);overflow:auto;background:#10192a;border:1px solid var(--line);border-radius:20px;padding:17px}
+.sidebar h2{font-size:16px;margin:0 0 4px}.muted{color:var(--muted)}.small{font-size:12px}.group{border-top:1px solid #293852;padding-top:13px;margin-top:13px}.group label{display:block;font-size:12px;color:#a9bad2;margin:0 0 6px}.group select,.group input[type=text],.group input[type=color]{width:100%;background:#0b1424;border:1px solid #31415e;border-radius:10px;padding:9px 10px;outline:none}.group input[type=color]{height:40px;padding:4px}.checkrow{display:flex;align-items:center;gap:8px;margin:8px 0;color:#c8d4e6}.checkrow input{accent-color:#80d9b5}.btnrow{display:flex;gap:8px;margin-top:14px}.primary,.secondary{border:1px solid #3c5a72;border-radius:11px;padding:10px 12px;background:#1c3a4a;color:#eafff7;font-weight:700}.secondary{background:#131f32;color:#c5d2e5;border-color:#30405a}.main{min-width:0}.herohead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:5px 0 15px}.herohead h1{font-size:clamp(22px,3vw,32px);margin:0}.herohead p{margin:5px 0 0;color:var(--muted)}.viewport{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:18px;align-items:start}
+.card{background:linear-gradient(150deg,#15223a,#101827);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 14px 40px #0002}.cardhead{display:flex;justify-content:space-between;align-items:center;padding:15px 17px;border-bottom:1px solid #263650}.cardhead h2{font-size:15px;margin:0}.cardbody{padding:17px}
+.banner{height:170px;position:relative;background:#183047;overflow:hidden}.banner img{width:100%;height:100%;object-fit:cover;display:block}.banner:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#0b1221aa,transparent 60%);pointer-events:none}
+.profiletop{display:flex;gap:15px;align-items:flex-end;padding:0 20px 17px;margin-top:-48px;position:relative;z-index:2}.avatar-wrap{position:relative;flex:0 0 104px;width:104px;height:104px}.avatar-photo{position:absolute;inset:7px;width:90px;height:90px;object-fit:cover;border-radius:50%;border:3px solid #10192b;background:#6a7892}.frame-layer{position:absolute;inset:0;width:104px;height:104px;z-index:2;pointer-events:none}.effect-layer{position:absolute;inset:-9px;width:122px;height:122px;z-index:3;pointer-events:none;overflow:visible}.profile-names{padding-bottom:5px;min-width:0}.name-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.displayname{font-size:24px;font-weight:850;letter-spacing:-.4px}.handle{font-size:12px;color:#9eafc8;margin-top:2px}.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:750;border:1px solid #477d72;background:#183b35;color:#9ef0cf;white-space:nowrap}.status-badge img{height:22px;width:auto;max-width:145px;display:block}.verified{color:#83caff;border-color:#3d6e9d;background:#142e47}.profile-actions{margin-left:auto;display:flex;gap:7px;align-self:flex-end;padding-bottom:6px}.iconbtn{border:1px solid #33435e;border-radius:11px;background:#18253a;padding:9px 11px;color:#dce7f7}.bio{color:#c5d1e2;padding:0 20px 16px}.profile-stats{display:flex;gap:22px;flex-wrap:wrap;padding:13px 20px;border-top:1px solid #263650;border-bottom:1px solid #263650;color:#aebed4;font-size:12px}.profile-stats b{color:#f0f5ff;font-size:14px;margin-right:4px}.tabs{display:flex;gap:4px;padding:10px 15px;border-bottom:1px solid #263650}.tab{padding:8px 12px;border-radius:9px;color:#9eafc8}.tab.active{background:#21344e;color:#fff}.section{margin-top:18px}.section-title{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}.section-title h2{font-size:16px;margin:0}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid #30435f;background:#18263b;border-radius:12px;padding:8px 10px;color:#d4e0f2;font-size:12px}.chip img{width:27px;height:27px;vertical-align:middle;margin-right:6px}.awardrow{display:flex;gap:10px;flex-wrap:wrap}.award{display:flex;align-items:center;gap:8px;background:#17243a;border:1px solid #2b3b56;border-radius:12px;padding:8px 10px;min-width:0}.award img{width:34px;height:34px}.award b{display:block;font-size:12px}.award span{display:block;font-size:10px;color:#9eafc8}
+.feedpost{padding:15px 16px;border-bottom:1px solid #273650}.postauthor{display:flex;align-items:center;gap:10px}.mini-avatar{position:relative;width:42px;height:42px;flex:0 0 42px}.mini-avatar .photo{position:absolute;inset:4px;width:34px;height:34px;object-fit:cover;border-radius:50%;background:#7186a2}.mini-avatar .mini-frame{position:absolute;inset:0;width:42px;height:42px}.postname{font-weight:750}.postmeta{font-size:11px;color:#94a6c0}.posttext{margin:13px 0;color:#dce6f6;font-size:14px}.postmedia{border-radius:13px;min-height:115px;background:linear-gradient(120deg,#193c42,#27355c 60%,#563a68);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:#e9f5ff;font-size:20px;font-weight:800;letter-spacing:.4px}.postactions{display:flex;gap:18px;color:#a7b7cf;font-size:12px;margin-top:13px}.comment{display:flex;gap:9px;padding:12px 0;border-bottom:1px solid #263650}.comment:last-child{border-bottom:0}.comment .mini-avatar{width:34px;height:34px;flex-basis:34px}.comment .photo{inset:3px;width:28px;height:28px}.comment .mini-frame{width:34px;height:34px}.commentbubble{background:#1a2940;border-radius:3px 13px 13px 13px;padding:9px 11px;flex:1;color:#d9e4f4}.commentbubble b{font-size:12px}.commentbubble p{margin:4px 0 0}.chat-shell{display:grid;grid-template-columns:115px minmax(0,1fr);min-height:440px}.chatlist{background:#0d1626;border-right:1px solid #263650;padding:10px}.chatperson{display:flex;align-items:center;gap:7px;padding:10px 6px;border-radius:10px;font-size:11px;color:#bdcbe0}.chatperson.active{background:#1c2e48;color:#fff}.chatdot{width:8px;height:8px;border-radius:50%;background:#5ad39e}.chatmain{display:flex;flex-direction:column;min-width:0}.chathead{padding:12px 14px;border-bottom:1px solid #263650;font-weight:750}.messages{padding:15px;display:flex;flex-direction:column;gap:12px;flex:1}.msg{max-width:88%;display:flex;gap:8px;align-items:flex-end}.msg.mine{align-self:flex-end;flex-direction:row-reverse}.bubble{background:#1c2b42;border:1px solid #2b3d59;border-radius:14px 14px 14px 4px;padding:9px 11px;color:#e1ebfa;font-size:12px}.mine .bubble{background:#174238;border-color:#2b695a;border-radius:14px 14px 4px 14px}.bubble small{display:block;color:#91a6c1;font-size:10px;margin-top:5px}.chatinput{padding:12px;border-top:1px solid #263650;display:flex;gap:8px}.chatinput input{min-width:0;flex:1;background:#0c1525;border:1px solid #2d405d;border-radius:10px;padding:10px}.send{border:0;border-radius:10px;padding:0 14px;background:#3b8c77;color:white;font-weight:800}.notice{padding:12px 14px;border:1px solid #5a4a2b;background:#2a2418;color:#e9d5a1;border-radius:13px;font-size:12px;margin-top:16px}
+.hidden{display:none!important}.toast{position:fixed;right:18px;bottom:18px;background:#17372f;border:1px solid #3b806e;color:#c8ffea;border-radius:12px;padding:12px 16px;z-index:30;box-shadow:0 12px 35px #0005;display:none}
+@media(max-width:1100px){.layout{grid-template-columns:250px minmax(0,1fr);padding:12px}.viewport{grid-template-columns:1fr}.sidebar{top:70px}.profile-actions{display:none}}
+@media(max-width:760px){.topbar{padding:10px 12px;gap:8px;flex-wrap:wrap}.brand{font-size:16px}.topnav{order:3;width:100%;overflow:auto;flex-wrap:nowrap}.demo-pill{margin-left:auto}.layout{display:flex;flex-direction:column;padding:10px}.sidebar{position:static;max-height:none}.sidebar details summary{cursor:pointer}.sidebar details[open] .controls-body{padding-top:12px}.herohead{align-items:flex-start;flex-direction:column}.profiletop{align-items:flex-end;gap:10px;padding:0 13px 14px;margin-top:-42px}.avatar-wrap{width:88px;height:88px;flex-basis:88px}.avatar-photo{inset:6px;width:76px;height:76px}.frame-layer{width:88px;height:88px}.effect-layer{width:104px;height:104px;inset:-8px}.displayname{font-size:20px}.bio{padding:0 14px 14px}.profile-stats{padding:12px 14px;gap:14px}.tabs{overflow:auto}.cardbody{padding:12px}.chat-shell{grid-template-columns:80px minmax(0,1fr)}.chatlist{padding:6px}.chatperson{font-size:10px;flex-direction:column}.profile-actions{display:none}}
+</style>
 </head>
 <body>
-<div id="app">
-
-  <div class="beta-ribbon" onclick="toast('ТЕСТОВАЯ ВЕРСИЯ. ПРОГРЕСС И ДАННЫЕ МОГУТ БЫТЬ СБРОШЕНЫ БЕЗ ПРЕДУПРЕЖДЕНИЯ.')">
-    <span id="conn-status-dot" style="color:var(--accent);">●</span> <span id="conn-status-text">ОНЛАЙН</span> · ⚠ BETA · ТЕСТОВАЯ ВЕРСИЯ
+<header class="topbar">
+ <div class="brand"><div class="brandmark">✦</div><span>BaoMudao</span></div>
+ <nav class="topnav">
+  <button class="navbtn active" data-view="profile">Профиль</button>
+  <button class="navbtn" data-view="feed">Посты и комментарии</button>
+  <button class="navbtn" data-view="chat">Чаты</button>
+  <button class="navbtn" data-view="showcase">Коллекция</button>
+ </nav>
+ <div class="spacer"></div><span class="demo-pill">ИНТЕРАКТИВНЫЙ КОНЦЕПТ</span>
+</header>
+<div class="layout">
+<aside class="sidebar">
+ <h2>Кастомизация</h2><div class="muted small">Меняй настройки — изменения сразу видны во всех макетах справа.</div>
+ <div class="controls-body" id="controls">
+  <div class="group"><label for="username">Имя профиля</label><input id="username" type="text" value="Пользователь4821"></div>
+  <div class="group"><label for="handle">Никнейм</label><input id="handle" type="text" value="@bao_explorer"></div>
+  <div class="group"><label for="status">Статус возле ника</label><select id="status"></select>
+   <label style="margin-top:9px" for="secondStatus">Дополнительный статус</label><select id="secondStatus"><option value="">Без второго статуса</option></select>
   </div>
+  <div class="group"><label for="frame">Рамка аватара</label><select id="frame"></select></div>
+  <div class="group"><label for="effect">Эффект аватара</label><select id="effect"></select></div>
+  <div class="group"><label for="banner">Обложка профиля</label><select id="banner"></select></div>
+  <div class="group"><label for="accent">Акцент интерфейса</label><input id="accent" type="color" value="#79d8b3">
+   <label style="margin-top:9px" for="bio">Описание профиля</label><input id="bio" type="text" value="Исследую остров, собираю истории и знакомлюсь с интересными людьми.">
+  </div>
+  <div class="group">
+   <label>Дополнительные элементы</label>
+   <label class="checkrow"><input type="checkbox" id="showAwards" checked> Показывать награды</label>
+   <label class="checkrow"><input type="checkbox" id="showStatusInChat" checked> Статус в чатах</label>
+   <label class="checkrow"><input type="checkbox" id="showFramesEverywhere" checked> Рамка в постах и комментариях</label>
+   <label class="checkrow"><input type="checkbox" id="showEffects" checked> Эффекты и сияние</label>
+  </div>
+  <div class="btnrow"><button class="primary" id="randomize">Случайный образ</button><button class="secondary" id="reset">Сбросить</button></div>
+  <div class="notice">Демонстрационные данные вымышлены. Этот HTML работает локально и ничего не меняет на реальном сайте или в Supabase.</div>
+ </div>
+</aside>
 
-  <div id="screen-stack">
-
-  <!-- AUTH GATE (Supabase Auth: sign in / sign up) -->
-  <div class="screen active" id="screen-authgate">
-    <div class="scroll" style="display:flex; flex-direction:column; justify-content:center;">
-      <div class="eyebrow" style="text-align:center; display:block;">LAST ASYLUM DATABASE</div>
-      <h2 style="text-align:center; font-size:20px; margin-top:8px;">ДОСТУП К АРХИВУ</h2>
-      <p class="dim" style="text-align:center; font-size:12px; margin-top:8px;">Для входа в архив нужен аккаунт. Прогресс хранится на защищённом сервере, а не в этом браузере.</p>
-
-      <div class="reg-card" style="margin-top:20px;">
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="ag-email" placeholder="you@example.com" autocomplete="email">
-        </div>
-        <div class="field" id="ag-username-field" style="display:none;">
-          <label>Позывной</label>
-          <input type="text" id="ag-username" placeholder="SURVIVOR NAME" maxlength="20">
-          <div id="ag-username-hint" style="font-family:var(--mono); font-size:10.5px; margin-top:5px; min-height:13px;"></div>
-        </div>
-        <div class="field">
-          <label>Пароль</label>
-          <input type="password" id="ag-password" placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <div id="ag-error" style="color:var(--danger); font-family:var(--mono); font-size:11.5px; min-height:14px; margin-bottom:8px;"></div>
-        <button class="btn solid" id="ag-submit-btn">ВОЙТИ</button>
-        <button class="btn ghost" id="ag-toggle-mode-btn" style="margin-top:10px;">НЕТ АККАУНТА? ЗАРЕГИСТРИРОВАТЬСЯ</button>
-        <button class="btn ghost" id="ag-forgot-btn" style="margin-top:10px; font-size:10.5px;">ЗАБЫЛ ПАРОЛЬ?</button>
+<main class="main">
+ <div class="herohead"><div><h1 id="pageTitle">Профиль пользователя</h1><p>Один набор настроек — сразу в профиле, ленте, комментариях и чатах.</p></div><span class="muted small">Desktop / Mobile friendly</span></div>
+ <div id="view-profile" class="view">
+  <div class="viewport">
+   <div>
+    <section class="card">
+     <div class="banner"><img id="profileBanner" src="banners/bamboo_dawn.svg" alt="Обложка профиля"></div>
+     <div class="profiletop">
+      <div class="avatar-wrap">
+       <img class="avatar-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80" alt="Демонстрационный аватар">
+       <img class="frame-layer" id="profileFrame" src="avatar_frames/bamboo.svg" alt="">
+       <img class="effect-layer" id="profileEffect" src="profile_effects/sparkles.svg" alt="">
       </div>
-      <div id="ag-status" class="dim mono" style="text-align:center; font-size:11px; margin-top:14px;"></div>
-    </div>
+      <div class="profile-names"><div class="name-line"><span class="displayname" id="profileName">Пользователь4821</span><span class="status-badge" id="profileStatus"></span><span class="status-badge verified" id="profileStatus2"></span></div><div class="handle" id="profileHandle">@bao_explorer</div></div>
+      <div class="profile-actions"><button class="iconbtn">＋ Добавить</button><button class="iconbtn">•••</button></div>
+     </div>
+     <div class="bio" id="profileBio">Исследую остров, собираю истории и знакомлюсь с интересными людьми.</div>
+     <div class="profile-stats"><span><b>128</b> публикаций</span><span><b>2.4k</b> подписчиков</span><span><b>318</b> подписок</span><span><b>14</b> наград</span></div>
+     <div class="tabs"><span class="tab active">Публикации</span><span class="tab">Истории</span><span class="tab">Награды</span><span class="tab">О себе</span></div>
+     <div class="feedpost">
+      <div class="postauthor"><div class="mini-avatar"><img class="photo" id="profilePostPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt=""><img class="mini-frame" id="profilePostFrame" src="avatar_frames/bamboo.svg" alt=""></div><div><div class="postname"><span class="nameMirror">Пользователь4821</span> <span class="status-badge statusMini">● В сети</span></div><div class="postmeta">Сегодня, 10:42 · Публично</div></div></div>
+      <div class="posttext">Нашёл новое красивое место на острове 🌿 Иногда стоит свернуть с привычной тропы — и можно открыть что-то удивительное.</div>
+      <div class="postmedia">НОВЫЕ ТРОПЫ · НОВЫЕ ИСТОРИИ</div><div class="postactions"><span>♡ 48</span><span>◯ 12 комментариев</span><span>↗ Поделиться</span></div>
+     </div>
+    </section>
+    <section class="section card" id="awardSection"><div class="cardhead"><h2>Избранные награды</h2><span class="muted small">3 из 14</span></div><div class="cardbody"><div class="awardrow" id="profileAwards"></div></div></section>
+   </div>
+   <div>
+    <section class="card"><div class="cardhead"><h2>Визитка профиля</h2><span class="muted small">Предпросмотр</span></div><div class="cardbody">
+     <div class="chips"><span class="chip">✦ Участник BaoMudao</span><span class="chip">⌂ Сервер 54</span><span class="chip">♫ Музыка</span></div>
+     <div class="section"><div class="section-title"><h2>Оформление</h2></div><div class="muted small">Рамка, статус и обложка обновляются в реальном времени при выборе слева.</div></div>
+     <div class="section"><div class="section-title"><h2>Активность</h2></div><div class="chips"><span class="chip">✎ Авторские записи</span><span class="chip">♡ Помогает сообществу</span></div></div>
+    </div></section>
+    <section class="section card"><div class="cardhead"><h2>Комментарии профиля</h2><span class="muted small">2</span></div><div class="cardbody">
+     <div class="comment"><div class="mini-avatar"><img class="photo" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/ocean_glass.svg" alt=""></div><div class="commentbubble"><b>Алексей</b><p>Классный профиль, оформление очень атмосферное!</p></div></div>
+     <div class="comment"><div class="mini-avatar"><img class="photo" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/starlight.svg" alt=""></div><div class="commentbubble"><b>Мира</b><p>Поздравляю с новой наградой ✨</p></div></div>
+    </div></section>
+   </div>
   </div>
+ </div>
 
-  <!-- BOOT -->
-  <div class="screen" id="screen-boot">
-    <div class="boot-wrap">
-      <div class="boot-glyph" id="boot-glyph-click">
-        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="#31ff9c" stroke-width="1.5" fill="none" opacity=".5"/><path d="M32 12 L46 40 L18 40 Z" stroke="#31ff9c" stroke-width="1.6" fill="none"/><circle cx="32" cy="34" r="2.4" fill="#31ff9c"/><rect x="30.6" y="20" width="2.8" height="10" fill="#31ff9c"/></svg>
-      </div>
-      <div id="boot-lines"></div>
-      <button class="btn solid" id="boot-start">НАЧАТЬ РАССЛЕДОВАНИЕ</button>
-      <div class="egg-text" id="egg-text">YOU ARE NOT THE FIRST ONE TO ACCESS THIS ARCHIVE.</div>
+ <div id="view-feed" class="view hidden">
+  <div class="viewport">
+   <section class="card"><div class="cardhead"><h2>Лента сообщества</h2><span class="muted small">Посты и комментарии</span></div>
+    <div class="feedpost"><div class="postauthor"><div class="mini-avatar"><img class="photo" id="feedPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt=""><img class="mini-frame" id="feedFrame" src="avatar_frames/bamboo.svg" alt=""></div><div><div class="postname"><span class="nameMirror">Пользователь4821</span> <span class="status-badge statusMini">● В сети</span></div><div class="postmeta">@bao_explorer · 8 минут назад</div></div></div>
+     <div class="posttext">Какой стиль профиля вам больше нравится — космический или природный? Собираю идеи для следующего оформления BaoMudao 🌌</div><div class="postmedia">ВАШ ПРОФИЛЬ — ВАШ МИР</div><div class="postactions"><span>♡ 86</span><span>◯ 24 комментария</span><span>↗ Поделиться</span></div>
+     <div class="comment"><div class="mini-avatar"><img class="photo" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/ocean_glass.svg" alt=""></div><div class="commentbubble"><b>Алексей</b><p>Я за неон! Особенно если рамка меняется вместе с темой.</p></div></div>
+     <div class="comment"><div class="mini-avatar"><img class="photo" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/starlight.svg" alt=""></div><div class="commentbubble"><b>Мира</b><p>Природные темы идеально подходят BaoMudao 🌿</p></div></div>
     </div>
+   </section>
+   <section class="card"><div class="cardhead"><h2>Как выглядит бейдж</h2></div><div class="cardbody"><p class="muted">Статус отображается рядом с ником в ленте и возле автора комментария. Рамка аватара может использоваться в карточках публикаций.</p><div class="section"><div class="postauthor"><div class="avatar-wrap" style="width:72px;height:72px;flex-basis:72px"><img class="avatar-photo" style="inset:5px;width:62px;height:62px" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80" alt=""><img class="frame-layer" style="width:72px;height:72px" id="feedBigFrame" src="avatar_frames/bamboo.svg" alt=""></div><div><div class="name-line"><span class="displayname" style="font-size:18px" id="feedBigName">Пользователь4821</span><span class="status-badge" id="feedBigStatus"></span></div><div class="handle">@bao_explorer · автор публикации</div></div></div></div></div></section>
   </div>
+ </div>
 
-  <!-- REGISTRATION -->
-  <div class="screen" id="screen-reg">
-    <div class="scroll">
-      <div class="eyebrow">SURVIVOR PROTOCOL</div>
-      <h2 style="font-size:21px; margin-top:8px;">ИДЕНТИФИКАЦИЯ ВЫЖИВШЕГО</h2>
-      <p class="dim" style="margin-top:8px; font-size:13px;">Система требует подтверждения личности перед выдачей доступа к архиву.</p>
-      <div class="reg-card">
-        <div class="avatar-picker">
-          <div class="avatar-circle" id="reg-avatar-circle" onclick="Avatar.pick()">
-            <div class="edit-badge">+</div>
-          </div>
-          <div class="avatar-hint">НАЖМИ, ЧТОБЫ ЗАГРУЗИТЬ ФОТО</div>
-        </div>
-        <div class="field">
-          <label>Номер сервера</label>
-          <button type="button" class="server-select-btn" id="reg-server-btn" onclick="ServerPicker.open()">ВЫБРАТЬ СЕРВЕР (1–300)</button>
-        </div>
-        <div class="field">
-          <label>Позывной выжившего</label>
-          <input type="text" id="reg-name" placeholder="SURVIVOR NAME" maxlength="18">
-        </div>
-        <div class="field">
-          <label>Тег альянса (опционально)</label>
-          <input type="text" id="reg-alliance" placeholder="НАПР. RATS" maxlength="5" style="text-transform:uppercase;">
-        </div>
-        <button class="btn solid" id="reg-submit">ПОДТВЕРДИТЬ ЛИЧНОСТЬ</button>
-      </div>
-      <div class="player-card" id="reg-preview" style="display:none;">
-        <div class="row"><span>SERVER</span><span id="pv-server" class="mono accent"></span></div>
-        <div class="row"><span>PLAYER</span><span id="pv-name" class="mono accent"></span></div>
-        <div class="row" id="pv-alliance-row" style="display:none;"><span>АЛЬЯНС</span><span id="pv-alliance" class="mono accent"></span></div>
-        <div class="row"><span>STATUS</span><span class="mono accent"><span class="status-dot"></span>ACTIVE</span></div>
-        <div class="row"><span>CLEARANCE</span><span class="mono">LEVEL 0</span></div>
-      </div>
-    </div>
-  </div>
+ <div id="view-chat" class="view hidden">
+  <section class="card"><div class="cardhead"><h2>Сообщения</h2><span class="muted small">Демонстрация личного чата</span></div><div class="chat-shell">
+   <aside class="chatlist"><div class="chatperson active"><span class="chatdot"></span><span>Мира</span></div><div class="chatperson">Алексей</div><div class="chatperson">Бао-клуб</div></aside>
+   <div class="chatmain"><div class="chathead">Мира <span class="muted small">· в сети</span></div><div class="messages" id="messages">
+    <div class="msg"><div class="mini-avatar"><img class="photo" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/starlight.svg" alt=""></div><div class="bubble">Привет! Видела, ты меняешь оформление профиля. Уже выбрал рамку?<small>10:31</small></div></div>
+    <div class="msg mine"><div class="mini-avatar myMini"><img class="photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/bamboo.svg" alt=""></div><div class="bubble">Пока экспериментирую. Хочу подобрать что-то под стиль острова 🌿<small>10:32 · ✓✓</small></div></div>
+    <div class="msg"><div class="mini-avatar"><img class="photo" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/starlight.svg" alt=""></div><div class="bubble">Тогда попробуй «Золотой Бао» или «Весенний сад»!<small>10:33</small></div></div>
+   </div><form class="chatinput" id="chatForm"><input id="chatText" placeholder="Написать сообщение…" autocomplete="off"><button class="send" type="submit">➤</button></form></div>
+  </div></section>
+  <div class="notice">Сообщения отправляются только внутри этой демонстрации и исчезнут после перезагрузки страницы.</div>
+ </div>
 
-  <!-- HUB (MAP) -->
-  <div class="screen" id="screen-hub">
-    <div class="scroll">
-      <div class="hub-header">
-        <div class="eyebrow">LAST ASYLUM DATABASE</div>
-        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">КАРТА РАССЛЕДОВАНИЯ</h2>
-
-        <div class="player-strip">
-          <div class="avatar-circle avatar-sm" id="hub-avatar-circle" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
-          <div class="info">
-            <div class="name-row"><span class="nm" id="hub-strip-name">—</span><span class="lvl" id="hub-strip-level">LVL 1</span></div>
-            <div class="xp-track"><div class="xp-fill" id="hub-strip-xpfill" style="width:0%"></div></div>
-            <div class="xp-caption" id="hub-strip-xpcap">0 / 0 XP</div>
-          </div>
-        </div>
-
-        <div class="progress-bar-wrap">
-          <div class="progress-track"><div class="progress-fill" id="hub-progress-fill" style="width:0%"></div></div>
-          <div class="progress-label"><span id="hub-progress-pct">0%</span><span id="hub-progress-txt">0 / 0 РАЗГАДАНО</span></div>
-        </div>
-      </div>
-      <div class="branch-map">
-        <div class="branch-line"></div>
-        <div id="branch-list"></div>
-      </div>
-
-      <div class="section-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
-      <div class="locked-module" id="hub-role-card" style="opacity:1;" onclick="Nav.go('role')">
-        <div class="lm-icon">🎭</div>
-        <div class="lm-body"><div class="lm-title" id="hub-role-title">ТВОЯ РОЛЬ</div><span class="lm-tag" id="hub-role-tag" style="color:var(--accent);">ОТКРЫТЬ ДОСЬЕ</span></div>
-      </div>
-
-      <div class="section-title">ДОПОЛНИТЕЛЬНЫЕ МОДУЛИ</div>
-      <div class="locked-module" style="opacity:1;" onclick="Nav.go('rating')">
-        <div class="lm-icon">🏆</div>
-        <div class="lm-body"><div class="lm-title">МИРОВОЙ РЕЙТИНГ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
-      </div>
-      <div class="locked-module" style="opacity:1;" onclick="Nav.go('alliance')">
-        <div class="lm-icon">🛡</div>
-        <div class="lm-body"><div class="lm-title">АЛЬЯНСЫ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
-      </div>
-      <div class="locked-module" style="opacity:1;" onclick="Nav.go('friends')">
-        <div class="lm-icon">🧑‍🤝‍🧑</div>
-        <div class="lm-body"><div class="lm-title">ДРУЗЬЯ</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
-      </div>
-      <div class="locked-module" style="opacity:1;" onclick="Nav.go('chat')">
-        <div class="lm-icon">💬</div>
-        <div class="lm-body"><div class="lm-title">МИРОВОЙ ЧАТ</div><span class="lm-tag" style="color:var(--accent);">ТЕСТ ФУНКЦИОНАЛА</span></div>
-      </div>
-      <div class="locked-module" style="opacity:1;" onclick="Nav.go('warehouse')">
-        <div class="lm-icon">📦</div>
-        <div class="lm-body"><div class="lm-title">СКЛАД</div><span class="lm-tag" style="color:var(--accent);">ДОСТУП ОТКРЫТ</span></div>
-      </div>
-      <div style="height:8px;"></div>
-    </div>
-  </div>
-
-  <!-- SECRET ROLE -->
-  <div class="screen" id="screen-role">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">CLASSIFIED PERSONNEL FILE</div>
-      <h2 id="role-screen-name" style="font-size:22px; margin-top:8px;">—</h2>
-      <p class="dim" style="margin-top:8px; font-size:12.5px;" id="role-screen-tagline">—</p>
-      <div class="doc-panel" style="margin-top:16px;">
-        <div class="q-text" id="role-screen-desc">—</div>
-      </div>
-      <p class="dim" style="margin-top:6px; font-size:11px;">Задания роли пока не влияют на других выживших — это личный протокол для отслеживания твоего стиля игры.</p>
-      <div class="section-title">ЗАДАНИЯ РОЛИ</div>
-      <div id="role-task-list"></div>
-    </div>
-  </div>
-
-  <!-- RATING (open, single-player self view) -->
-  <div class="screen" id="screen-rating">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">МИРОВОЙ РЕЙТИНГ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">GLOBAL LEADERBOARD · BETA</div>
-      <h2 style="font-size:19px; margin-top:6px;">МИРОВОЙ РЕЙТИНГ</h2>
-      <p class="dim" style="margin-top:8px; font-size:12px;">Рейтинг в раннем тестировании: пока отображаются только данные, зарегистрированные на этом устройстве.</p>
-      <input type="text" class="server-search" id="rating-filter" placeholder="Фильтр по номеру сервера..." inputmode="numeric" style="margin-top:14px;">
-      <div class="rating-sort-row">
-        <select class="rating-select" id="rating-sort-field">
-          <option value="xp">ПО ОЧКАМ (XP)</option>
-          <option value="level">ПО УРОВНЮ</option>
-          <option value="solved">ПО ЗАДАНИЯМ</option>
-        </select>
-        <button class="btn ghost" id="rating-sort-dir" style="width:auto; padding:10px 14px;">↓ БОЛЬШЕ→МЕНЬШЕ</button>
-      </div>
-      <div id="rating-list" style="margin-top:14px;"></div>
-    </div>
-  </div>
-
-  <!-- ALLIANCES -->
-  <div class="screen" id="screen-alliance">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">АЛЬЯНСЫ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">ALLIANCE REGISTRY · BETA</div>
-      <h2 style="font-size:19px; margin-top:6px;">АЛЬЯНСЫ</h2>
-      <p class="dim" style="margin-top:8px; font-size:12px;" id="alliance-status-text">—</p>
-      <div id="alliance-list" style="margin-top:14px;"></div>
-    </div>
-  </div>
-
-  <!-- FRIENDS -->
-  <div class="screen" id="screen-friends">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">ДРУЗЬЯ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">CONTACT LIST · BETA</div>
-      <h2 style="font-size:19px; margin-top:6px;">ДРУЗЬЯ</h2>
-      <p class="dim" style="margin-top:8px; font-size:12px;">Добавляй других выживших по позывному и номеру сервера. Список хранится локально на этом устройстве.</p>
-      <div class="reg-card" style="margin-top:14px; padding:16px;">
-        <div class="field">
-          <label>Позывной</label>
-          <input type="text" id="friend-add-name" placeholder="SURVIVOR NAME" maxlength="18">
-        </div>
-        <div class="field">
-          <label>Номер сервера</label>
-          <input type="text" id="friend-add-server" placeholder="НАПР. 047" maxlength="4" inputmode="numeric">
-        </div>
-        <button class="btn solid" id="friend-add-btn">ДОБАВИТЬ В ДРУЗЬЯ</button>
-      </div>
-      <div class="section-title">СПИСОК ДРУЗЕЙ</div>
-      <div id="friends-list"></div>
-    </div>
-  </div>
-
-  <!-- PVP (rating + search shell open, live matches still in development) -->
-  <div class="screen" id="screen-pvp">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">PVP АРЕНА</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">PVP ARENA · BETA</div>
-      <h2 style="font-size:19px; margin-top:6px;">PVP АРЕНА</h2>
-      <p class="dim" style="margin-top:8px; font-size:12px;">Локальный тестовый режим: бои проходят против ботов, подстроенных под силу твоего героя. Поиск реальных игроков появится позже.</p>
-
-      <div class="section-title">МОЙ БОЕВОЙ ГЕРОЙ</div>
-      <div id="pvp-my-hero"></div>
-
-      <div class="section-title">ЕЖЕДНЕВНЫЕ ЗАДАНИЯ</div>
-      <div id="pvp-daily-missions"></div>
-
-      <div class="section-title">РЕЙТИНГ PVP</div>
-      <div id="pvp-rating-list"></div>
-
-      <div class="locked-module" style="opacity:1; margin-top:4px;" onclick="Nav.go('pvphistory')">
-        <div class="lm-icon">📜</div>
-        <div class="lm-body"><div class="lm-title">ИСТОРИЯ БОЁВ</div><span class="lm-tag" style="color:var(--accent);">ПОСЛЕДНИЕ 30 БОЁВ</span></div>
-      </div>
-
-      <div class="section-title">ПОИСК ПРОТИВНИКА</div>
-      <p class="dim mono" id="pvp-search-counter" style="font-size:10.5px;">ПОПЫТОК СЕГОДНЯ: 0/5</p>
-      <button class="btn solid" id="pvp-find-btn" style="margin-top:10px;">НАЙТИ ПРОТИВНИКА</button>
-      <div id="pvp-search-results"></div>
-    </div>
-  </div>
-
-  <!-- PVP BATTLE HISTORY -->
-  <div class="screen" id="screen-pvphistory">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('pvp')">‹ PVP</button>
-      <div class="topbar-title">ИСТОРИЯ БОЁВ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <p class="dim" style="font-size:12px; margin-bottom:12px;">Последние бои. Нажми на запись, чтобы увидеть подробную статистику и лог ходов.</p>
-      <div id="pvphistory-list"></div>
-    </div>
-  </div>
-
-  <!-- PVP BATTLE HISTORY DETAIL -->
-  <div class="screen" id="screen-pvphistorydetail">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('pvphistory')">‹ ИСТОРИЯ</button>
-      <div class="topbar-title">ДЕТАЛИ БОЯ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll" id="pvphistorydetail-scroll"></div>
-  </div>
-
-  <!-- PVP COMPARE (pre-battle) -->
-  <div class="screen" id="screen-pvpcompare">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('pvp')">‹ PVP</button>
-      <div class="topbar-title">СРАВНЕНИЕ ПЕРЕД БОЕМ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="vs-panel" id="pvpcompare-panel"></div>
-      <div id="pvpcompare-power-diff"></div>
-      <div id="pvpcompare-counter"></div>
-      <div class="section-title">ХАРАКТЕРИСТИКИ</div>
-      <div id="pvpcompare-stats"></div>
-      <button class="btn solid" id="pvpcompare-fight-btn" style="margin-top:16px;">В БОЙ</button>
-    </div>
-  </div>
-
-  <!-- PVP BATTLE -->
-  <div class="screen" id="screen-battle">
-    <div class="topbar">
-      <div class="topbar-title" id="battle-title">БОЙ</div>
-      <div class="tokens-label" id="battle-turn-counter">ХОД 0/30</div>
-    </div>
-    <div class="scroll">
-      <div id="battle-hp-player"></div>
-      <div id="battle-hp-enemy"></div>
-      <div class="battle-log" id="battle-log"></div>
-      <div id="battle-actions-wrap"></div>
-      <div id="battle-result-wrap"></div>
-    </div>
-  </div>
-
-  <!-- HEROES LIST -->
-  <div class="screen" id="screen-heroes">
-    <div class="scroll">
-      <div class="hub-header">
-        <div class="eyebrow">ROSTER · LAST ASYLUM</div>
-        <h2 style="font-size:20px; margin-top:6px; margin-bottom:14px;">ГЕРОИ</h2>
-      </div>
-      <div id="heroes-list"></div>
-      <div style="height:8px;"></div>
-    </div>
-  </div>
-
-  <!-- HERO DETAIL -->
-  <div class="screen" id="screen-herodetail">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('heroes')">‹ ГЕРОИ</button>
-      <div class="topbar-title" id="herodetail-title">—</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll" id="herodetail-scroll"></div>
-  </div>
-
-  <!-- WAREHOUSE -->
-  <div class="screen" id="screen-warehouse">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">СКЛАД</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">STORAGE · RESOURCES</div>
-      <h2 style="font-size:19px; margin-top:6px; margin-bottom:14px;">СКЛАД</h2>
-      <div class="warehouse-grid" id="warehouse-main"></div>
-      <div class="section-title">ДЕТАЛИ И ПАЗЛЫ ГЕРОЕВ</div>
-      <div id="warehouse-heroes"></div>
-    </div>
-  </div>
-
-  <!-- WORLD CHAT (open, local test only) -->
-  <div class="screen" id="screen-chat">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title">МИРОВОЙ ЧАТ</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll" id="chat-scroll" style="flex:1;">
-      <p class="dim" style="font-size:11px; text-align:center; margin-bottom:10px;">ТЕСТОВЫЙ РЕЖИМ — сообщения видны только тебе на этом устройстве.</p>
-      <div id="chat-messages"></div>
-    </div>
-    <div class="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Сообщение..." maxlength="200">
-      <button class="btn solid" id="chat-send-btn" style="width:auto; padding:12px 16px;">➤</button>
-    </div>
-  </div>
-
-  <!-- QUEST (branch puzzle list) -->
-  <div class="screen" id="screen-quest">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('hub')">‹ АРХИВ</button>
-      <div class="topbar-title" id="quest-branch-title">—</div>
-      <div style="width:60px;"></div>
-    </div>
-    <div class="scroll" id="quest-list-wrap"></div>
-  </div>
-
-  <!-- PUZZLE -->
-  <div class="screen" id="screen-puzzle">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('quest')">‹ НАЗАД</button>
-      <div class="topbar-title" id="puzzle-branch-title">—</div>
-      <div class="tokens-label" id="puzzle-tokens">💠 0</div>
-    </div>
-    <div class="scroll">
-      <div class="file-tag" id="puzzle-file-tag">FILE #000</div>
-      <div id="puzzle-body"></div>
-      <div class="feedback" id="puzzle-feedback"></div>
-      <div class="puzzle-nav-row" id="puzzle-nav-row" style="display:none;">
-        <button class="btn ghost" id="puzzle-menu-btn" onclick="Quest.goToMenu()">В МЕНЮ</button>
-        <button class="btn solid" id="puzzle-continue-btn" onclick="Quest.goNextPuzzle()">ДАЛЬШЕ →</button>
-      </div>
-      <div class="hint-bar">
-        <button class="hint-btn" id="puzzle-hint-btn">ПОДСКАЗКА</button>
-      </div>
-      <div class="hint-box" id="puzzle-hint-box"></div>
-    </div>
-  </div>
-
-  <!-- FINAL PROTOCOL -->
-  <div class="screen" id="screen-final">
-    <div class="topbar">
-      <button class="back-btn" onclick="Nav.go('quest')">‹ НАЗАД</button>
-      <div class="topbar-title">FINAL PROTOCOL</div>
-      <div class="tokens-label" id="final-tokens">💠 0</div>
-    </div>
-    <div class="scroll">
-      <div class="eyebrow">СБОРКА ФИНАЛЬНОГО ШИФРА</div>
-      <h2 style="font-size:18px; margin-top:8px;" id="final-branch-title">—</h2>
-      <p class="dim" style="margin-top:10px; font-size:13px;">Ты собрал все фрагменты этой ветки. Они не объясняют сами себя. Найди скрытый принцип и расставь символы в правильном порядке. Нажимай на символы снизу, чтобы добавить их в последовательность сверху.</p>
-
-      <div class="order-hint" style="margin-top:16px;">ТЕКУЩАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ</div>
-      <div class="order-seq" id="final-seq"></div>
-      <div class="order-hint">ДОСТУПНЫЕ СИМВОЛЫ</div>
-      <div class="order-pool" id="final-pool"></div>
-
-      <button class="btn solid" style="margin-top:14px;" id="final-check-btn">ПРОВЕРИТЬ ПРОТОКОЛ</button>
-      <button class="btn ghost" style="margin-top:10px;" id="final-clear-btn">ОЧИСТИТЬ</button>
-
-      <div class="feedback" id="final-feedback"></div>
-      <div class="hint-bar">
-        <button class="hint-btn" id="final-hint-btn">ПОДСКАЗКА</button>
-      </div>
-      <div class="hint-box" id="final-hint-box"></div>
-    </div>
-  </div>
-
-  <!-- SYMBOLS ARCHIVE -->
-  <div class="screen" id="screen-symbols">
-    <div class="scroll">
-      <div class="eyebrow">DATA VAULT</div>
-      <h2 style="font-size:20px; margin-top:6px;">АРХИВ СИМВОЛОВ</h2>
-      <p class="dim" style="margin-top:8px; font-size:13px;">Все фрагменты, найденные в ходе расследования. Порядок ничего не значит сам по себе.</p>
-      <div class="sym-grid" id="sym-grid"></div>
-    </div>
-  </div>
-
-  <!-- PROFILE -->
-  <div class="screen" id="screen-profile">
-    <div class="scroll">
-      <div class="eyebrow">SURVIVOR FILE</div>
-      <h2 style="font-size:20px; margin-top:6px; margin-bottom:16px;">ПРОФИЛЬ</h2>
-
-      <div class="rank-badge">
-        <div class="avatar-circle" id="profile-avatar-circle" style="margin-bottom:12px;" onclick="Avatar.pick()"><div class="edit-badge">✎</div></div>
-        <div class="dim mono" style="font-size:10.5px; letter-spacing:.15em;" id="prof-server-name">SERVER — PLAYER</div>
-        <div class="rank-name" id="prof-rank">NOVICE</div>
-        <div class="mono" style="font-size:12px; color:var(--amber); margin-top:8px;" id="prof-level">LVL 1</div>
-        <div class="xp-track" style="max-width:220px; margin:8px auto 0;"><div class="xp-fill" id="prof-xpfill" style="width:0%"></div></div>
-        <div class="xp-caption" id="prof-xpcap" style="text-align:center; margin-top:5px;">0 / 0 XP</div>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat-box"><div class="v" id="stat-solved">0</div><div class="l">ЗАГАДОК РЕШЕНО</div></div>
-        <div class="stat-box"><div class="v" id="stat-symbols">0</div><div class="l">СИМВОЛОВ НАЙДЕНО</div></div>
-        <div class="stat-box"><div class="v" id="stat-branches">0/3</div><div class="l">ВЕТОК ОТКРЫТО</div></div>
-        <div class="stat-box"><div class="v" id="stat-mistakes">0</div><div class="l">ОШИБОК</div></div>
-        <div class="stat-box"><div class="v" id="stat-hints">0</div><div class="l">ПОДСКАЗОК ИСПОЛЬЗОВАНО</div></div>
-        <div class="stat-box"><div class="v" id="stat-time">0м</div><div class="l">ВРЕМЯ РАССЛЕДОВАНИЯ</div></div>
-      </div>
-
-      <div class="section-title">PVP СТАТИСТИКА <span class="dim" style="text-transform:none; letter-spacing:0;">(режим в разработке)</span></div>
-      <div class="stat-grid">
-        <div class="stat-box"><div class="v" id="stat-pvp-rating">1000</div><div class="l">РЕЙТИНГ</div></div>
-        <div class="stat-box"><div class="v" id="stat-pvp-winrate">—</div><div class="l">% ПОБЕД</div></div>
-        <div class="stat-box"><div class="v" id="stat-pvp-wins">0</div><div class="l">ПОБЕДЫ</div></div>
-        <div class="stat-box"><div class="v" id="stat-pvp-losses">0</div><div class="l">ПОРАЖЕНИЯ</div></div>
-      </div>
-
-      <div class="section-title">УВЕДОМЛЕНИЯ <span id="notif-unread-badge" class="dim" style="text-transform:none; letter-spacing:0;"></span></div>
-      <div id="notif-list"></div>
-
-      <div class="section-title">ДОСТИЖЕНИЯ</div>
-      <div id="ach-list"></div>
-
-      <div class="section-title">НАСТРОЙКИ</div>
-      <div class="settings-row">
-        <span class="mono" style="font-size:12.5px;">SOUND</span>
-        <div class="toggle" id="sound-toggle"><div class="dot"></div></div>
-      </div>
-      <div class="settings-row">
-        <span class="mono" style="font-size:12.5px;">ПОЗЫВНОЙ</span>
-        <span class="mono accent" id="settings-name" style="font-size:12.5px;">—</span>
-      </div>
-      <div class="settings-row">
-        <span class="mono" style="font-size:12.5px;">СЕРВЕР</span>
-        <span class="mono accent" id="settings-server" style="font-size:12.5px;">—</span>
-      </div>
-      <div class="settings-row" style="border-bottom:none; gap:10px;">
-        <span class="mono" style="font-size:12.5px; white-space:nowrap;">ТЕГ АЛЬЯНСА</span>
-        <input type="text" id="settings-alliance" maxlength="5" placeholder="—" style="text-transform:uppercase; text-align:right; width:90px; background:none; border:none; border-bottom:1px solid var(--panel-edge); color:var(--accent); font-family:var(--mono); font-size:12.5px; padding:4px 2px; outline:none;">
-      </div>
-
-      <button class="btn danger" style="margin-top:22px;" id="reset-btn">СБРОСИТЬ ПРОГРЕСС</button>
-      <div style="height:20px;"></div>
-    </div>
-  </div>
-
-  </div><!-- /screen-stack -->
-
-  <!-- BOTTOM NAV -->
-  <div class="bottomnav" id="bottomnav" style="display:none;">
-    <button class="nav-item" data-tab="hub" onclick="Nav.tab('hub')">
-      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg>
-      АРХИВ
-    </button>
-    <button class="nav-item" data-tab="quest" onclick="Nav.tab('quest')">
-      <svg viewBox="0 0 24 24" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
-      КВЕСТ
-    </button>
-    <button class="nav-item" data-tab="heroes" onclick="Nav.tab('heroes')">
-      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2 4 4.5.6-3.2 3.2.8 4.5L12 13.2 8 15.3l.8-4.5L5.5 7.6 10 7z"/><path d="M6 21c0-3 2.7-5 6-5s6 2 6 5"/></svg>
-      ГЕРОИ
-    </button>
-    <button class="nav-item" data-tab="pvp" onclick="Nav.tab('pvp')">
-      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/><circle cx="6.5" cy="6.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/><circle cx="17.5" cy="6.5" r="2"/><circle cx="6.5" cy="17.5" r="2"/></svg>
-      PVP
-    </button>
-    <button class="nav-item" data-tab="symbols" onclick="Nav.tab('symbols')">
-      <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>
-      СИМВОЛЫ
-    </button>
-    <button class="nav-item" data-tab="profile" onclick="Nav.tab('profile')">
-      <svg viewBox="0 0 24 24" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5S18 16 19.5 20"/></svg>
-      ПРОФИЛЬ
-    </button>
-  </div>
-
-  <!-- MODAL (confirm reset) -->
-  <div class="overlay" id="overlay-confirm">
-    <div class="modal">
-      <h3>СБРОСИТЬ ПРОГРЕСС?</h3>
-      <p>Все загадки, символы и достижения будут удалены безвозвратно. Отменить это действие нельзя.</p>
-      <div class="row">
-        <button class="btn ghost" onclick="UI.closeOverlay()">ОТМЕНА</button>
-        <button class="btn danger" onclick="Game.resetProgress()">СБРОСИТЬ</button>
-      </div>
-    </div>
-  </div>
-
-  <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
-
-  <!-- MODAL (server select) -->
-  <div class="overlay" id="overlay-server">
-    <div class="modal server-modal">
-      <h3 style="margin-bottom:12px;">ВЫБОР СЕРВЕРА</h3>
-      <input type="text" class="server-search" id="server-search" placeholder="Поиск по номеру..." inputmode="numeric">
-      <div class="server-grid" id="server-grid"></div>
-      <button class="btn ghost" style="margin-top:14px;" onclick="UI.closeOverlay()">ОТМЕНА</button>
-    </div>
-  </div>
-
-  <!-- MODAL (branch unlock) -->
-  <div class="overlay" id="overlay-unlock">
-    <div class="modal">
-      <h3 id="unlock-title">ACCESS GRANTED</h3>
-      <p id="unlock-text">Новая ветка расследования разблокирована.</p>
-      <button class="btn solid" onclick="UI.closeOverlay()">ПРОДОЛЖИТЬ</button>
-    </div>
-  </div>
-
-  <!-- MODAL (secret role reveal) -->
-  <div class="overlay" id="overlay-role">
-    <div class="modal">
-      <div class="eyebrow" style="justify-content:center; display:block; text-align:center;">СЕКРЕТНЫЙ ПРОТОКОЛ</div>
-      <h3 id="role-reveal-name" style="margin-top:10px; font-size:19px;">РОЛЬ</h3>
-      <p id="role-reveal-tagline" style="margin-top:10px;">—</p>
-      <button class="btn solid" id="role-reveal-continue">ПРИНЯТЬ РОЛЬ</button>
-    </div>
-  </div>
-
-  <!-- MODAL (where to get resource) -->
-  <div class="overlay" id="overlay-source">
-    <div class="modal">
-      <h3 id="source-title" style="font-size:16px;">ГДЕ ПОЛУЧИТЬ</h3>
-      <ul class="source-list" id="source-list"></ul>
-      <button class="btn solid" style="margin-top:16px;" onclick="UI.closeOverlay()">ПОНЯТНО</button>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-  <div class="glitch-flash" id="glitch-flash"></div>
-  <div class="grain"></div>
-  <div class="scanlines"></div>
-  <div class="vignette"></div>
+ <div id="view-showcase" class="view hidden">
+  <section class="card"><div class="cardhead"><h2>Коллекция оформления</h2><span class="muted small">Все предметы из набора</span></div><div class="cardbody">
+   <div class="section-title"><h2>Рамки аватара</h2></div><div class="chips" id="frameGallery"></div>
+   <div class="section"><div class="section-title"><h2>Статусы</h2></div><div class="chips" id="statusGallery"></div></div>
+   <div class="section"><div class="section-title"><h2>Эффекты</h2></div><div class="chips" id="effectGallery"></div></div>
+   <div class="section"><div class="section-title"><h2>Обложки профиля</h2></div><div class="chips" id="bannerGallery"></div></div>
+  </div></section>
+ </div>
+</main>
 </div>
-
-
-<!-- Supabase SDK (client code only ever uses the publishable key — see js/config.js) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Fill in js/config.js with your project URL + publishable key before deploying -->
-<script src="./js/config.js"></script>
-<script src="./js/supabase.js"></script>
-<script src="./js/auth.js"></script>
-<script src="./js/database.js"></script>
-<script src="./js/pvp.js"></script>
-<script src="./js/quests.js"></script>
-<script src="./js/chat.js"></script>
-<script src="./js/notifications.js"></script>
-
-<!-- The existing game (unchanged apart from no longer auto-booting) -->
-<script src="./js/game.js"></script>
-
-<!-- Wires the login/signup screen to Supabase Auth and boots the game -->
-<script src="./js/authgate.js"></script>
-
-</body>
-</html>
+<div class="toast" id="toast">Настройки обновлены</div>
+<script>
+const $=id=>document.getElementById(id);
+let data={};
+const defaults={username:"Пользователь4821",handle:"@bao_explorer",status:"online",secondStatus:"",frame:"bamboo",effect:"sparkles",banner:"bamboo_dawn",accent:"#79d8b3",bio:"Исследую остров, собираю истории и знакомлюсь с интересными людьми.",showAwards:true,showStatusInChat:true,showFramesEverywhere:true,showEffects:true};
+async function loadData(){const r=await fetch("cosmetics.json");data=await r.json();populate();initAwards();apply();renderGalleries();}
+function optionLabel(x){return x.name}
+function fillSelect(id,items,includeNone=false){const el=$(id);el.innerHTML="";if(includeNone){const o=document.createElement("option");o.value="";o.textContent="Без статуса";el.append(o)}items.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=x.name;el.append(o)})}
+function populate(){fillSelect("status",data.statuses);fillSelect("secondStatus",data.statuses,true);fillSelect("frame",data.avatar_frames);fillSelect("effect",data.profile_effects);fillSelect("banner",data.banners)}
+function find(arr,id){return arr.find(x=>x.id===id)||arr[0]}
+function apply(){
+ const s=find(data.statuses,$("status").value),s2=data.statuses.find(x=>x.id===$("secondStatus").value),fr=find(data.avatar_frames,$("frame").value),ef=find(data.profile_effects,$("effect").value),bn=find(data.banners,$("banner").value);
+ document.documentElement.style.setProperty("--mint",$("accent").value);
+ $("profileName").textContent=$("username").value||"Пользователь";$("profileHandle").textContent=$("handle").value||"@username";$("profileBio").textContent=$("bio").value;
+ document.querySelectorAll(".nameMirror").forEach(x=>x.textContent=$("username").value||"Пользователь");
+ $("profileBanner").src="banners/"+bn.id+".svg";
+ $("profileFrame").src="avatar_frames/"+fr.id+".svg";$("profileEffect").src="profile_effects/"+ef.id+".svg";
+ $("profileStatus").textContent=s.display;$("profileStatus").style.color=s.color;$("profileStatus").style.borderColor=s.color+"99";$("profileStatus").style.background=s.color+"22";
+ $("profileStatus2").textContent=s2?s2.display:"";$("profileStatus2").style.display=s2?"inline-flex":"none";if(s2){$("profileStatus2").style.color=s2.color;$("profileStatus2").style.borderColor=s2.color+"99";$("profileStatus2").style.background=s2.color+"22"}
+ $("feedBigName").textContent=$("username").value||"Пользователь";$("feedBigStatus").textContent=s.display;$("feedBigStatus").style.color=s.color;$("feedBigStatus").style.borderColor=s.color+"99";$("feedBigStatus").style.background=s.color+"22";
+ $("profilePostFrame").src="avatar_frames/"+fr.id+".svg";$("feedFrame").src="avatar_frames/"+fr.id+".svg";$("feedBigFrame").src="avatar_frames/"+fr.id+".svg";
+ document.querySelectorAll(".statusMini").forEach(x=>{x.textContent=s.display;x.style.color=s.color;x.style.borderColor=s.color+"99";x.style.background=s.color+"22";x.style.display=$("showStatusInChat").checked?"inline-flex":"none"});
+ document.querySelectorAll(".mini-frame").forEach(x=>{if(["profilePostFrame","feedFrame"].includes(x.id))return;x.style.opacity=$("showFramesEverywhere").checked?"1":".0"});
+ $("profileEffect").style.display=$("showEffects").checked?"block":"none";
+ $("awardSection").classList.toggle("hidden",!$("showAwards").checked);
+ document.querySelectorAll(".myMini .mini-frame").forEach(x=>x.src="avatar_frames/"+fr.id+".svg");
+ // Use selected frame in personal avatar throughout preview.
+ document.querySelectorAll(".myMini .mini-frame").forEach(x=>x.style.opacity=$("showFramesEverywhere").checked?"1":"0");
+ document.querySelectorAll(".name-line .status-badge").forEach(x=>x.style.boxShadow="0 0 0 1px "+$("accent").value+"22");
+}
+function initAwards(){
+ const list=(data.awards||[]).awards||[];
+ const target=$("profileAwards");target.innerHTML="";
+ list.slice(0,3).forEach(a=>{const d=document.createElement("div");d.className="award";d.innerHTML=`<img src="award_icons/${a.id}.svg" alt=""><div><b>${a.name}</b><span>${a.rarity}</span></div>`;target.append(d)});
+}
+function renderGalleries(){
+ const put=(id,items,folder,extra)=>{const el=$(id);el.innerHTML="";items.forEach(x=>{const b=document.createElement("button");b.className="chip";b.innerHTML=extra(x,folder);b.addEventListener("click",()=>{if(folder==="avatar_frames")$("frame").value=x.id;else if(folder==="statuses")$("status").value=x.id;else if(folder==="profile_effects")$("effect").value=x.id;else if(folder==="banners")$("banner").value=x.id;apply();toast("Выбрано: "+x.name)});el.append(b)})};
+ put("frameGallery",data.avatar_frames,"avatar_frames",x=>`<img src="avatar_frames/${x.id}.svg" alt="">${x.name}`);
+ put("statusGallery",data.statuses,"statuses",x=>`<img src="statuses/${x.id}.svg" alt="">${x.name}`);
+ put("effectGallery",data.profile_effects,"profile_effects",x=>`<img src="profile_effects/${x.id}.svg" alt="">${x.name}`);
+ put("bannerGallery",data.banners,"banners",x=>`<img src="banners/${x.id}.svg" alt="">${x.name}`);
+}
+function toast(t){$("toast").textContent=t;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",1700)}
+document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".view").forEach(x=>x.classList.add("hidden"));$("view-"+b.dataset.view).classList.remove("hidden");$("pageTitle").textContent=({profile:"Профиль пользователя",feed:"Посты и комментарии",chat:"Чаты",showcase:"Коллекция оформления"})[b.dataset.view]}));
+["username","handle","status","secondStatus","frame","effect","banner","accent","bio","showAwards","showStatusInChat","showFramesEverywhere","showEffects"].forEach(id=>$(id).addEventListener("input",apply));
+$("randomize").addEventListener("click",()=>{const choose=(arr)=>arr[Math.floor(Math.random()*arr.length)].id;$("status").value=choose(data.statuses);$("frame").value=choose(data.avatar_frames);$("effect").value=choose(data.profile_effects);$("banner").value=choose(data.banners);apply();toast("Новый образ применён")});
+$("reset").addEventListener("click",()=>{Object.entries(defaults).forEach(([k,v])=>{const el=$(k);if(el.type==="checkbox")el.checked=v;else el.value=v});apply();toast("Настройки сброшены")});
+$("chatForm").addEventListener("submit",e=>{e.preventDefault();const t=$("chatText").value.trim();if(!t)return;const msg=document.createElement("div");msg.className="msg mine";msg.innerHTML=`<div class="mini-avatar myMini"><img class="photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt=""><img class="mini-frame" src="avatar_frames/${$("frame").value}.svg" alt=""></div><div class="bubble"></div>`;msg.querySelector(".bubble").textContent=t;const small=document.createElement("small");small.textContent="сейчас · ✓✓";msg.querySelector(".bubble").append(small);$("messages").append(msg);$("chatText").value="";apply();$("messages").scrollTop=$("messages").scrollHeight});
+loadData().catch(()=>{document.body.insertAdjacentHTML("beforeend",'<div class="notice">Не удалось загрузить cosmetics.json. Откройте index.html через локальный сервер, например Live Server в VS Code, чтобы fetch мог прочитать каталог.</div>')});
+</script>
+</body></html>
