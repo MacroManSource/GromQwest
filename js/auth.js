@@ -1,130 +1,129 @@
-// js/auth.js
-//
-// Wraps Supabase Auth. This module owns exactly one piece of state:
-// window.AuthState.user / .session — everything else in the app reads
-// that instead of calling supabase.auth.* directly, so there is one
-// obvious place to look when debugging "who does the app think is logged in".
+/**
+ * BaoPulse — Authentication
+ */
+import { supabase } from './supabase.js';
+import { setState, getState } from './state.js';
+import { showToast, validateEmail, validatePassword, validateUsername } from './utils.js';
+import { CONFIG } from './config.js';
 
-// Only ever pass an explicit redirect URL when we're actually served over
-// http(s) — over file:// (common while testing locally by double-clicking
-// index.html) this would send Supabase a "file:///Users/..." URL that
-// almost certainly isn't in the project's Redirect URLs allowlist, which
-// can make signUp()/resetPasswordForEmail() fail outright. When we skip
-// it, Supabase falls back to the Site URL configured in the dashboard,
-// which is the safer default anyway.
-function safeRedirectUrl() {
-  if (location.protocol !== 'http:' && location.protocol !== 'https:') return null;
-  return location.origin + location.pathname; // strip any ?query or #hash
+export async function initAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) {
+    await loadProfile(session.user.id);
+  }
+
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      await loadProfile(session.user.id);
+    } else if (event === 'SIGNED_OUT') {
+      setState({ user: null, profile: null });
+    }
+  });
 }
 
-window.AuthState = {
-  user: null,
-  session: null,
-  profile: null,
-  ready: false, // becomes true once the initial getSession() resolves
-  listeners: []
-};
+async function loadProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
 
-window.Auth = {
-  onChange(fn) { window.AuthState.listeners.push(fn); },
-  _notify() {
-    window.AuthState.listeners.forEach(fn => {
-      try { fn(window.AuthState); } catch (e) { console.error(e); }
-    });
-  },
-
-  /** Call once on page load, before rendering the boot/auth-gate screen. */
-  async init() {
-    const { data, error } = await safeCall(() => window.supabaseClient.auth.getSession());
-    if (error) {
-      console.error('[Auth] getSession failed:', error.raw);
-    } else {
-      window.AuthState.session = data.session;
-      window.AuthState.user = data.session ? data.session.user : null;
-    }
-    window.AuthState.ready = true;
-
-    // Keep session in sync across tab refreshes, token refresh, sign-out
-    // in another tab, etc. — this is what makes "session persists after
-    // reload" actually true rather than a one-time check.
-    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      window.AuthState.session = session;
-      window.AuthState.user = session ? session.user : null;
-      if (session) {
-        await window.Database.loadEverythingAfterLogin();
-      } else {
-        window.AuthState.profile = null;
-      }
-      this._notify();
-    });
-
-    if (window.AuthState.user) {
-      await window.Database.loadEverythingAfterLogin();
-    }
-    this._notify();
-    return window.AuthState;
-  },
-
-  /**
-   * @param {string} email
-   * @param {string} password
-   * @param {string} username  shown everywhere in-game; stored on the
-   *   auth user's metadata so the handle_new_user() trigger can use it
-   *   when creating the profiles row.
-   */
-  async signUp(email, password, username) {
-    if (!email || !password || !username) {
-      return { data: null, error: { userMessage: 'Заполни email, пароль и позывной.' } };
-    }
-    if (password.length < 6) {
-      return { data: null, error: { userMessage: 'Пароль должен быть не короче 6 символов.' } };
-    }
-    const options = { data: { username } };
-    const redirect = safeRedirectUrl();
-    if (redirect) options.emailRedirectTo = redirect;
-    const { data, error } = await safeCall(() => window.supabaseClient.auth.signUp({ email, password, options }));
-    return { data, error };
-  },
-
-  async signIn(email, password) {
-    const { data, error } = await safeCall(() => window.supabaseClient.auth.signInWithPassword({ email, password }));
-    return { data, error };
-  },
-
-  async signOut() {
-    if (window.Database) window.Database.teardownOnSignOut();
-    const { error } = await safeCall(() => window.supabaseClient.auth.signOut());
-    window.AuthState.user = null;
-    window.AuthState.session = null;
-    window.AuthState.profile = null;
-    this._notify();
-    return { error };
-  },
-
-  async sendPasswordReset(email) {
-    const opts = {};
-    const redirect = safeRedirectUrl();
-    if (redirect) opts.redirectTo = redirect;
-    const { data, error } = await safeCall(() => window.supabaseClient.auth.resetPasswordForEmail(email, opts));
-    return { data, error };
-  },
-
-  /**
-   * Calls check_username_available() — a stable, security-definer RPC
-   * that's granted to `anon` too, since this needs to work before the
-   * player has an account. This is a UX nicety only; the real backstop
-   * is the case-insensitive unique index + the USERNAME_TAKEN error
-   * signUp() surfaces if two people still race for the same name.
-   */
-  async checkUsernameAvailable(username) {
-    const { data, error } = await safeCall(() =>
-      window.supabaseClient.rpc('check_username_available', { p_username: username })
-    );
-    if (error) return { available: null, error };
-    return { available: data === true, error: null };
-  },
-
-  isLoggedIn() {
-    return !!window.AuthState.user;
+  if (error) {
+    console.error('Profile load error:', error);
+    return;
   }
-};
+
+  setState({ user: { id: userId }, profile: data });
+}
+
+export async function signUp({ email, password, username, displayName }) {
+  const emailErr = validateEmail(email);
+  if (emailErr) return { error: emailErr };
+
+  const passErr = validatePassword(password);
+  if (passErr) return { error: passErr };
+
+  const userErr = validateUsername(username);
+  if (userErr) return { error: userErr };
+
+  // Check username uniqueness client-side first
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .ilike('username', username)
+    .maybeSingle();
+
+  if (existing) {
+    return { error: 'Этот username уже занят' };
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        username: username.toLowerCase(),
+        display_name: displayName || username
+      },
+      emailRedirectTo: window.location.origin + (CONFIG.BASE_PATH || '') + '/#/login'
+    }
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { data, needsConfirmation: !data.session };
+}
+
+export async function signIn({ email, password }) {
+  const emailErr = validateEmail(email);
+  if (emailErr) return { error: emailErr };
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { data };
+}
+
+export async function signOut() {
+  await supabase.auth.signOut();
+  setState({ user: null, profile: null });
+  window.location.hash = '#/login';
+}
+
+export async function resetPassword(email) {
+  const emailErr = validateEmail(email);
+  if (emailErr) return { error: emailErr };
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + (CONFIG.BASE_PATH || '') + '/#/recover'
+  });
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function updatePassword(newPassword) {
+  const passErr = validatePassword(newPassword);
+  if (passErr) return { error: passErr };
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export function requireAuth() {
+  const { user } = getState();
+  if (!user) {
+    window.location.hash = '#/login';
+    return false;
+  }
+  return true;
+}
