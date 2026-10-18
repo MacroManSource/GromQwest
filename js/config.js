@@ -6,8 +6,8 @@
 
 export const CONFIG = {
   // === SUPABASE (заполните своими значениями) ===
-  SUPABASE_URL: 'https://YOUR_PROJECT_ID.supabase.co',
-  SUPABASE_ANON_KEY: 'YOUR_ANON_KEY',
+  SUPABASE_URL: 'https://qsxxyrxpzkyuwnupkesf.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_f0hFhhelV4thfnuvQAhB_A_WOGelAko',
 
   // === App ===
   APP_NAME: 'BaoPulse',
