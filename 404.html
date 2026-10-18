@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 — BaoPulse</title>
+  <script>
+    // Redirect to index for SPA routing on GitHub Pages
+    const path = location.pathname.replace(/\/404\.html$/, '') || '';
+    location.replace(path + '/#' + (location.hash || '/'));
+  </script>
+</head>
+<body>
+  <p>Перенаправление…</p>
+</body>
+</html>
